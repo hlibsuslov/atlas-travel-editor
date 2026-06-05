@@ -1,0 +1,180 @@
+{
+  "app": { "name": "Atlas", "tagline": "Personal travel cartography" },
+  "nav": {
+    "editor": "Editor",
+    "map": "Map",
+    "stats": "Stats",
+    "friends": "Friends",
+    "signOut": "Sign in"
+  },
+  "dash": {
+    "kicker": "Reading the map",
+    "title": "A life in countries",
+    "lede": "Patterns from your travel record — distance, rhythm, and the places that pulled you back.",
+    "ofWorld": "of the world",
+    "acrossContinents": "across {{n}} continents",
+    "yearsTravelling": "Years travelling",
+    "homes": "Homes",
+    "calledHome": "countries called home",
+    "byContinent": "By continent",
+    "total": "total",
+    "travelRhythm": "Travel rhythm",
+    "tripsPerYear": "trips logged per year",
+    "statusMix": "Status mix",
+    "topDest": "Most-returned destinations",
+    "byVisits": "by visits"
+  },
+  "confirm": { "confirm": "Confirm", "cancel": "Cancel" },
+  "common": {
+    "loading": "Loading…",
+    "close": "Close",
+    "language": "Language",
+    "theme": "Theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
+  "auth": {
+    "subtitle": "Save and share your personal travel map.",
+    "login": "Login",
+    "password": "Password",
+    "signIn": "Sign in",
+    "orMagic": "or magic link",
+    "artTitle": "Every place you've been, drawn as one map.",
+    "demoHint": "Demo — use {{login}} / {{password}} or just press Sign in",
+    "email": "Email",
+    "sendLink": "Send magic link",
+    "sending": "Sending…",
+    "linkSent": "Magic link sent to {{email}}. Check your inbox.",
+    "or": "or",
+    "google": "Continue with Google"
+  },
+  "status": {
+    "syncing": "Syncing…",
+    "offline": "Offline (cached)",
+    "unsaved": "Unsaved",
+    "synced": "Synced"
+  },
+  "actions": {
+    "import": "Import JSON",
+    "reset": "Reset",
+    "download": "Download",
+    "share": "Share",
+    "makePrivate": "Make private",
+    "save": "Save",
+    "saving": "Saving…",
+    "copy": "Copy",
+    "copied": "Copied!",
+    "load": "Load",
+    "add": "Add",
+    "delete": "Delete",
+    "addCountry": "Add Country",
+    "addCity": "Add city",
+    "addYear": "Add year"
+  },
+  "editor": {
+    "title": "Editor",
+    "kicker": "The document · one source of truth",
+    "bornIn": "Born in",
+    "lede": "Edit your travel record through the form — the validated JSON updates live on the right.",
+    "person": "Person",
+    "personSub": "Where the story begins",
+    "entries": "entries",
+    "previewTitle": "JSON preview",
+    "liveAt": "Your map is public at",
+    "birthplace": "Birthplace country",
+    "required": "required",
+    "countries": "Countries",
+    "birthplacePlaceholder": "e.g., Ukraine",
+    "filter": "Filter countries…",
+    "noMatches": "No countries match your filter."
+  },
+  "stats": { "countries": "Countries", "cities": "Cities", "errors": "Errors" },
+  "country": {
+    "namePlaceholder": "Country name",
+    "selectPlaceholder": "Select a country…",
+    "searchPlaceholder": "Search countries…",
+    "noMatches": "No countries found",
+    "cities": "{{count}} cities",
+    "visited": "Visited",
+    "lived": "Lived",
+    "birthplace": "Birthplace",
+    "capital": "Capital",
+    "visitedCapital": "Visited Capital",
+    "timelineVisited": "Timeline — Visited",
+    "timelineLived": "Timeline — Lived",
+    "noEntries": "No entries yet",
+    "removeConfirm": "Remove {{name}}?",
+    "thisCountry": "this country"
+  },
+  "city": {
+    "title": "Cities",
+    "namePlaceholder": "City name",
+    "noCities": "No cities yet",
+    "noYears": "No years yet",
+    "addYearPlaceholder": "Add year (e.g., 2025)",
+    "yearDefault": "Year (default {{year}})"
+  },
+  "json": { "title": "JSON Preview", "valid": "Valid JSON", "errors": "{{count}} error(s)" },
+  "import": {
+    "title": "Import JSON",
+    "placeholder": "Paste your JSON here...",
+    "failed": "Import failed: {{message}}"
+  },
+  "validation": {
+    "invalidTimeline": "Invalid format. Use {{formats}}.",
+    "cityYearRange": "City visit year must be {{min}}-{{max}}."
+  },
+  "map": {
+    "kicker": "Equal Earth projection · click to edit",
+    "title": "The world, marked",
+    "subtitle": "Countries you've visited, lived in or were born in.",
+    "lede": "Every country you were born in, have lived in, or passed through — coloured by status.",
+    "onMap": "on map",
+    "loadOwn": "My data",
+    "clickHint": "Click a country to cycle status · scroll to zoom · drag to pan",
+    "matched": "{{matched}} of {{total}} countries matched on the map",
+    "unmatchedHint": "Some names didn't match the map. Use official English country names for best results.",
+    "legend": {
+      "birthplace": "Birthplace",
+      "lived": "Lived",
+      "visited": "Visited",
+      "capital": "Capital only",
+      "none": "Not visited"
+    }
+  },
+  "friends": {
+    "kicker": "Other cartographers",
+    "title": "Friends",
+    "subtitle": "Follow people by their share code and explore the maps they've drawn.",
+    "addPlaceholder": "SHARE-CODE",
+    "add": "Follow",
+    "empty": "You're not following anyone yet.",
+    "viewMap": "View map",
+    "countriesLabel": "Countries",
+    "homeBase": "Home base",
+    "countriesCount": "{{count}} countries",
+    "remove": "Unfollow"
+  },
+  "share": {
+    "title": "Shared travel map",
+    "openEditor": "Open editor",
+    "publicView": "Public view",
+    "readOnly": "read-only",
+    "continents": "Continents",
+    "dragHint": "Drag to pan · scroll to zoom",
+    "private": "This map is private or does not exist.",
+    "summary": "Born in {{country}} · {{count}} countries marked"
+  },
+  "toast": {
+    "saved": "Saved to server.",
+    "saveFailed": "Save failed: {{message}}",
+    "shareOn": "Public link created.",
+    "shareOff": "Sharing turned off.",
+    "copied": "JSON copied to clipboard.",
+    "imported": "Data imported.",
+    "reset": "Reset to the default example.",
+    "resetConfirm": "Reset to the default example? This clears current work.",
+    "loadedOwn": "Loaded your data onto the map."
+  }
+}

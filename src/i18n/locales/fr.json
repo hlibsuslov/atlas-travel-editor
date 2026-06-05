@@ -1,0 +1,130 @@
+{
+  "app": {
+    "name": "Travel Editor",
+    "tagline": "Modifiez, validez et partagez votre carte de voyages"
+  },
+  "nav": { "editor": "Éditeur", "map": "Carte", "friends": "Amis", "signOut": "Se déconnecter" },
+  "confirm": { "confirm": "Confirmer", "cancel": "Annuler" },
+  "common": {
+    "loading": "Chargement…",
+    "close": "Fermer",
+    "language": "Langue",
+    "theme": "Thème",
+    "light": "Clair",
+    "dark": "Sombre",
+    "system": "Système"
+  },
+  "auth": {
+    "subtitle": "Connectez-vous pour enregistrer et partager votre carte de voyages.",
+    "email": "E-mail",
+    "sendLink": "Envoyer le lien magique",
+    "sending": "Envoi…",
+    "linkSent": "Lien magique envoyé à {{email}}. Vérifiez votre boîte de réception.",
+    "or": "ou",
+    "google": "Continuer avec Google"
+  },
+  "status": {
+    "syncing": "Synchronisation…",
+    "offline": "Hors ligne (en cache)",
+    "unsaved": "Non enregistré",
+    "synced": "Enregistré"
+  },
+  "actions": {
+    "import": "Importer le JSON",
+    "reset": "Réinitialiser",
+    "download": "Télécharger",
+    "share": "Partager",
+    "makePrivate": "Rendre privé",
+    "save": "Enregistrer",
+    "saving": "Enregistrement…",
+    "copy": "Copier",
+    "copied": "Copié !",
+    "load": "Charger",
+    "add": "Ajouter",
+    "delete": "Supprimer",
+    "addCountry": "Ajouter un pays",
+    "addCity": "Ajouter une ville",
+    "addYear": "Ajouter une année"
+  },
+  "editor": {
+    "title": "Éditeur",
+    "hint": "Modifiez via l'interface — le JSON se met à jour à droite",
+    "person": "Profil",
+    "birthplace": "Pays de naissance",
+    "required": "obligatoire",
+    "countries": "Pays",
+    "birthplacePlaceholder": "ex. : Ukraine"
+  },
+  "stats": { "countries": "Pays", "cities": "Villes", "errors": "Erreurs" },
+  "country": {
+    "namePlaceholder": "Nom du pays",
+    "cities": "{{count}} villes",
+    "visited": "Visité",
+    "lived": "Vécu",
+    "birthplace": "Lieu de naissance",
+    "visitedCapital": "Capitale visitée",
+    "timelineVisited": "Chronologie — Visites",
+    "timelineLived": "Chronologie — Résidence",
+    "noEntries": "Aucune entrée pour l'instant",
+    "removeConfirm": "Supprimer {{name}} ?",
+    "thisCountry": "ce pays"
+  },
+  "city": {
+    "namePlaceholder": "Nom de la ville",
+    "noCities": "Aucune ville pour l'instant",
+    "noYears": "Aucune année pour l'instant",
+    "addYearPlaceholder": "Ajouter une année (ex. : 2025)",
+    "yearDefault": "Année (par défaut {{year}})"
+  },
+  "json": { "title": "Aperçu du JSON", "valid": "JSON valide", "errors": "{{count}} erreur(s)" },
+  "import": {
+    "title": "Importer le JSON",
+    "placeholder": "Collez votre JSON ici...",
+    "failed": "Échec de l'import : {{message}}"
+  },
+  "validation": {
+    "invalidTimeline": "Format non valide. Utilisez {{formats}}.",
+    "cityYearRange": "L'année de visite de la ville doit être comprise entre {{min}} et {{max}}."
+  },
+  "map": {
+    "title": "Carte du monde",
+    "subtitle": "Pays que vous avez visités, où vous avez vécu ou êtes né.",
+    "loadOwn": "Charger mes données",
+    "matched": "{{matched}} pays sur {{total}} correspondent sur la carte",
+    "unmatchedHint": "Certains noms ne correspondent pas à la carte. Utilisez les noms officiels en anglais pour de meilleurs résultats.",
+    "legend": {
+      "birthplace": "Naissance",
+      "lived": "Résidence",
+      "visited": "Visité",
+      "capital": "Capitale seulement",
+      "none": "Non visité"
+    }
+  },
+  "friends": {
+    "title": "Amis",
+    "subtitle": "Suivez des personnes et explorez leurs cartes de voyages.",
+    "addPlaceholder": "Code de partage de l'ami",
+    "add": "Suivre",
+    "empty": "Vous ne suivez personne pour l'instant.",
+    "viewMap": "Voir la carte",
+    "countriesCount": "{{count}} pays",
+    "remove": "Ne plus suivre"
+  },
+  "share": {
+    "title": "Carte de voyages partagée",
+    "openEditor": "Ouvrir l'éditeur",
+    "private": "Cette carte est privée ou n'existe pas.",
+    "summary": "Naissance : {{country}} · {{count}} pays"
+  },
+  "toast": {
+    "saved": "Enregistré sur le serveur.",
+    "saveFailed": "Échec de l'enregistrement : {{message}}",
+    "shareOn": "Lien public créé.",
+    "shareOff": "Partage désactivé.",
+    "copied": "JSON copié dans le presse-papiers.",
+    "imported": "Données importées.",
+    "reset": "Réinitialisé à l'exemple par défaut.",
+    "resetConfirm": "Réinitialiser à l'exemple par défaut ? Le travail actuel sera effacé.",
+    "loadedOwn": "Vos données ont été chargées sur la carte."
+  }
+}

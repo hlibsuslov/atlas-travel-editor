@@ -1,0 +1,131 @@
+{
+  "app": { "name": "Travel Editor", "tagline": "Edita, valida y comparte tu mapa de viajes" },
+  "nav": { "editor": "Editor", "map": "Mapa", "friends": "Amigos", "signOut": "Cerrar sesión" },
+  "confirm": { "confirm": "Confirmar", "cancel": "Cancelar" },
+  "common": {
+    "loading": "Cargando…",
+    "close": "Cerrar",
+    "language": "Idioma",
+    "theme": "Tema",
+    "light": "Claro",
+    "dark": "Oscuro",
+    "system": "Sistema"
+  },
+  "auth": {
+    "subtitle": "Inicia sesión para guardar y compartir tu mapa de viajes.",
+    "email": "Correo electrónico",
+    "sendLink": "Enviar enlace mágico",
+    "sending": "Enviando…",
+    "linkSent": "Enlace mágico enviado a {{email}}. Revisa tu bandeja de entrada.",
+    "or": "o",
+    "google": "Continuar con Google"
+  },
+  "status": {
+    "syncing": "Sincronizando…",
+    "offline": "Sin conexión (caché)",
+    "unsaved": "Sin guardar",
+    "synced": "Sincronizado"
+  },
+  "actions": {
+    "import": "Importar JSON",
+    "reset": "Restablecer",
+    "download": "Descargar",
+    "share": "Compartir",
+    "makePrivate": "Hacer privado",
+    "save": "Guardar",
+    "saving": "Guardando…",
+    "copy": "Copiar",
+    "copied": "¡Copiado!",
+    "load": "Cargar",
+    "add": "Añadir",
+    "delete": "Eliminar",
+    "addCountry": "Añadir país",
+    "addCity": "Añadir ciudad",
+    "addYear": "Añadir año"
+  },
+  "editor": {
+    "title": "Editor",
+    "hint": "Edita en la interfaz: el JSON se actualiza a la derecha",
+    "person": "Perfil",
+    "birthplace": "País de nacimiento",
+    "required": "obligatorio",
+    "countries": "Países",
+    "birthplacePlaceholder": "p. ej., Ucrania"
+  },
+  "stats": { "countries": "Países", "cities": "Ciudades", "errors": "Errores" },
+  "country": {
+    "namePlaceholder": "Nombre del país",
+    "cities": "{{count}} ciudades",
+    "visited": "Visitado",
+    "lived": "Vivido",
+    "birthplace": "Lugar de nacimiento",
+    "visitedCapital": "Capital visitada",
+    "timelineVisited": "Cronología — Visitas",
+    "timelineLived": "Cronología — Residencia",
+    "noEntries": "Aún no hay entradas",
+    "removeConfirm": "¿Eliminar {{name}}?",
+    "thisCountry": "este país"
+  },
+  "city": {
+    "namePlaceholder": "Nombre de la ciudad",
+    "noCities": "Aún no hay ciudades",
+    "noYears": "Aún no hay años",
+    "addYearPlaceholder": "Añadir año (p. ej., 2025)",
+    "yearDefault": "Año (por defecto {{year}})"
+  },
+  "json": {
+    "title": "Vista previa del JSON",
+    "valid": "JSON válido",
+    "errors": "{{count}} error(es)"
+  },
+  "import": {
+    "title": "Importar JSON",
+    "placeholder": "Pega tu JSON aquí...",
+    "failed": "Error al importar: {{message}}"
+  },
+  "validation": {
+    "invalidTimeline": "Formato no válido. Usa {{formats}}.",
+    "cityYearRange": "El año de visita de la ciudad debe estar entre {{min}} y {{max}}."
+  },
+  "map": {
+    "title": "Mapa del mundo",
+    "subtitle": "Países que has visitado, donde has vivido o nacido.",
+    "loadOwn": "Cargar mis datos",
+    "matched": "{{matched}} de {{total}} países coincidieron en el mapa",
+    "unmatchedHint": "Algunos nombres no coincidieron con el mapa. Usa los nombres oficiales en inglés para mejores resultados.",
+    "legend": {
+      "birthplace": "Nacimiento",
+      "lived": "Residencia",
+      "visited": "Visitado",
+      "capital": "Solo capital",
+      "none": "No visitado"
+    }
+  },
+  "friends": {
+    "title": "Amigos",
+    "subtitle": "Sigue a personas y explora sus mapas de viajes.",
+    "addPlaceholder": "Código para compartir del amigo",
+    "add": "Seguir",
+    "empty": "Todavía no sigues a nadie.",
+    "viewMap": "Ver mapa",
+    "countriesCount": "{{count}} países",
+    "remove": "Dejar de seguir"
+  },
+  "share": {
+    "title": "Mapa de viajes compartido",
+    "openEditor": "Abrir editor",
+    "private": "Este mapa es privado o no existe.",
+    "summary": "Nacimiento: {{country}} · {{count}} países"
+  },
+  "toast": {
+    "saved": "Guardado en el servidor.",
+    "saveFailed": "Error al guardar: {{message}}",
+    "shareOn": "Enlace público creado.",
+    "shareOff": "Compartir desactivado.",
+    "copied": "JSON copiado al portapapeles.",
+    "imported": "Datos importados.",
+    "reset": "Restablecido al ejemplo por defecto.",
+    "resetConfirm": "¿Restablecer al ejemplo por defecto? Se borrará el trabajo actual.",
+    "loadedOwn": "Tus datos se han cargado en el mapa."
+  }
+}

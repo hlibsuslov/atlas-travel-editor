@@ -1,0 +1,127 @@
+{
+  "app": { "name": "Travel Editor", "tagline": "Reisekarte bearbeiten, prüfen und teilen" },
+  "nav": { "editor": "Editor", "map": "Karte", "friends": "Freunde", "signOut": "Abmelden" },
+  "confirm": { "confirm": "Bestätigen", "cancel": "Abbrechen" },
+  "common": {
+    "loading": "Wird geladen…",
+    "close": "Schließen",
+    "language": "Sprache",
+    "theme": "Design",
+    "light": "Hell",
+    "dark": "Dunkel",
+    "system": "System"
+  },
+  "auth": {
+    "subtitle": "Melde dich an, um deine Reisekarte zu speichern und zu teilen.",
+    "email": "E-Mail",
+    "sendLink": "Magischen Link senden",
+    "sending": "Wird gesendet…",
+    "linkSent": "Magischer Link an {{email}} gesendet. Bitte prüfe dein Postfach.",
+    "or": "oder",
+    "google": "Mit Google fortfahren"
+  },
+  "status": {
+    "syncing": "Synchronisierung…",
+    "offline": "Offline (zwischengespeichert)",
+    "unsaved": "Nicht gespeichert",
+    "synced": "Gespeichert"
+  },
+  "actions": {
+    "import": "JSON importieren",
+    "reset": "Zurücksetzen",
+    "download": "Herunterladen",
+    "share": "Teilen",
+    "makePrivate": "Privat machen",
+    "save": "Speichern",
+    "saving": "Wird gespeichert…",
+    "copy": "Kopieren",
+    "copied": "Kopiert!",
+    "load": "Laden",
+    "add": "Hinzufügen",
+    "delete": "Löschen",
+    "addCountry": "Land hinzufügen",
+    "addCity": "Stadt hinzufügen",
+    "addYear": "Jahr hinzufügen"
+  },
+  "editor": {
+    "title": "Editor",
+    "hint": "Über die Oberfläche bearbeiten — JSON wird rechts aktualisiert",
+    "person": "Profil",
+    "birthplace": "Geburtsland",
+    "required": "erforderlich",
+    "countries": "Länder",
+    "birthplacePlaceholder": "z. B. Ukraine"
+  },
+  "stats": { "countries": "Länder", "cities": "Städte", "errors": "Fehler" },
+  "country": {
+    "namePlaceholder": "Ländername",
+    "cities": "{{count}} Städte",
+    "visited": "Besucht",
+    "lived": "Gewohnt",
+    "birthplace": "Geburtsort",
+    "visitedCapital": "Hauptstadt besucht",
+    "timelineVisited": "Zeitleiste — Besuche",
+    "timelineLived": "Zeitleiste — Wohnsitz",
+    "noEntries": "Noch keine Einträge",
+    "removeConfirm": "{{name}} entfernen?",
+    "thisCountry": "dieses Land"
+  },
+  "city": {
+    "namePlaceholder": "Stadtname",
+    "noCities": "Noch keine Städte",
+    "noYears": "Noch keine Jahre",
+    "addYearPlaceholder": "Jahr hinzufügen (z. B. 2025)",
+    "yearDefault": "Jahr (Standard {{year}})"
+  },
+  "json": { "title": "JSON-Vorschau", "valid": "Gültiges JSON", "errors": "{{count}} Fehler" },
+  "import": {
+    "title": "JSON importieren",
+    "placeholder": "Füge dein JSON hier ein...",
+    "failed": "Import fehlgeschlagen: {{message}}"
+  },
+  "validation": {
+    "invalidTimeline": "Ungültiges Format. Verwende {{formats}}.",
+    "cityYearRange": "Das Besuchsjahr der Stadt muss zwischen {{min}} und {{max}} liegen."
+  },
+  "map": {
+    "title": "Weltkarte",
+    "subtitle": "Länder, die du besucht hast, in denen du gelebt hast oder geboren wurdest.",
+    "loadOwn": "Meine Daten laden",
+    "matched": "{{matched}} von {{total}} Ländern auf der Karte zugeordnet",
+    "unmatchedHint": "Einige Namen konnten nicht zugeordnet werden. Verwende für beste Ergebnisse die offiziellen englischen Ländernamen.",
+    "legend": {
+      "birthplace": "Geburtsort",
+      "lived": "Wohnsitz",
+      "visited": "Besucht",
+      "capital": "Nur Hauptstadt",
+      "none": "Nicht besucht"
+    }
+  },
+  "friends": {
+    "title": "Freunde",
+    "subtitle": "Folge Personen und entdecke ihre Reisekarten.",
+    "addPlaceholder": "Freigabecode des Freundes",
+    "add": "Folgen",
+    "empty": "Du folgst noch niemandem.",
+    "viewMap": "Karte ansehen",
+    "countriesCount": "{{count}} Länder",
+    "remove": "Entfolgen"
+  },
+  "share": {
+    "title": "Geteilte Reisekarte",
+    "openEditor": "Editor öffnen",
+    "private": "Diese Karte ist privat oder existiert nicht.",
+    "summary": "Geburtsort: {{country}} · {{count}} Länder"
+  },
+  "toast": {
+    "saved": "Auf dem Server gespeichert.",
+    "saveFailed": "Speichern fehlgeschlagen: {{message}}",
+    "shareOn": "Öffentlicher Link erstellt.",
+    "shareOff": "Teilen deaktiviert.",
+    "copied": "JSON in die Zwischenablage kopiert.",
+    "imported": "Daten importiert.",
+    "reset": "Auf das Standardbeispiel zurückgesetzt.",
+    "resetConfirm": "Auf das Standardbeispiel zurücksetzen? Die aktuelle Arbeit wird gelöscht.",
+    "loadedOwn": "Deine Daten wurden auf die Karte geladen."
+  }
+}

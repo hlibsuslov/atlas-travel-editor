@@ -1,0 +1,62 @@
+import { lazy, Suspense, type ReactNode } from 'react';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { useAuth } from '@/features/auth/AuthProvider';
+import { LoginPage } from '@/features/auth/LoginPage';
+import { AppShell } from '@/components/AppShell';
+import { EditorPage } from '@/features/editor/EditorPage';
+
+// Code-split the heavier routes (world atlas, charts) so the editor's initial
+// bundle stays small.
+const MapPage = lazy(() => import('@/features/map/MapPage').then((m) => ({ default: m.MapPage })));
+const DashboardPage = lazy(() =>
+  import('@/features/dashboard/DashboardPage').then((m) => ({ default: m.DashboardPage })),
+);
+const FriendsPage = lazy(() =>
+  import('@/features/friends/FriendsPage').then((m) => ({ default: m.FriendsPage })),
+);
+const SharePage = lazy(() =>
+  import('@/features/sharing/SharePage').then((m) => ({ default: m.SharePage })),
+);
+
+function PageFallback() {
+  return (
+    <div className="full-center">
+      <p className="empty-note">Loading…</p>
+    </div>
+  );
+}
+
+function RequireAuth({ children }: { children: ReactNode }) {
+  const { session, loading } = useAuth();
+  if (loading) return <PageFallback />;
+  return session ? <>{children}</> : <LoginPage />;
+}
+
+export function App() {
+  return (
+    <BrowserRouter>
+      <div className="atlas-app">
+        <Suspense fallback={<PageFallback />}>
+          <Routes>
+            <Route path="/share/:slug" element={<SharePage />} />
+
+            <Route
+              element={
+                <RequireAuth>
+                  <AppShell />
+                </RequireAuth>
+              }
+            >
+              <Route path="/" element={<EditorPage />} />
+              <Route path="/map" element={<MapPage />} />
+              <Route path="/stats" element={<DashboardPage />} />
+              <Route path="/friends" element={<FriendsPage />} />
+            </Route>
+
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Suspense>
+      </div>
+    </BrowserRouter>
+  );
+}
