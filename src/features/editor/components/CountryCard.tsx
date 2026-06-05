@@ -1,16 +1,15 @@
 import { memo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useShallow } from 'zustand/react/shallow';
-import { ChevronRight, X } from 'lucide-react';
+import { ChevronRight, Star, X } from 'lucide-react';
 import type { Country } from '@/domain/schema';
-import { isValidTimelineString } from '@/domain/timeline';
-import { TIMELINE_HINT } from '@/domain/constants';
 import { primaryStatus } from '@/domain/stats';
+import { canonical } from '@/features/map/countryMatch';
 import { useEditorStore } from '@/features/editor/store';
 import { FlagDisc } from '@/components/ui/FlagDisc';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { StatusToggle } from './StatusToggle';
-import { TagList } from './TagList';
+import { TimelineField } from './TimelineField';
 import { CityTimeline } from './CityTimeline';
 import { CountrySelect } from './CountrySelect';
 
@@ -41,15 +40,15 @@ const useCountryActions = () =>
 function CountryCardImpl({ country, index, invalid, defaultOpen }: CountryCardProps) {
   const { t } = useTranslation();
   const store = useCountryActions();
+  // Birthplace is owned by the Person field, not markable per-country — a country
+  // is "birthplace" only when its name matches the person's birthplace.
+  const birthplaceCountry = useEditorStore((s) => s.data.person.birthplace.country);
+  const isBirthplace = !!country.name && canonical(country.name) === canonical(birthplaceCountry);
+
   const [open, setOpen] = useState(defaultOpen ?? false);
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const status = primaryStatus(country);
+  const status = isBirthplace ? 'birthplace' : primaryStatus(country);
   const cityCount = country.cities.length;
-
-  const timelineValidator = (value: string): string | null =>
-    isValidTimelineString(value)
-      ? null
-      : t('validation.invalidTimeline', { formats: TIMELINE_HINT });
 
   return (
     <div className={`country-card${open ? ' open' : ''}${invalid ? ' invalid' : ''}`}>
@@ -68,6 +67,11 @@ function CountryCardImpl({ country, index, invalid, defaultOpen }: CountryCardPr
           </div>
         </div>
         <div className="country-top-right">
+          {isBirthplace && (
+            <span className="chip birthplace-chip" title={t('country.birthplace')}>
+              <Star size={11} /> {t('country.birthplace')}
+            </span>
+          )}
           <button
             type="button"
             className="btn btn-sm btn-ghost"
@@ -101,12 +105,6 @@ function CountryCardImpl({ country, index, invalid, defaultOpen }: CountryCardPr
               onClick={() => store.setStatus(index, 'lived', !country.status.lived)}
             />
             <StatusToggle
-              label={t('country.birthplace')}
-              on={country.status.birthplace}
-              status="birthplace"
-              onClick={() => store.setStatus(index, 'birthplace', !country.status.birthplace)}
-            />
-            <StatusToggle
               label={t('country.capital')}
               on={country.capitalVisit.visited}
               status="capital"
@@ -115,19 +113,17 @@ function CountryCardImpl({ country, index, invalid, defaultOpen }: CountryCardPr
           </div>
 
           <div className="grid-2">
-            <TagList
+            <TimelineField
               title={t('country.timelineVisited')}
+              mode="year"
               items={country.timeline.visited}
-              placeholder={TIMELINE_HINT}
-              validate={timelineValidator}
               onAdd={(v) => store.addCountryTimeline(index, 'visited', v)}
               onRemove={(i) => store.removeCountryTimeline(index, 'visited', i)}
             />
-            <TagList
+            <TimelineField
               title={t('country.timelineLived')}
+              mode="range"
               items={country.timeline.lived}
-              placeholder={TIMELINE_HINT}
-              validate={timelineValidator}
               onAdd={(v) => store.addCountryTimeline(index, 'lived', v)}
               onRemove={(i) => store.removeCountryTimeline(index, 'lived', i)}
             />
@@ -147,9 +143,7 @@ function CountryCardImpl({ country, index, invalid, defaultOpen }: CountryCardPr
       <ConfirmDialog
         open={confirmOpen}
         title={t('actions.delete')}
-        message={t('country.removeConfirm', {
-          name: country.name || t('country.thisCountry'),
-        })}
+        message={t('country.removeConfirm', { name: country.name || t('country.thisCountry') })}
         onConfirm={() => {
           setConfirmOpen(false);
           store.removeCountry(index);

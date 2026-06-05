@@ -12,13 +12,7 @@ const OPTIONS: ComboboxOption[] = [
 function renderCombobox(overrides: Partial<Parameters<typeof Combobox>[0]> = {}) {
   const onChange = vi.fn();
   render(
-    <Combobox
-      value=""
-      options={OPTIONS}
-      onChange={onChange}
-      ariaLabel="Country"
-      {...overrides}
-    />,
+    <Combobox value="" options={OPTIONS} onChange={onChange} ariaLabel="Country" {...overrides} />,
   );
   return { onChange };
 }
@@ -111,10 +105,7 @@ describe('<Combobox>', () => {
     expect(trigger).toHaveAttribute('aria-expanded', 'false');
 
     await user.click(trigger);
-    expect(screen.getByRole('option', { name: 'France' })).toHaveAttribute(
-      'aria-selected',
-      'true',
-    );
+    expect(screen.getByRole('option', { name: 'France' })).toHaveAttribute('aria-selected', 'true');
     expect(screen.getByRole('option', { name: 'Germany' })).toHaveAttribute(
       'aria-selected',
       'false',

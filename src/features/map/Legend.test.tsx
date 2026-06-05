@@ -41,8 +41,7 @@ describe('<Legend>', () => {
     const items = screen.getAllByRole('listitem');
     expect(items).toHaveLength(4);
 
-    const byLabel = (label: string) =>
-      items.find((item) => within(item).queryByText(label))!;
+    const byLabel = (label: string) => items.find((item) => within(item).queryByText(label))!;
 
     expect(byLabel('Birthplace')).toHaveTextContent('1');
     expect(byLabel('Lived')).toHaveTextContent('2');

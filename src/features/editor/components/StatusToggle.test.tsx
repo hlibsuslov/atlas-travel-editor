@@ -11,18 +11,12 @@ describe('<StatusToggle>', () => {
 
   it('exposes aria-pressed=true when on', () => {
     render(<StatusToggle label="Lived" on status="lived" onClick={vi.fn()} />);
-    expect(screen.getByRole('button', { name: 'Lived' })).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    );
+    expect(screen.getByRole('button', { name: 'Lived' })).toHaveAttribute('aria-pressed', 'true');
   });
 
   it('exposes aria-pressed=false when off', () => {
     render(<StatusToggle label="Lived" on={false} status="lived" onClick={vi.fn()} />);
-    expect(screen.getByRole('button', { name: 'Lived' })).toHaveAttribute(
-      'aria-pressed',
-      'false',
-    );
+    expect(screen.getByRole('button', { name: 'Lived' })).toHaveAttribute('aria-pressed', 'false');
   });
 
   it('fires onClick when activated', async () => {

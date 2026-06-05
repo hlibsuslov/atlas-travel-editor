@@ -86,7 +86,7 @@ const MAX_CYCLES = budget.total ? 100 : 3;
 
 for (let cycle = 1; cycle <= MAX_CYCLES; cycle++) {
   // Self-refilling but bounded: stop when the token budget is nearly spent.
-  if (budget.total && budget.remaining() < 120_000) {
+  if (budget.total && budget.remaining() < 90_000) {
     log(`Stopping: token budget nearly exhausted after ${cycle - 1} cycle(s).`);
     break;
   }
