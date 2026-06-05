@@ -1,0 +1,159 @@
+import { beforeAll, describe, expect, it } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import { WORLD_VIEW, WorldMap, MiniMap, zoomToFit } from './WorldMap';
+import type { TravelData } from '@/domain/schema';
+
+// jsdom does not implement the SVG geometry properties d3-zoom reads when the
+// ZoomableGroup mounts (viewBox.baseVal / width.baseVal). Provide minimal stubs
+// so <WorldMap> can render in tests; this only affects the test environment.
+beforeAll(() => {
+  const svgProto = window.SVGSVGElement.prototype as unknown as Record<string, unknown>;
+  if (!('viewBox' in svgProto)) {
+    Object.defineProperty(svgProto, 'viewBox', {
+      configurable: true,
+      get() {
+        return { baseVal: { x: 0, y: 0, width: 960, height: 500 } };
+      },
+    });
+  }
+  const elProto = window.SVGElement.prototype as unknown as Record<string, unknown>;
+  for (const dim of ['width', 'height'] as const) {
+    if (!(dim in elProto)) {
+      Object.defineProperty(elProto, dim, {
+        configurable: true,
+        get() {
+          return { baseVal: { value: dim === 'width' ? 960 : 500 } };
+        },
+      });
+    }
+  }
+});
+
+// The world default the controlled ZoomableGroup starts at / RESET returns to.
+const WORLD_DEFAULT = { coordinates: [10, 30], zoom: 1 };
+
+// Synthetic country geometries. Rings use counter-clockwise winding so d3-geo's
+// spherical interior matches the small box (the same winding world-atlas uses).
+function box(coords: Array<[number, number]>) {
+  return {
+    type: 'Feature' as const,
+    properties: { name: 'Testland' },
+    geometry: { type: 'Polygon' as const, coordinates: [coords] },
+  };
+}
+
+// ~10°×10° box centred near [20, 50].
+const smallCountry = box([
+  [15, 45],
+  [15, 55],
+  [25, 55],
+  [25, 45],
+  [15, 45],
+]);
+
+// Minimal travel document marking France as visited so at least one geography
+// has a non-"none" status to announce.
+const sampleData: TravelData = {
+  person: { birthplace: { country: 'France' } },
+  travel: {
+    countries: [
+      {
+        name: 'France',
+        status: { visited: true, lived: false, birthplace: true },
+        capitalVisit: { visited: false },
+        timeline: { visited: [], lived: [] },
+        cities: [],
+      },
+    ],
+  },
+};
+
+describe('WORLD_VIEW (RESET target)', () => {
+  it('matches the documented world view { coordinates: [10, 30], zoom: 1 }', () => {
+    expect(WORLD_VIEW.coordinates).toEqual(WORLD_DEFAULT.coordinates);
+    expect(WORLD_VIEW.zoom).toBe(WORLD_DEFAULT.zoom);
+  });
+});
+
+describe('zoomToFit (applied on double-click)', () => {
+  it('updates the position to a higher zoom centred away from the world default', () => {
+    const pos = zoomToFit(smallCountry);
+
+    // Higher zoom than the world view.
+    expect(pos.zoom).toBeGreaterThan(WORLD_DEFAULT.zoom);
+
+    // Re-centred on the country centroid (~[20, 50]), away from the world default.
+    expect(pos.coordinates).not.toEqual(WORLD_DEFAULT.coordinates);
+    expect(pos.coordinates[0]).toBeGreaterThan(15);
+    expect(pos.coordinates[0]).toBeLessThan(25);
+    expect(pos.coordinates[1]).toBeGreaterThan(45);
+    expect(pos.coordinates[1]).toBeLessThan(55);
+  });
+
+  it('clamps zoom within the existing minZoom 1 / maxZoom 10 bounds', () => {
+    const wholeWorld = box([
+      [-179, -85],
+      [-179, 85],
+      [179, 85],
+      [179, -85],
+      [-179, -85],
+    ]);
+    const tiny = box([
+      [20, 50],
+      [20, 50.1],
+      [20.1, 50.1],
+      [20.1, 50],
+      [20, 50],
+    ]);
+
+    // A world-sized geography cannot zoom below the minimum.
+    expect(zoomToFit(wholeWorld).zoom).toBe(1);
+    // A pin-sized geography is capped at the maximum.
+    expect(zoomToFit(tiny).zoom).toBe(10);
+
+    // Anything in between stays within bounds.
+    const mid = zoomToFit(smallCountry).zoom;
+    expect(mid).toBeGreaterThanOrEqual(1);
+    expect(mid).toBeLessThanOrEqual(10);
+  });
+});
+
+describe('<WorldMap> accessibility (G3)', () => {
+  it('exposes the interactive map container as a labelled group', () => {
+    render(<WorldMap data={sampleData} />);
+    const group = screen.getByRole('group', { name: 'World travel map' });
+    expect(group).toBeInTheDocument();
+  });
+
+  it('exposes each interactive country as a button with a name announcing country + status', () => {
+    render(<WorldMap data={sampleData} />);
+    const countries = screen.getAllByRole('button');
+    // Many geographies plus the three zoom controls — there should be lots.
+    expect(countries.length).toBeGreaterThan(3);
+
+    // At least one geography exposes an accessible name containing a country name.
+    const named = countries
+      .map((el) => el.getAttribute('aria-label') ?? '')
+      .filter((label) => label.includes(':'));
+    expect(named.length).toBeGreaterThan(0);
+
+    // France was marked visited/birthplace, so it announces its localized name + status.
+    expect(screen.getByRole('button', { name: 'France: Birthplace' })).toBeInTheDocument();
+  });
+
+  it('gives the three zoom controls translatable accessible names', () => {
+    render(<WorldMap data={sampleData} />);
+    expect(screen.getByRole('button', { name: 'Zoom in' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Zoom out' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Reset view' })).toBeInTheDocument();
+  });
+});
+
+describe('<MiniMap> is decorative', () => {
+  it('exposes no interactive button roles and is hidden from assistive tech', () => {
+    const { container } = render(<MiniMap data={sampleData} />);
+    expect(screen.queryByRole('button')).toBeNull();
+    // The map svg wrapper is marked aria-hidden so it makes no announcements.
+    expect(container.querySelector('[aria-hidden="true"]')).not.toBeNull();
+  });
+});

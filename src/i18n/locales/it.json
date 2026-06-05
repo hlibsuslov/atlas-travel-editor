@@ -1,0 +1,130 @@
+{
+  "app": {
+    "name": "Travel Editor",
+    "tagline": "Modifica, valida e condividi la tua mappa di viaggi"
+  },
+  "nav": { "editor": "Editor", "map": "Mappa", "friends": "Amici", "signOut": "Esci" },
+  "confirm": { "confirm": "Conferma", "cancel": "Annulla" },
+  "common": {
+    "loading": "Caricamento…",
+    "close": "Chiudi",
+    "language": "Lingua",
+    "theme": "Tema",
+    "light": "Chiaro",
+    "dark": "Scuro",
+    "system": "Sistema"
+  },
+  "auth": {
+    "subtitle": "Accedi per salvare e condividere la tua mappa di viaggi.",
+    "email": "Email",
+    "sendLink": "Invia link magico",
+    "sending": "Invio…",
+    "linkSent": "Link magico inviato a {{email}}. Controlla la posta in arrivo.",
+    "or": "oppure",
+    "google": "Continua con Google"
+  },
+  "status": {
+    "syncing": "Sincronizzazione…",
+    "offline": "Offline (in cache)",
+    "unsaved": "Non salvato",
+    "synced": "Salvato"
+  },
+  "actions": {
+    "import": "Importa JSON",
+    "reset": "Reimposta",
+    "download": "Scarica",
+    "share": "Condividi",
+    "makePrivate": "Rendi privato",
+    "save": "Salva",
+    "saving": "Salvataggio…",
+    "copy": "Copia",
+    "copied": "Copiato!",
+    "load": "Carica",
+    "add": "Aggiungi",
+    "delete": "Elimina",
+    "addCountry": "Aggiungi paese",
+    "addCity": "Aggiungi città",
+    "addYear": "Aggiungi anno"
+  },
+  "editor": {
+    "title": "Editor",
+    "hint": "Modifica dall'interfaccia — il JSON si aggiorna a destra",
+    "person": "Profilo",
+    "birthplace": "Paese di nascita",
+    "required": "obbligatorio",
+    "countries": "Paesi",
+    "birthplacePlaceholder": "es. Ucraina"
+  },
+  "stats": { "countries": "Paesi", "cities": "Città", "errors": "Errori" },
+  "country": {
+    "namePlaceholder": "Nome del paese",
+    "cities": "{{count}} città",
+    "visited": "Visitato",
+    "lived": "Vissuto",
+    "birthplace": "Luogo di nascita",
+    "visitedCapital": "Capitale visitata",
+    "timelineVisited": "Cronologia — Visite",
+    "timelineLived": "Cronologia — Residenza",
+    "noEntries": "Ancora nessuna voce",
+    "removeConfirm": "Rimuovere {{name}}?",
+    "thisCountry": "questo paese"
+  },
+  "city": {
+    "namePlaceholder": "Nome della città",
+    "noCities": "Ancora nessuna città",
+    "noYears": "Ancora nessun anno",
+    "addYearPlaceholder": "Aggiungi anno (es. 2025)",
+    "yearDefault": "Anno (predefinito {{year}})"
+  },
+  "json": { "title": "Anteprima JSON", "valid": "JSON valido", "errors": "{{count}} errore/i" },
+  "import": {
+    "title": "Importa JSON",
+    "placeholder": "Incolla qui il tuo JSON...",
+    "failed": "Importazione non riuscita: {{message}}"
+  },
+  "validation": {
+    "invalidTimeline": "Formato non valido. Usa {{formats}}.",
+    "cityYearRange": "L'anno di visita della città deve essere compreso tra {{min}} e {{max}}."
+  },
+  "map": {
+    "title": "Mappa del mondo",
+    "subtitle": "Paesi che hai visitato, in cui hai vissuto o sei nato.",
+    "loadOwn": "Carica i miei dati",
+    "matched": "{{matched}} di {{total}} paesi corrispondono sulla mappa",
+    "unmatchedHint": "Alcuni nomi non corrispondono alla mappa. Usa i nomi ufficiali in inglese per risultati migliori.",
+    "legend": {
+      "birthplace": "Nascita",
+      "lived": "Residenza",
+      "visited": "Visitato",
+      "capital": "Solo capitale",
+      "none": "Non visitato"
+    }
+  },
+  "friends": {
+    "title": "Amici",
+    "subtitle": "Segui le persone ed esplora le loro mappe di viaggi.",
+    "addPlaceholder": "Codice di condivisione dell'amico",
+    "add": "Segui",
+    "empty": "Non segui ancora nessuno.",
+    "viewMap": "Vedi mappa",
+    "countriesCount": "{{count}} paesi",
+    "remove": "Smetti di seguire"
+  },
+  "share": {
+    "title": "Mappa di viaggi condivisa",
+    "openEditor": "Apri editor",
+    "private": "Questa mappa è privata o non esiste.",
+    "summary": "Nascita: {{country}} · {{count}} paesi"
+  },
+  "toast": {
+    "saved": "Salvato sul server.",
+    "saveFailed": "Salvataggio non riuscito: {{message}}",
+    "shareOn": "Link pubblico creato.",
+    "shareOff": "Condivisione disattivata.",
+    "copied": "JSON copiato negli appunti.",
+    "imported": "Dati importati.",
+    "reset": "Reimpostato all'esempio predefinito.",
+    "resetConfirm": "Reimpostare all'esempio predefinito? Il lavoro corrente verrà cancellato.",
+    "loadedOwn": "I tuoi dati sono stati caricati sulla mappa."
+  }
+}
