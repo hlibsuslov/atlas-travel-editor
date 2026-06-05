@@ -12,6 +12,7 @@ import { CountrySelect } from './components/CountrySelect';
 import { FilterInput } from './components/FilterInput';
 import { JsonPreview } from './components/JsonPreview';
 import { ImportModal } from './components/ImportModal';
+import { ExportMenu } from './components/ExportMenu';
 
 export function EditorPage() {
   const { t } = useTranslation();
@@ -79,6 +80,7 @@ export function EditorPage() {
           <button className="btn btn-sm" onClick={() => setImportOpen(true)}>
             {t('actions.import')}
           </button>
+          <ExportMenu data={data} />
           <button
             className="btn btn-sm btn-primary"
             disabled={save.isPending || !validation.ok}

@@ -27,12 +27,7 @@ export function Legend({ counts }: { counts?: Record<string, number> }) {
                 count,
               });
         return (
-          <span
-            className="legend-item"
-            key={k}
-            role="listitem"
-            aria-label={accessibleName}
-          >
+          <span className="legend-item" key={k} role="listitem" aria-label={accessibleName}>
             <span
               className="legend-sw"
               style={{ background: STATUS_COLORS[k] }}

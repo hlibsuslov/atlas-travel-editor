@@ -49,8 +49,7 @@ export function Combobox({
   }, [options, query]);
 
   const activeOption = filtered[active];
-  const activeDescendantId =
-    open && activeOption ? optionId(activeOption.value) : undefined;
+  const activeDescendantId = open && activeOption ? optionId(activeOption.value) : undefined;
 
   // Close on outside click.
   useEffect(() => {

@@ -22,9 +22,7 @@ const FOCUSABLE_SELECTOR = [
 ].join(',');
 
 function getFocusable(container: HTMLElement): HTMLElement[] {
-  const nodes = Array.from(
-    container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR),
-  );
+  const nodes = Array.from(container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR));
   return nodes.filter((el) => {
     if (el.hasAttribute('disabled')) return false;
     if (el.getAttribute('aria-hidden') === 'true') return false;
@@ -59,10 +57,7 @@ function getFocusable(container: HTMLElement): HTMLElement[] {
  * @param open       Whether the dialog is currently open.
  * @param containerRef Ref to the dialog container element (the `.modal-card`).
  */
-export function useFocusTrap(
-  open: boolean,
-  containerRef: RefObject<HTMLElement>,
-): void {
+export function useFocusTrap(open: boolean, containerRef: RefObject<HTMLElement>): void {
   useEffect(() => {
     if (!open) return;
 

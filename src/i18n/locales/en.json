@@ -115,11 +115,26 @@
     "addYearPlaceholder": "Add year (e.g., 2025)",
     "yearDefault": "Year (default {{year}})"
   },
+  "timeline": { "year": "Year", "from": "From", "to": "To" },
+  "export": {
+    "title": "Export",
+    "local": "On this device",
+    "download": "Download JSON",
+    "copy": "Copy JSON",
+    "email": "Email a copy",
+    "connect": "Save to cloud",
+    "soonBadge": "soon",
+    "soon": "{{target}} integration is coming soon.",
+    "more": "More destinations can be added in exportTargets."
+  },
   "json": { "title": "JSON Preview", "valid": "Valid JSON", "errors": "{{count}} error(s)" },
   "import": {
     "title": "Import JSON",
-    "placeholder": "Paste your JSON here...",
-    "failed": "Import failed: {{message}}"
+    "placeholder": "…or paste your JSON here",
+    "dropTitle": "Drop a .json file",
+    "dropHint": "or click to browse",
+    "summary": "{{countries}} countries · {{cities}} cities",
+    "failed": "Invalid JSON: {{message}}"
   },
   "validation": {
     "invalidTimeline": "Invalid format. Use {{formats}}.",
@@ -132,7 +147,9 @@
     "lede": "Every country you were born in, have lived in, or passed through — coloured by status.",
     "onMap": "on map",
     "loadOwn": "My data",
-    "clickHint": "Click a country to cycle status · scroll to zoom · drag to pan",
+    "exportImage": "Export image",
+    "format": { "story": "Story", "post": "Post", "wide": "Wide" },
+    "clickHint": "Click a country to cycle status · scroll to zoom · drag to pan · double-click to zoom in",
     "matched": "{{matched}} of {{total}} countries matched on the map",
     "unmatchedHint": "Some names didn't match the map. Use official English country names for best results.",
     "legend": {
@@ -175,6 +192,8 @@
     "imported": "Data imported.",
     "reset": "Reset to the default example.",
     "resetConfirm": "Reset to the default example? This clears current work.",
-    "loadedOwn": "Loaded your data onto the map."
+    "loadedOwn": "Loaded your data onto the map.",
+    "imageExported": "Map image saved.",
+    "imageFailed": "Could not export the map image."
   }
 }
