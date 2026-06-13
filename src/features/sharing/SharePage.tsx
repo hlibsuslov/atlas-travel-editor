@@ -12,7 +12,7 @@ export function SharePage() {
   const { t } = useTranslation();
   const { slug = '' } = useParams();
 
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading, isError, isFetching, refetch } = useQuery({
     queryKey: ['public-record', slug],
     queryFn: () => fetchPublicRecord(slug),
     enabled: !!slug,
@@ -32,7 +32,22 @@ export function SharePage() {
       </div>
 
       {isLoading && <p className="empty-note">{t('common.loading')}</p>}
-      {(isError || (!isLoading && !data)) && <p className="empty-note">{t('share.private')}</p>}
+      {/* A thrown query error means the load failed (network/RPC) — offer a retry.
+          A resolved-but-empty result means the slug is unknown or not public. */}
+      {isError && (
+        <div className="notice-bar notice-bar-warn">
+          <span>{t('share.loadError')}</span>
+          <button
+            type="button"
+            className="btn btn-sm"
+            disabled={isFetching}
+            onClick={() => refetch()}
+          >
+            {t('actions.retry')}
+          </button>
+        </div>
+      )}
+      {!isLoading && !isError && !data && <p className="empty-note">{t('share.private')}</p>}
 
       {data && stats && (
         <>

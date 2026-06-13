@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { WORLD_VIEW, WorldMap, MiniMap, zoomToFit } from './WorldMap';
+import { WorldMap, MiniMap } from './WorldMap';
+import { WORLD_VIEW, zoomToFit } from './useMapZoom';
 import type { TravelData } from '@/domain/schema';
 
 // jsdom does not implement the SVG geometry properties d3-zoom reads when the

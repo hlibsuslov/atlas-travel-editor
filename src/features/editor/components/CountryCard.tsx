@@ -8,7 +8,7 @@ import { canonical } from '@/features/map/countryMatch';
 import { useEditorStore } from '@/features/editor/store';
 import { FlagDisc } from '@/components/ui/FlagDisc';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
-import { StatusToggle } from './StatusToggle';
+import { StatusRow } from './StatusRow';
 import { TimelineField } from './TimelineField';
 import { CityTimeline } from './CityTimeline';
 import { CountrySelect } from './CountrySelect';
@@ -52,7 +52,22 @@ function CountryCardImpl({ country, index, invalid, defaultOpen }: CountryCardPr
 
   return (
     <div className={`country-card${open ? ' open' : ''}${invalid ? ' invalid' : ''}`}>
-      <div className="country-top" onClick={() => setOpen((o) => !o)}>
+      <div
+        className="country-top"
+        role="button"
+        tabIndex={0}
+        aria-expanded={open}
+        aria-label={country.name || t('country.thisCountry')}
+        onClick={() => setOpen((o) => !o)}
+        onKeyDown={(e) => {
+          // Don't hijack typing/activation inside the nested name picker or buttons.
+          if (e.target !== e.currentTarget) return;
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            setOpen((o) => !o);
+          }
+        }}
+      >
         <FlagDisc name={country.name} status={status} />
         <div className="country-id" onClick={(e) => e.stopPropagation()}>
           <CountrySelect
@@ -91,26 +106,12 @@ function CountryCardImpl({ country, index, invalid, defaultOpen }: CountryCardPr
 
       {open && (
         <div className="country-body">
-          <div className="status-row">
-            <StatusToggle
-              label={t('country.visited')}
-              on={country.status.visited}
-              status="visited"
-              onClick={() => store.setStatus(index, 'visited', !country.status.visited)}
-            />
-            <StatusToggle
-              label={t('country.lived')}
-              on={country.status.lived}
-              status="lived"
-              onClick={() => store.setStatus(index, 'lived', !country.status.lived)}
-            />
-            <StatusToggle
-              label={t('country.capital')}
-              on={country.capitalVisit.visited}
-              status="capital"
-              onClick={() => store.setCapitalVisit(index, !country.capitalVisit.visited)}
-            />
-          </div>
+          <StatusRow
+            country={country}
+            onToggleVisited={() => store.setStatus(index, 'visited', !country.status.visited)}
+            onToggleLived={() => store.setStatus(index, 'lived', !country.status.lived)}
+            onToggleCapital={() => store.setCapitalVisit(index, !country.capitalVisit.visited)}
+          />
 
           <div className="grid-2">
             <TimelineField

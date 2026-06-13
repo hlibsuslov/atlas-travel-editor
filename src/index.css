@@ -1469,12 +1469,15 @@ textarea.input {
   display: flex;
   align-items: center;
   gap: 14px;
+  width: 100%;
+  text-align: left;
   padding: 20px;
   border: 1.5px dashed var(--line-strong);
   border-radius: var(--radius-lg);
   background: var(--panel-2);
   color: var(--ink-soft);
   cursor: pointer;
+  font: inherit;
   transition:
     border-color 0.15s,
     background 0.15s;

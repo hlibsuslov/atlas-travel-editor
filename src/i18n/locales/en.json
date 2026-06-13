@@ -79,7 +79,8 @@
     "addYear": "Add year",
     "reorder": "Reorder",
     "undo": "Undo",
-    "redo": "Redo"
+    "redo": "Redo",
+    "retry": "Try again"
   },
   "editor": {
     "title": "Editor",
@@ -207,7 +208,8 @@
     "continents": "Continents",
     "dragHint": "Drag to pan · scroll to zoom",
     "private": "This map is private or does not exist.",
-    "summary": "Born in {{country}} · {{count}} countries marked"
+    "summary": "Born in {{country}} · {{count}} countries marked",
+    "loadError": "Couldn't load this map. Check your connection and try again."
   },
   "toast": {
     "saved": "Saved to server.",
