@@ -29,6 +29,28 @@ export type FriendLinkRow = {
   created_at: string;
 };
 
+export type TravelDocumentRow = {
+  id: string;
+  user_id: string;
+  birthplace_country: string;
+  is_public: boolean;
+  share_slug: string | null;
+  version: number;
+  created_at: string;
+  updated_at: string;
+};
+
+/**
+ * Envelope returned by the document RPCs: the assembled TravelData plus the
+ * sharing metadata the editor needs. Mirrors build_document_envelope() in SQL.
+ */
+export type TravelDocumentEnvelope = {
+  data: TravelData;
+  is_public: boolean;
+  share_slug: string | null;
+  version: number;
+};
+
 export type Database = {
   public: {
     Tables: {
@@ -59,12 +81,39 @@ export type Database = {
         };
         Relationships: [];
       };
+      travel_documents: {
+        Row: TravelDocumentRow;
+        Insert: {
+          user_id?: string;
+          birthplace_country?: string;
+          is_public?: boolean;
+          share_slug?: string | null;
+        };
+        Update: {
+          birthplace_country?: string;
+          is_public?: boolean;
+          share_slug?: string | null;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<never, never>;
     Functions: {
       get_shared_travel: {
         Args: { p_slug: string };
         Returns: TravelData | null;
+      };
+      get_my_travel_document: {
+        Args: Record<never, never>;
+        Returns: TravelDocumentEnvelope | null;
+      };
+      save_travel_document: {
+        Args: { p_data: TravelData };
+        Returns: TravelDocumentEnvelope;
+      };
+      set_travel_sharing: {
+        Args: { p_is_public: boolean };
+        Returns: TravelDocumentEnvelope;
       };
     };
     Enums: Record<never, never>;
