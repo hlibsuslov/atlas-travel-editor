@@ -148,5 +148,14 @@
     "reset": "Restablecido al ejemplo por defecto.",
     "resetConfirm": "¿Restablecer al ejemplo por defecto? Se borrará el trabajo actual.",
     "loadedOwn": "Tus datos se han cargado en el mapa."
+  },
+  "profile": {
+    "title": "Tu perfil público",
+    "subtitle": "Cómo te ven tus amigos en tu mapa compartido.",
+    "displayName": "Nombre visible",
+    "namePlaceholder": "Tu nombre",
+    "color": "Color del avatar",
+    "save": "Guardar perfil",
+    "saved": "Perfil guardado"
   }
 }

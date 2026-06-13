@@ -148,5 +148,14 @@
     "reset": "Reimpostato all'esempio predefinito.",
     "resetConfirm": "Reimpostare all'esempio predefinito? Il lavoro corrente verrà cancellato.",
     "loadedOwn": "I tuoi dati sono stati caricati sulla mappa."
+  },
+  "profile": {
+    "title": "Il tuo profilo pubblico",
+    "subtitle": "Come ti vedono gli amici sulla tua mappa condivisa.",
+    "displayName": "Nome visualizzato",
+    "namePlaceholder": "Il tuo nome",
+    "color": "Colore avatar",
+    "save": "Salva profilo",
+    "saved": "Profilo salvato"
   }
 }

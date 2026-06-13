@@ -51,6 +51,28 @@ export type TravelDocumentEnvelope = {
   version: number;
 };
 
+export type ProfileRow = {
+  user_id: string;
+  display_name: string;
+  accent_color: string;
+  public_handle: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+/** The signed-in user's own profile, as returned by get_my_profile(). */
+export type MyProfile = {
+  display_name: string;
+  accent_color: string;
+  public_handle: string | null;
+};
+
+/** The publicly visible slice of a profile, resolved from a share slug. */
+export type SharedProfile = {
+  display_name: string;
+  accent_color: string;
+};
+
 export type Database = {
   public: {
     Tables: {
@@ -96,6 +118,21 @@ export type Database = {
         };
         Relationships: [];
       };
+      profiles: {
+        Row: ProfileRow;
+        Insert: {
+          user_id?: string;
+          display_name?: string;
+          accent_color?: string;
+          public_handle?: string | null;
+        };
+        Update: {
+          display_name?: string;
+          accent_color?: string;
+          public_handle?: string | null;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<never, never>;
     Functions: {
@@ -114,6 +151,18 @@ export type Database = {
       set_travel_sharing: {
         Args: { p_is_public: boolean };
         Returns: TravelDocumentEnvelope;
+      };
+      get_my_profile: {
+        Args: Record<never, never>;
+        Returns: MyProfile | null;
+      };
+      save_my_profile: {
+        Args: { p_display_name: string; p_accent_color: string };
+        Returns: MyProfile;
+      };
+      get_shared_profile: {
+        Args: { p_slug: string };
+        Returns: SharedProfile | null;
       };
     };
     Enums: Record<never, never>;
