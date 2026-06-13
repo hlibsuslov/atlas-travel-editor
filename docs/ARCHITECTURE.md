@@ -71,16 +71,22 @@ Vertical slices, each owning its UI, state, and data access:
    `dirty`. The JSON preview and validation badge derive from store state with
    `useMemo`.
 3. **Save** is explicit and user-triggered. `saveMyRecord` validates against the
-   strict schema before upserting — the client never persists invalid data, and
-   the database constrains it further.
+   strict schema before calling `save_travel_document` — the client never
+   persists invalid data, and the database constrains it further.
+4. **Storage is relational** (ADR 0005): the document is branched into
+   `travel_documents → visited_countries → cities → city_visit_years` (plus
+   country timeline entries). The client still works with a whole `TravelData`
+   JSON; SECURITY DEFINER functions assemble/disassemble it atomically, so the
+   offline cache and public share contract are unchanged.
 
 ## Scaling to x100
 
 - **Frontend**: static assets on a CDN; vendor code is split into cacheable
   chunks (`react`, `supabase`, `query`) so app deploys don't bust dependency
   caches.
-- **Data**: one row per user keyed by a unique `user_id`; reads/writes are
-  point lookups on indexed keys. Public sharing is an indexed slug lookup.
+- **Data**: one document per user keyed by a unique `user_id`, branched into
+  indexed child tables (countries/cities/years) for analytics and search.
+  Public sharing is an indexed slug lookup.
 - **Auth/throughput**: handled by Supabase (connection pooling, read replicas).
   No stateful app server to scale or fail over.
 - **Cost**: pay-per-use hosting + managed Postgres; no idle compute.

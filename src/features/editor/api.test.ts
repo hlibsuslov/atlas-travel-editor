@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { makeDefaultData } from '@/domain/normalize';
-import type { TravelRecordRow } from '@/lib/database.types';
+import type { TravelDocumentEnvelope } from '@/lib/database.types';
 
 // Mock the Supabase client so the data layer can be tested with no live DB.
 const { mockFrom, mockRpc, mockGetUser } = vi.hoisted(() => ({
@@ -20,29 +20,12 @@ vi.mock('@/lib/supabase', () => ({
 // Import after the mock is registered.
 const { fetchMyRecord, saveMyRecord, setSharing, fetchPublicRecord } = await import('./api');
 
-/** A chainable query-builder stub whose terminal calls resolve to `result`. */
-function builder<T>(result: { data: T; error: { message: string } | null }) {
-  const b = {
-    select: vi.fn(() => b),
-    eq: vi.fn(() => b),
-    upsert: vi.fn(() => b),
-    update: vi.fn(() => b),
-    maybeSingle: vi.fn(() => Promise.resolve(result)),
-    single: vi.fn(() => Promise.resolve(result)),
-  };
-  return b;
-}
-
-function row(overrides: Partial<TravelRecordRow> = {}): TravelRecordRow {
+function envelope(overrides: Partial<TravelDocumentEnvelope> = {}): TravelDocumentEnvelope {
   return {
-    id: 'rec-1',
-    user_id: 'user-1',
     data: makeDefaultData(),
     is_public: false,
     share_slug: null,
     version: 1,
-    created_at: '2026-01-01T00:00:00Z',
-    updated_at: '2026-01-01T00:00:00Z',
     ...overrides,
   };
 }
@@ -53,20 +36,21 @@ beforeEach(() => {
 });
 
 describe('fetchMyRecord', () => {
-  it('returns a normalized record when a row exists', async () => {
-    mockFrom.mockReturnValue(builder({ data: row(), error: null }));
+  it('returns a normalized record when the document exists', async () => {
+    mockRpc.mockResolvedValue({ data: envelope(), error: null });
     const result = await fetchMyRecord();
+    expect(mockRpc).toHaveBeenCalledWith('get_my_travel_document');
     expect(result?.version).toBe(1);
     expect(result?.data.person.birthplace.country).toBe('Ukraine');
   });
 
-  it('returns null when the user has no row yet', async () => {
-    mockFrom.mockReturnValue(builder({ data: null, error: null }));
+  it('returns null when the user has no document yet', async () => {
+    mockRpc.mockResolvedValue({ data: null, error: null });
     expect(await fetchMyRecord()).toBeNull();
   });
 
   it('throws on a database error', async () => {
-    mockFrom.mockReturnValue(builder({ data: null, error: { message: 'boom' } }));
+    mockRpc.mockResolvedValue({ data: null, error: { message: 'boom' } });
     await expect(fetchMyRecord()).rejects.toThrow('boom');
   });
 });
@@ -76,32 +60,31 @@ describe('saveMyRecord', () => {
     const invalid = makeDefaultData();
     invalid.person.birthplace.country = '';
     await expect(saveMyRecord(invalid)).rejects.toThrow(/Cannot save invalid data/);
-    expect(mockFrom).not.toHaveBeenCalled();
+    expect(mockRpc).not.toHaveBeenCalled();
   });
 
-  it('upserts valid data scoped to the authenticated user', async () => {
-    const b = builder({ data: row({ version: 2 }), error: null });
-    mockFrom.mockReturnValue(b);
-    const result = await saveMyRecord(makeDefaultData());
-    expect(b.upsert).toHaveBeenCalledWith(
-      expect.objectContaining({ user_id: 'user-1' }),
-      expect.objectContaining({ onConflict: 'user_id' }),
-    );
+  it('sends the whole document to the save RPC and returns the new version', async () => {
+    const data = makeDefaultData();
+    mockRpc.mockResolvedValue({ data: envelope({ version: 2 }), error: null });
+    const result = await saveMyRecord(data);
+    expect(mockRpc).toHaveBeenCalledWith('save_travel_document', { p_data: data });
     expect(result.version).toBe(2);
   });
 
-  it('throws when there is no authenticated user', async () => {
-    mockGetUser.mockResolvedValue({ data: { user: null } });
+  it('throws when the RPC reports an error', async () => {
+    mockRpc.mockResolvedValue({ data: null, error: { message: 'Not authenticated.' } });
     await expect(saveMyRecord(makeDefaultData())).rejects.toThrow('Not authenticated.');
   });
 });
 
 describe('setSharing', () => {
   it('publishes and returns the updated record', async () => {
-    const b = builder({ data: row({ is_public: true, share_slug: 'abc123' }), error: null });
-    mockFrom.mockReturnValue(b);
+    mockRpc.mockResolvedValue({
+      data: envelope({ is_public: true, share_slug: 'abc123' }),
+      error: null,
+    });
     const result = await setSharing(true);
-    expect(b.update).toHaveBeenCalledWith({ is_public: true });
+    expect(mockRpc).toHaveBeenCalledWith('set_travel_sharing', { p_is_public: true });
     expect(result.isPublic).toBe(true);
     expect(result.shareSlug).toBe('abc123');
   });
