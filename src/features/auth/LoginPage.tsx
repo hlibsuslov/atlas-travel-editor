@@ -1,46 +1,82 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ArrowRight, Compass, Globe, Share2 } from 'lucide-react';
+import { ArrowRight, Compass, Globe, Share2, UserPlus } from 'lucide-react';
 import { useAuth } from './AuthProvider';
 import { LanguageSwitcher } from '@/features/settings/LanguageSwitcher';
 import { makeDefaultData } from '@/domain/normalize';
 import { MiniMap } from '@/features/map/WorldMap';
 
 const ART_DOC = makeDefaultData();
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MIN_PASSWORD = 6;
 
 export function LoginPage() {
   const { t } = useTranslation();
-  const { signInWithPassword, signInWithOtp, signInWithGoogle, demo } = useAuth();
-  const [login, setLogin] = useState('');
-  const [password, setPassword] = useState('');
+  const { signInWithPassword, signUpWithPassword, signInWithOtp, signInWithGoogle, demo } =
+    useAuth();
+  const [mode, setMode] = useState<'signin' | 'signup'>('signin');
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [magicEmail, setMagicEmail] = useState('');
   const [message, setMessage] = useState('');
   const [error, setError] = useState(false);
+  const [busy, setBusy] = useState(false);
 
-  const onPasswordSubmit = async (e: FormEvent) => {
+  const fail = (msg: string) => {
+    setError(true);
+    setMessage(msg);
+  };
+
+  const onCredentialSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    const res = await signInWithPassword(login.trim() || '1', password || '1');
-    if (res.error) {
-      setError(true);
-      setMessage(res.error);
+    setMessage('');
+    setError(false);
+
+    // Demo mode accepts the configured demo credentials as-is; real auth needs a
+    // valid email and a password long enough for Supabase to accept.
+    if (!demo) {
+      if (!EMAIL_RE.test(email.trim())) return fail(t('auth.emailInvalid'));
+      if (password.length < MIN_PASSWORD) return fail(t('auth.passwordTooShort'));
+    }
+
+    setBusy(true);
+    if (mode === 'signup' && !demo) {
+      const res = await signUpWithPassword(email.trim(), password);
+      setBusy(false);
+      if (res.error) return fail(res.error);
+      if (res.needsConfirmation) {
+        setError(false);
+        setMessage(t('auth.confirmEmail', { email: email.trim() }));
+      }
+      // Otherwise the new session arrives via onAuthStateChange → editor.
+    } else {
+      const res = await signInWithPassword(email.trim(), password);
+      setBusy(false);
+      if (res.error) fail(res.error);
     }
   };
 
   const onMagic = async () => {
-    if (!email.trim()) return;
-    const res = await signInWithOtp(email.trim());
+    if (!magicEmail.trim()) return;
+    const res = await signInWithOtp(magicEmail.trim());
     setError(!!res.error);
-    setMessage(res.error ?? t('auth.linkSent', { email }));
+    setMessage(res.error ?? t('auth.linkSent', { email: magicEmail.trim() }));
   };
 
   const onGoogle = async () => {
     const res = await signInWithGoogle();
-    if (res.error) {
-      setError(true);
-      setMessage(res.error);
-    }
+    if (res.error) fail(res.error);
   };
+
+  const toggleMode = () => {
+    setMode((m) => (m === 'signin' ? 'signup' : 'signin'));
+    setMessage('');
+    setError(false);
+  };
+
+  const isSignup = mode === 'signup' && !demo;
+  const submitLabel = busy ? t('actions.saving') : isSignup ? t('auth.signUp') : t('auth.signIn');
 
   return (
     <div className="login-screen">
@@ -79,19 +115,22 @@ export function LoginPage() {
           <LanguageSwitcher />
         </div>
         <div className="login-card">
-          <h1>{t('auth.signIn')}</h1>
+          <h1>{isSignup ? t('auth.signUp') : t('auth.signIn')}</h1>
           <p className="lede">{t('auth.subtitle')}</p>
 
-          <form onSubmit={onPasswordSubmit}>
+          <form onSubmit={onCredentialSubmit}>
             <div className="field">
               <div className="field-label">
-                <span>{t('auth.login')}</span>
+                <span>{demo ? t('auth.login') : t('auth.emailLabel')}</span>
               </div>
               <input
                 className="input"
-                value={login}
-                onChange={(e) => setLogin(e.target.value)}
-                placeholder="1"
+                type={demo ? 'text' : 'email'}
+                inputMode={demo ? 'text' : 'email'}
+                autoComplete={demo ? 'username' : 'email'}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder={demo ? '1' : 'you@email.com'}
               />
             </div>
             <div className="field">
@@ -101,15 +140,26 @@ export function LoginPage() {
               <input
                 className="input"
                 type="password"
+                autoComplete={isSignup ? 'new-password' : 'current-password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••"
               />
+              {isSignup && <div className="helper">{t('auth.passwordHint')}</div>}
             </div>
-            <button className="btn btn-primary btn-block" type="submit">
-              <ArrowRight size={15} /> {t('auth.signIn')}
+            <button className="btn btn-primary btn-block" type="submit" disabled={busy}>
+              {isSignup ? <UserPlus size={15} /> : <ArrowRight size={15} />} {submitLabel}
             </button>
           </form>
+
+          {!demo && (
+            <p className="auth-toggle empty-note">
+              {mode === 'signin' ? t('auth.noAccount') : t('auth.haveAccount')}{' '}
+              <button type="button" className="auth-toggle-btn" onClick={toggleMode}>
+                {mode === 'signin' ? t('auth.toSignUp') : t('auth.toSignIn')}
+              </button>
+            </p>
+          )}
 
           <div className="divider">{t('auth.orMagic')}</div>
 
@@ -117,8 +167,9 @@ export function LoginPage() {
             <input
               className="input"
               type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              autoComplete="email"
+              value={magicEmail}
+              onChange={(e) => setMagicEmail(e.target.value)}
               placeholder="you@email.com"
             />
           </div>
@@ -131,8 +182,8 @@ export function LoginPage() {
 
           {message && (
             <p
-              className="empty-note"
-              style={{ marginTop: 14, color: error ? '#b4452f' : undefined }}
+              className={`empty-note${error ? ' field-error' : ''}`}
+              style={{ marginTop: 14 }}
               role="status"
             >
               {message}

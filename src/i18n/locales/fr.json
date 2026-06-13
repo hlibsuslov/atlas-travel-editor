@@ -29,7 +29,17 @@
     "sending": "Envoi…",
     "linkSent": "Lien magique envoyé à {{email}}. Vérifiez votre boîte de réception.",
     "or": "ou",
-    "google": "Continuer avec Google"
+    "google": "Continuer avec Google",
+    "signUp": "Créer un compte",
+    "emailLabel": "E-mail",
+    "noAccount": "Pas de compte ?",
+    "haveAccount": "Déjà un compte ?",
+    "toSignUp": "Créer",
+    "toSignIn": "Se connecter",
+    "confirmEmail": "Compte créé. Vérifiez {{email}} pour confirmer votre adresse, puis connectez-vous.",
+    "passwordHint": "Au moins 6 caractères",
+    "passwordTooShort": "Le mot de passe doit comporter au moins 6 caractères.",
+    "emailInvalid": "Saisissez une adresse e-mail valide."
   },
   "status": {
     "syncing": "Synchronisation…",
