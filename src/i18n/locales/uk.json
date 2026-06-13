@@ -3,8 +3,16 @@
     "name": "Travel Editor",
     "tagline": "Редагуйте, перевіряйте та діліться картою подорожей"
   },
-  "nav": { "editor": "Редактор", "map": "Карта", "friends": "Друзі", "signOut": "Вийти" },
-  "confirm": { "confirm": "Підтвердити", "cancel": "Скасувати" },
+  "nav": {
+    "editor": "Редактор",
+    "map": "Карта",
+    "friends": "Друзі",
+    "signOut": "Вийти"
+  },
+  "confirm": {
+    "confirm": "Підтвердити",
+    "cancel": "Скасувати"
+  },
   "common": {
     "loading": "Завантаження…",
     "close": "Закрити",
@@ -44,7 +52,10 @@
     "delete": "Видалити",
     "addCountry": "Додати країну",
     "addCity": "Додати місто",
-    "addYear": "Додати рік"
+    "addYear": "Додати рік",
+    "reorder": "Перемістити",
+    "undo": "Скасувати",
+    "redo": "Повторити"
   },
   "editor": {
     "title": "Редактор",
@@ -53,9 +64,14 @@
     "birthplace": "Країна народження",
     "required": "обовʼязково",
     "countries": "Країни",
-    "birthplacePlaceholder": "напр., Україна"
+    "birthplacePlaceholder": "напр., Україна",
+    "offlineNote": "Ви офлайн — зміни зберігаються локально та синхронізуються пізніше."
   },
-  "stats": { "countries": "Країни", "cities": "Міста", "errors": "Помилки" },
+  "stats": {
+    "countries": "Країни",
+    "cities": "Міста",
+    "errors": "Помилки"
+  },
   "country": {
     "namePlaceholder": "Назва країни",
     "cities": "{{count}} міст",
@@ -76,7 +92,11 @@
     "addYearPlaceholder": "Додати рік (напр., 2025)",
     "yearDefault": "Рік (за замовчуванням {{year}})"
   },
-  "json": { "title": "Перегляд JSON", "valid": "JSON коректний", "errors": "помилок: {{count}}" },
+  "json": {
+    "title": "Перегляд JSON",
+    "valid": "JSON коректний",
+    "errors": "помилок: {{count}}"
+  },
   "import": {
     "title": "Імпорт JSON",
     "placeholder": "Вставте ваш JSON сюди...",
