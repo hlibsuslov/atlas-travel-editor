@@ -3,7 +3,11 @@ import { useTranslation } from 'react-i18next';
 import { useEditorStore } from '@/features/editor/store';
 import { computeStats, primaryStatus } from '@/domain/stats';
 import { STATUS_COLORS } from '@/features/map/countryMatch';
+import { COUNTRIES } from '@/domain/countries';
 import { FlagDisc } from '@/components/ui/FlagDisc';
+
+/** Total number of countries the picker knows about — denominator for "% of world". */
+const WORLD_COUNTRY_COUNT = COUNTRIES.length;
 
 function StatTile({
   kicker,
@@ -198,7 +202,7 @@ export function DashboardPage() {
     label: t(`map.legend.${k}`),
   }));
 
-  const worldPct = Math.round((stats.traveled / 195) * 100);
+  const worldPct = Math.round((stats.traveled / WORLD_COUNTRY_COUNT) * 100);
 
   return (
     <div className="page">

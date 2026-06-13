@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MapPin, Plus, X } from 'lucide-react';
 import type { City } from '@/domain/schema';
+import { CURRENT_YEAR } from '@/domain/constants';
 
 interface CityBlockProps {
   cities: readonly City[];
@@ -11,8 +12,6 @@ interface CityBlockProps {
   onAddYear: (index: number, year: number) => void;
   onRemoveYear: (index: number, yearIndex: number) => void;
 }
-
-const CURRENT_YEAR = new Date().getFullYear();
 
 /** Editable city list with per-city visit years (Atlas style). */
 export function CityTimeline({
