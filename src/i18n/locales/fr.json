@@ -3,8 +3,16 @@
     "name": "Travel Editor",
     "tagline": "Modifiez, validez et partagez votre carte de voyages"
   },
-  "nav": { "editor": "Éditeur", "map": "Carte", "friends": "Amis", "signOut": "Se déconnecter" },
-  "confirm": { "confirm": "Confirmer", "cancel": "Annuler" },
+  "nav": {
+    "editor": "Éditeur",
+    "map": "Carte",
+    "friends": "Amis",
+    "signOut": "Se déconnecter"
+  },
+  "confirm": {
+    "confirm": "Confirmer",
+    "cancel": "Annuler"
+  },
   "common": {
     "loading": "Chargement…",
     "close": "Fermer",
@@ -44,7 +52,10 @@
     "delete": "Supprimer",
     "addCountry": "Ajouter un pays",
     "addCity": "Ajouter une ville",
-    "addYear": "Ajouter une année"
+    "addYear": "Ajouter une année",
+    "reorder": "Réorganiser",
+    "undo": "Annuler",
+    "redo": "Rétablir"
   },
   "editor": {
     "title": "Éditeur",
@@ -53,9 +64,14 @@
     "birthplace": "Pays de naissance",
     "required": "obligatoire",
     "countries": "Pays",
-    "birthplacePlaceholder": "ex. : Ukraine"
+    "birthplacePlaceholder": "ex. : Ukraine",
+    "offlineNote": "Vous êtes hors ligne — les modifications sont enregistrées localement et synchronisées plus tard."
   },
-  "stats": { "countries": "Pays", "cities": "Villes", "errors": "Erreurs" },
+  "stats": {
+    "countries": "Pays",
+    "cities": "Villes",
+    "errors": "Erreurs"
+  },
   "country": {
     "namePlaceholder": "Nom du pays",
     "cities": "{{count}} villes",
@@ -76,7 +92,11 @@
     "addYearPlaceholder": "Ajouter une année (ex. : 2025)",
     "yearDefault": "Année (par défaut {{year}})"
   },
-  "json": { "title": "Aperçu du JSON", "valid": "JSON valide", "errors": "{{count}} erreur(s)" },
+  "json": {
+    "title": "Aperçu du JSON",
+    "valid": "JSON valide",
+    "errors": "{{count}} erreur(s)"
+  },
   "import": {
     "title": "Importer le JSON",
     "placeholder": "Collez votre JSON ici...",

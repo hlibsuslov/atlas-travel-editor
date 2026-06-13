@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { current, type Draft } from 'immer';
 import { immer } from 'zustand/middleware/immer';
 import type { CountryStatus, TravelData } from '@/domain/schema';
 import { makeDefaultData, makeEmptyCountry } from '@/domain/normalize';
@@ -6,17 +7,29 @@ import { canonicalCountryName } from '@/domain/countries';
 
 /**
  * Editor state. Holds the working travel document plus a `dirty` flag so the UI
- * knows when there are unsaved local changes relative to the last server sync.
- * All mutations are immutable (via Immer) and keep `dirty` accurate.
+ * knows when there are unsaved local changes relative to the last server sync,
+ * and a bounded undo/redo history of document snapshots.
+ *
+ * All mutations are immutable (via Immer). Content-changing actions go through
+ * the internal `mutate` helper, which snapshots the previous document onto the
+ * undo stack and flips `dirty`. Load boundaries (`setData`) clear the history.
  */
 export interface EditorState {
   data: TravelData;
   dirty: boolean;
+  /** Past document snapshots, oldest first; the tail is the most recent. */
+  past: TravelData[];
+  /** Undone snapshots available for redo, newest first. */
+  future: TravelData[];
 
   // Lifecycle
   setData: (data: TravelData, opts?: { markClean?: boolean }) => void;
   reset: () => void;
   markClean: () => void;
+
+  // History
+  undo: () => void;
+  redo: () => void;
 
   // Person
   setBirthplace: (country: string) => void;
@@ -29,6 +42,8 @@ export interface EditorState {
   setCapitalVisit: (index: number, value: boolean) => void;
   /** Set the single dominant status (used by the interactive map click-cycle). */
   setPrimaryStatus: (index: number, status: 'none' | 'visited' | 'lived' | 'birthplace') => void;
+  /** Move a country from one position to another (drag-and-drop / keyboard reorder). */
+  reorderCountries: (from: number, to: number) => void;
   /** Find a country by name (case/format-insensitive) or create it; returns its index. */
   ensureCountry: (name: string) => number;
 
@@ -44,164 +59,179 @@ export interface EditorState {
   removeCityYear: (index: number, cityIndex: number, yearIndex: number) => void;
 }
 
+/** Cap the undo history so long sessions can't grow memory without bound. */
+const HISTORY_LIMIT = 50;
+
+/** Plain, detached snapshot of a draft's current document. */
+const snapshot = (data: Draft<TravelData>): TravelData => structuredClone(current(data));
+
 export const useEditorStore = create<EditorState>()(
-  immer((set, get) => ({
-    data: makeDefaultData(),
-    dirty: false,
-
-    setData: (data, opts) =>
+  immer((set, get) => {
+    /**
+     * Apply a content mutation: record the pre-mutation document on the undo
+     * stack, clear the redo stack, run the change, and mark the doc dirty.
+     */
+    const mutate = (recipe: (s: Draft<EditorState>) => void) =>
       set((s) => {
-        s.data = data;
-        s.dirty = !opts?.markClean;
-      }),
-
-    reset: () =>
-      set((s) => {
-        s.data = makeDefaultData();
-        s.dirty = true;
-      }),
-
-    markClean: () =>
-      set((s) => {
-        s.dirty = false;
-      }),
-
-    setBirthplace: (country) =>
-      set((s) => {
-        s.data.person.birthplace.country = country;
-        s.dirty = true;
-      }),
-
-    addCountry: () =>
-      set((s) => {
-        s.data.travel.countries.unshift(makeEmptyCountry());
-        s.dirty = true;
-      }),
-
-    removeCountry: (index) =>
-      set((s) => {
-        s.data.travel.countries.splice(index, 1);
-        s.dirty = true;
-      }),
-
-    setCountryName: (index, name) =>
-      set((s) => {
-        const c = s.data.travel.countries[index];
-        if (c) {
-          c.name = name;
-          s.dirty = true;
-        }
-      }),
-
-    setStatus: (index, key, value) =>
-      set((s) => {
-        const c = s.data.travel.countries[index];
-        if (c) {
-          c.status[key] = value;
-          s.dirty = true;
-        }
-      }),
-
-    setCapitalVisit: (index, value) =>
-      set((s) => {
-        const c = s.data.travel.countries[index];
-        if (c) {
-          c.capitalVisit.visited = value;
-          s.dirty = true;
-        }
-      }),
-
-    setPrimaryStatus: (index, status) =>
-      set((s) => {
-        const c = s.data.travel.countries[index];
-        if (!c) return;
-        c.status.visited = status !== 'none';
-        c.status.lived = status === 'lived' || status === 'birthplace';
-        c.status.birthplace = status === 'birthplace';
-        s.dirty = true;
-      }),
-
-    ensureCountry: (name) => {
-      const key = canonicalCountryName(name);
-      const existing = get().data.travel.countries.findIndex(
-        (c) => canonicalCountryName(c.name) === key,
-      );
-      if (existing !== -1) return existing;
-      set((s) => {
-        s.data.travel.countries.push({
-          name,
-          status: { visited: false, lived: false, birthplace: false },
-          capitalVisit: { visited: false },
-          timeline: { visited: [], lived: [] },
-          cities: [],
-        });
+        s.past.push(snapshot(s.data));
+        if (s.past.length > HISTORY_LIMIT) s.past.shift();
+        s.future = [];
+        recipe(s);
         s.dirty = true;
       });
-      return get().data.travel.countries.length - 1;
-    },
 
-    addCountryTimeline: (index, field, value) =>
-      set((s) => {
-        const c = s.data.travel.countries[index];
-        if (c) {
-          c.timeline[field].push(value);
-          s.dirty = true;
-        }
-      }),
+    return {
+      data: makeDefaultData(),
+      dirty: false,
+      past: [],
+      future: [],
 
-    removeCountryTimeline: (index, field, entryIndex) =>
-      set((s) => {
-        const c = s.data.travel.countries[index];
-        if (c) {
-          c.timeline[field].splice(entryIndex, 1);
-          s.dirty = true;
-        }
-      }),
+      setData: (data, opts) =>
+        set((s) => {
+          s.data = data;
+          s.dirty = !opts?.markClean;
+          // A load/import is a fresh baseline — there is nothing to undo past it.
+          s.past = [];
+          s.future = [];
+        }),
 
-    addCity: (index, name, year) =>
-      set((s) => {
-        const c = s.data.travel.countries[index];
-        if (c) {
-          c.cities.push({ name, timeline: { visited: year !== undefined ? [year] : [] } });
-          s.dirty = true;
-        }
-      }),
+      reset: () => mutate((s) => (s.data = makeDefaultData())),
 
-    removeCity: (index, cityIndex) =>
-      set((s) => {
-        const c = s.data.travel.countries[index];
-        if (c) {
-          c.cities.splice(cityIndex, 1);
-          s.dirty = true;
-        }
-      }),
+      markClean: () =>
+        set((s) => {
+          s.dirty = false;
+        }),
 
-    renameCity: (index, cityIndex, name) =>
-      set((s) => {
-        const city = s.data.travel.countries[index]?.cities[cityIndex];
-        if (city) {
-          city.name = name;
+      undo: () =>
+        set((s) => {
+          const prev = s.past.pop();
+          if (!prev) return;
+          s.future.unshift(snapshot(s.data));
+          s.data = prev;
           s.dirty = true;
-        }
-      }),
+        }),
 
-    addCityYear: (index, cityIndex, year) =>
-      set((s) => {
-        const city = s.data.travel.countries[index]?.cities[cityIndex];
-        if (city && !city.timeline.visited.includes(year)) {
-          city.timeline.visited.push(year);
-          city.timeline.visited.sort((a, b) => a - b);
+      redo: () =>
+        set((s) => {
+          const next = s.future.shift();
+          if (!next) return;
+          s.past.push(snapshot(s.data));
+          s.data = next;
           s.dirty = true;
-        }
-      }),
+        }),
 
-    removeCityYear: (index, cityIndex, yearIndex) =>
-      set((s) => {
-        const city = s.data.travel.countries[index]?.cities[cityIndex];
-        if (city) {
-          city.timeline.visited.splice(yearIndex, 1);
-          s.dirty = true;
-        }
-      }),
-  })),
+      setBirthplace: (country) =>
+        mutate((s) => {
+          s.data.person.birthplace.country = country;
+        }),
+
+      addCountry: () =>
+        mutate((s) => {
+          s.data.travel.countries.unshift(makeEmptyCountry());
+        }),
+
+      removeCountry: (index) =>
+        mutate((s) => {
+          s.data.travel.countries.splice(index, 1);
+        }),
+
+      setCountryName: (index, name) =>
+        mutate((s) => {
+          const c = s.data.travel.countries[index];
+          if (c) c.name = name;
+        }),
+
+      setStatus: (index, key, value) =>
+        mutate((s) => {
+          const c = s.data.travel.countries[index];
+          if (c) c.status[key] = value;
+        }),
+
+      setCapitalVisit: (index, value) =>
+        mutate((s) => {
+          const c = s.data.travel.countries[index];
+          if (c) c.capitalVisit.visited = value;
+        }),
+
+      setPrimaryStatus: (index, status) =>
+        mutate((s) => {
+          const c = s.data.travel.countries[index];
+          if (!c) return;
+          c.status.visited = status !== 'none';
+          c.status.lived = status === 'lived' || status === 'birthplace';
+          c.status.birthplace = status === 'birthplace';
+        }),
+
+      reorderCountries: (from, to) =>
+        mutate((s) => {
+          const arr = s.data.travel.countries;
+          if (from < 0 || from >= arr.length || to < 0 || to >= arr.length || from === to) return;
+          const [moved] = arr.splice(from, 1);
+          arr.splice(to, 0, moved!);
+        }),
+
+      ensureCountry: (name) => {
+        const key = canonicalCountryName(name);
+        const existing = get().data.travel.countries.findIndex(
+          (c) => canonicalCountryName(c.name) === key,
+        );
+        if (existing !== -1) return existing;
+        mutate((s) => {
+          s.data.travel.countries.push({
+            name,
+            status: { visited: false, lived: false, birthplace: false },
+            capitalVisit: { visited: false },
+            timeline: { visited: [], lived: [] },
+            cities: [],
+          });
+        });
+        return get().data.travel.countries.length - 1;
+      },
+
+      addCountryTimeline: (index, field, value) =>
+        mutate((s) => {
+          const c = s.data.travel.countries[index];
+          if (c) c.timeline[field].push(value);
+        }),
+
+      removeCountryTimeline: (index, field, entryIndex) =>
+        mutate((s) => {
+          const c = s.data.travel.countries[index];
+          if (c) c.timeline[field].splice(entryIndex, 1);
+        }),
+
+      addCity: (index, name, year) =>
+        mutate((s) => {
+          const c = s.data.travel.countries[index];
+          if (c) c.cities.push({ name, timeline: { visited: year !== undefined ? [year] : [] } });
+        }),
+
+      removeCity: (index, cityIndex) =>
+        mutate((s) => {
+          const c = s.data.travel.countries[index];
+          if (c) c.cities.splice(cityIndex, 1);
+        }),
+
+      renameCity: (index, cityIndex, name) =>
+        mutate((s) => {
+          const city = s.data.travel.countries[index]?.cities[cityIndex];
+          if (city) city.name = name;
+        }),
+
+      addCityYear: (index, cityIndex, year) =>
+        mutate((s) => {
+          const city = s.data.travel.countries[index]?.cities[cityIndex];
+          if (city && !city.timeline.visited.includes(year)) {
+            city.timeline.visited.push(year);
+            city.timeline.visited.sort((a, b) => a - b);
+          }
+        }),
+
+      removeCityYear: (index, cityIndex, yearIndex) =>
+        mutate((s) => {
+          const city = s.data.travel.countries[index]?.cities[cityIndex];
+          if (city) city.timeline.visited.splice(yearIndex, 1);
+        }),
+    };
+  }),
 );

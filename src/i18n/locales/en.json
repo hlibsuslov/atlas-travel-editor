@@ -1,5 +1,8 @@
 {
-  "app": { "name": "Atlas", "tagline": "Personal travel cartography" },
+  "app": {
+    "name": "Atlas",
+    "tagline": "Personal travel cartography"
+  },
   "nav": {
     "editor": "Editor",
     "map": "Map",
@@ -24,7 +27,10 @@
     "topDest": "Most-returned destinations",
     "byVisits": "by visits"
   },
-  "confirm": { "confirm": "Confirm", "cancel": "Cancel" },
+  "confirm": {
+    "confirm": "Confirm",
+    "cancel": "Cancel"
+  },
   "common": {
     "loading": "Loading…",
     "close": "Close",
@@ -70,7 +76,10 @@
     "delete": "Delete",
     "addCountry": "Add Country",
     "addCity": "Add city",
-    "addYear": "Add year"
+    "addYear": "Add year",
+    "reorder": "Reorder",
+    "undo": "Undo",
+    "redo": "Redo"
   },
   "editor": {
     "title": "Editor",
@@ -87,9 +96,14 @@
     "countries": "Countries",
     "birthplacePlaceholder": "e.g., Ukraine",
     "filter": "Filter countries…",
-    "noMatches": "No countries match your filter."
+    "noMatches": "No countries match your filter.",
+    "offlineNote": "You're offline — changes are saved locally and will sync when you're back."
   },
-  "stats": { "countries": "Countries", "cities": "Cities", "errors": "Errors" },
+  "stats": {
+    "countries": "Countries",
+    "cities": "Cities",
+    "errors": "Errors"
+  },
   "country": {
     "namePlaceholder": "Country name",
     "selectPlaceholder": "Select a country…",
@@ -115,7 +129,11 @@
     "addYearPlaceholder": "Add year (e.g., 2025)",
     "yearDefault": "Year (default {{year}})"
   },
-  "timeline": { "year": "Year", "from": "From", "to": "To" },
+  "timeline": {
+    "year": "Year",
+    "from": "From",
+    "to": "To"
+  },
   "export": {
     "title": "Export",
     "local": "On this device",
@@ -127,7 +145,11 @@
     "soon": "{{target}} integration is coming soon.",
     "more": "More destinations can be added in exportTargets."
   },
-  "json": { "title": "JSON Preview", "valid": "Valid JSON", "errors": "{{count}} error(s)" },
+  "json": {
+    "title": "JSON Preview",
+    "valid": "Valid JSON",
+    "errors": "{{count}} error(s)"
+  },
   "import": {
     "title": "Import JSON",
     "placeholder": "…or paste your JSON here",
@@ -148,7 +170,11 @@
     "onMap": "on map",
     "loadOwn": "My data",
     "exportImage": "Export image",
-    "format": { "story": "Story", "post": "Post", "wide": "Wide" },
+    "format": {
+      "story": "Story",
+      "post": "Post",
+      "wide": "Wide"
+    },
     "clickHint": "Click a country to cycle status · scroll to zoom · drag to pan · double-click to zoom in",
     "matched": "{{matched}} of {{total}} countries matched on the map",
     "unmatchedHint": "Some names didn't match the map. Use official English country names for best results.",

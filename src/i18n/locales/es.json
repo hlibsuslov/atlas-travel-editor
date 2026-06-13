@@ -1,7 +1,18 @@
 {
-  "app": { "name": "Travel Editor", "tagline": "Edita, valida y comparte tu mapa de viajes" },
-  "nav": { "editor": "Editor", "map": "Mapa", "friends": "Amigos", "signOut": "Cerrar sesión" },
-  "confirm": { "confirm": "Confirmar", "cancel": "Cancelar" },
+  "app": {
+    "name": "Travel Editor",
+    "tagline": "Edita, valida y comparte tu mapa de viajes"
+  },
+  "nav": {
+    "editor": "Editor",
+    "map": "Mapa",
+    "friends": "Amigos",
+    "signOut": "Cerrar sesión"
+  },
+  "confirm": {
+    "confirm": "Confirmar",
+    "cancel": "Cancelar"
+  },
   "common": {
     "loading": "Cargando…",
     "close": "Cerrar",
@@ -41,7 +52,10 @@
     "delete": "Eliminar",
     "addCountry": "Añadir país",
     "addCity": "Añadir ciudad",
-    "addYear": "Añadir año"
+    "addYear": "Añadir año",
+    "reorder": "Reordenar",
+    "undo": "Deshacer",
+    "redo": "Rehacer"
   },
   "editor": {
     "title": "Editor",
@@ -50,9 +64,14 @@
     "birthplace": "País de nacimiento",
     "required": "obligatorio",
     "countries": "Países",
-    "birthplacePlaceholder": "p. ej., Ucrania"
+    "birthplacePlaceholder": "p. ej., Ucrania",
+    "offlineNote": "Estás sin conexión: los cambios se guardan localmente y se sincronizarán al volver."
   },
-  "stats": { "countries": "Países", "cities": "Ciudades", "errors": "Errores" },
+  "stats": {
+    "countries": "Países",
+    "cities": "Ciudades",
+    "errors": "Errores"
+  },
   "country": {
     "namePlaceholder": "Nombre del país",
     "cities": "{{count}} ciudades",

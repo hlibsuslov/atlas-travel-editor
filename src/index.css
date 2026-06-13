@@ -1171,10 +1171,54 @@ textarea.input {
   align-items: center;
   gap: 10px;
   padding: 10px 16px;
+  margin-bottom: var(--gap);
   background: color-mix(in srgb, var(--accent) 9%, var(--panel));
   border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--line));
   border-radius: var(--radius);
   font-size: 13px;
+}
+/* Offline / warning variant of the notice bar. */
+.notice-bar-warn {
+  background: color-mix(in srgb, var(--c-danger) 8%, var(--panel));
+  border-color: color-mix(in srgb, var(--c-danger) 26%, var(--line));
+  color: color-mix(in srgb, var(--c-danger) 75%, var(--ink));
+}
+
+/* Grouped toolbar buttons (e.g. undo / redo) sit flush together. */
+.btn-group {
+  display: inline-flex;
+  gap: 2px;
+}
+
+/* Drag-and-drop reorder row: a grip handle beside each country card. */
+.sortable-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+.sortable-row-body {
+  flex: 1;
+  min-width: 0;
+}
+.drag-handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 14px;
+  padding: 6px 2px;
+  color: var(--ink-faint);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius);
+  cursor: grab;
+  touch-action: none;
+}
+.drag-handle:hover {
+  color: var(--ink);
+  background: var(--panel-2);
+}
+.drag-handle:active {
+  cursor: grabbing;
 }
 .notice-bar a {
   color: var(--accent);
