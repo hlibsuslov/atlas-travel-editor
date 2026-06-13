@@ -55,7 +55,8 @@
     "addYear": "Aggiungi anno",
     "reorder": "Riordina",
     "undo": "Annulla",
-    "redo": "Ripristina"
+    "redo": "Ripristina",
+    "retry": "Riprova"
   },
   "editor": {
     "title": "Editor",
@@ -134,7 +135,8 @@
     "title": "Mappa di viaggi condivisa",
     "openEditor": "Apri editor",
     "private": "Questa mappa è privata o non esiste.",
-    "summary": "Nascita: {{country}} · {{count}} paesi"
+    "summary": "Nascita: {{country}} · {{count}} paesi",
+    "loadError": "Impossibile caricare questa mappa. Controlla la connessione e riprova."
   },
   "toast": {
     "saved": "Salvato sul server.",

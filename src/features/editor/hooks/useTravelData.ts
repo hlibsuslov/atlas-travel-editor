@@ -6,6 +6,7 @@ import { makeDefaultData } from '@/domain/normalize';
 import type { TravelData } from '@/domain/schema';
 import { fetchMyRecord, saveMyRecord, setSharing, type TravelRecord } from '@/features/editor/api';
 import { readCache, writeCache } from '@/features/editor/cache';
+import { backoffDelay, retryTransient } from '@/lib/mutationError';
 
 /**
  * Bridges the server (Supabase), the offline cache, and the editor store.
@@ -43,6 +44,10 @@ export function useTravelData() {
 
   const save = useMutation({
     mutationFn: async (data: TravelData) => saveMyRecord(data),
+    // Retry transient network/RPC failures with backoff; never retry validation
+    // or auth errors (they're deterministic).
+    retry: retryTransient(2),
+    retryDelay: backoffDelay,
     onSuccess: (record) => {
       if (userId) writeCache(userId, record.data);
       queryClient.setQueryData(['travel-record', userId], record);

@@ -2,49 +2,14 @@ import { useMemo, useRef, useState } from 'react';
 import type { MouseEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ComposableMap, Geographies, Geography, ZoomableGroup } from 'react-simple-maps';
-import { geoBounds, geoCentroid } from 'd3-geo';
 import worldData from 'world-atlas/countries-50m.json';
 import type { TravelData } from '@/domain/schema';
 import { codeForEnglishName, localizedCountryName } from '@/domain/countries';
 import { buildStatusMap, STATUS_COLORS, statusForGeography, type MapStatus } from './countryMatch';
+import { useMapZoom } from './useMapZoom';
 import { CRIMEA_FEATURES, CRIMEA_OWNER } from './crimea';
 
 const GEO = worldData as unknown as Record<string, unknown>;
-
-const MIN_ZOOM = 1;
-const MAX_ZOOM = 10;
-export const WORLD_VIEW = { coordinates: [10, 30] as [number, number], zoom: MIN_ZOOM };
-
-// Viewport aspect (width 960 / height 500) used to balance lon vs lat fitting.
-const VIEW_ASPECT = 960 / 500;
-
-/**
- * Given a GeoJSON geography, return a controlled `position` ({ coordinates, zoom })
- * that centres the controlled ZoomableGroup on the geography and increases zoom so
- * the country roughly fills the viewport, clamped to [MIN_ZOOM, MAX_ZOOM].
- * Pure + exported so it can be unit-tested without rendering the map.
- */
-export function zoomToFit(geo: unknown): { coordinates: [number, number]; zoom: number } {
-  const [[minLon, minLat], [maxLon, maxLat]] = geoBounds(geo as never);
-  const [cLon, cLat] = geoCentroid(geo as never);
-
-  // Geographic span of the country (guard against degenerate / zero spans).
-  const spanLon = Math.max(Math.abs(maxLon - minLon), 0.5);
-  const spanLat = Math.max(Math.abs(maxLat - minLat), 0.5);
-
-  // At zoom 1 the map shows ~360° of longitude and ~180° of latitude. Add padding
-  // so the country doesn't touch the edges, and fit the tighter of the two axes.
-  const padding = 1.4;
-  const zoomLon = 360 / (spanLon * padding);
-  const zoomLat = 180 / (spanLat * padding * VIEW_ASPECT);
-  const zoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, Math.min(zoomLon, zoomLat)));
-
-  const coordinates: [number, number] = [
-    Number.isFinite(cLon) ? cLon : (minLon + maxLon) / 2,
-    Number.isFinite(cLat) ? cLat : (minLat + maxLat) / 2,
-  ];
-  return { coordinates, zoom };
-}
 
 interface Hover {
   name: string;
@@ -75,12 +40,8 @@ export function WorldMap({ data, onCountryClick, readOnly }: WorldMapProps) {
     });
   const crimeaStatus = statusForGeography(CRIMEA_OWNER, statusMap);
   const [hover, setHover] = useState<Hover | null>(null);
-  const [position, setPosition] = useState<{ coordinates: [number, number]; zoom: number }>(
-    WORLD_VIEW,
-  );
+  const { position, setPosition, setZoom, reset, zoomToGeo, deferClick } = useMapZoom();
   const wrapRef = useRef<HTMLDivElement>(null);
-  // Tracks a pending single-click so a double-click can cancel the status cycle.
-  const clickTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const moveTip = (e: MouseEvent, name: string, status: MapStatus) => {
     const rect = wrapRef.current?.getBoundingClientRect();
@@ -94,27 +55,11 @@ export function WorldMap({ data, onCountryClick, readOnly }: WorldMapProps) {
     });
   };
 
-  const setZoom = (factor: number) =>
-    setPosition((p) => ({ ...p, zoom: Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, p.zoom * factor)) }));
-  const reset = () => setPosition(WORLD_VIEW);
-
   // Single-click cycles status, but is deferred so a follow-up double-click
   // (zoom-to-fit) can cancel it — double-click never triggers a status change.
   const handleCountryClick = (name: string) => {
     if (readOnly) return;
-    if (clickTimer.current) clearTimeout(clickTimer.current);
-    clickTimer.current = setTimeout(() => {
-      clickTimer.current = null;
-      onCountryClick?.(name);
-    }, 220);
-  };
-
-  const handleCountryDoubleClick = (geo: unknown) => {
-    if (clickTimer.current) {
-      clearTimeout(clickTimer.current);
-      clickTimer.current = null;
-    }
-    setPosition(zoomToFit(geo));
+    deferClick(() => onCountryClick?.(name));
   };
 
   const cursor = readOnly ? 'grab' : 'pointer';
@@ -164,7 +109,7 @@ export function WorldMap({ data, onCountryClick, readOnly }: WorldMapProps) {
                         onMouseMove={(e) => moveTip(e, geo.properties.name, status)}
                         onMouseEnter={(e) => moveTip(e, geo.properties.name, status)}
                         onClick={() => handleCountryClick(geo.properties.name)}
-                        onDoubleClick={() => handleCountryDoubleClick(geo)}
+                        onDoubleClick={() => zoomToGeo(geo)}
                         style={{
                           default: { outline: 'none', transition: 'fill .25s ease' },
                           hover: { outline: 'none', opacity: 0.85, cursor },
@@ -191,7 +136,7 @@ export function WorldMap({ data, onCountryClick, readOnly }: WorldMapProps) {
                     onMouseMove={(e) => moveTip(e, 'Crimea (Ukraine)', crimeaStatus)}
                     onMouseEnter={(e) => moveTip(e, 'Crimea (Ukraine)', crimeaStatus)}
                     onClick={() => handleCountryClick(CRIMEA_OWNER)}
-                    onDoubleClick={() => handleCountryDoubleClick(geo)}
+                    onDoubleClick={() => zoomToGeo(geo)}
                     style={{
                       default: { outline: 'none', transition: 'fill .25s ease' },
                       hover: { outline: 'none', opacity: 0.85, cursor },

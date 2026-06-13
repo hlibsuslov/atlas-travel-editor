@@ -55,7 +55,8 @@
     "addYear": "Ajouter une année",
     "reorder": "Réorganiser",
     "undo": "Annuler",
-    "redo": "Rétablir"
+    "redo": "Rétablir",
+    "retry": "Réessayer"
   },
   "editor": {
     "title": "Éditeur",
@@ -134,7 +135,8 @@
     "title": "Carte de voyages partagée",
     "openEditor": "Ouvrir l'éditeur",
     "private": "Cette carte est privée ou n'existe pas.",
-    "summary": "Naissance : {{country}} · {{count}} pays"
+    "summary": "Naissance : {{country}} · {{count}} pays",
+    "loadError": "Impossible de charger cette carte. Vérifiez votre connexion et réessayez."
   },
   "toast": {
     "saved": "Enregistré sur le serveur.",

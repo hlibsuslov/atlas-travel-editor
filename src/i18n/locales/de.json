@@ -55,7 +55,8 @@
     "addYear": "Jahr hinzufügen",
     "reorder": "Verschieben",
     "undo": "Rückgängig",
-    "redo": "Wiederholen"
+    "redo": "Wiederholen",
+    "retry": "Erneut versuchen"
   },
   "editor": {
     "title": "Editor",
@@ -134,7 +135,8 @@
     "title": "Geteilte Reisekarte",
     "openEditor": "Editor öffnen",
     "private": "Diese Karte ist privat oder existiert nicht.",
-    "summary": "Geburtsort: {{country}} · {{count}} Länder"
+    "summary": "Geburtsort: {{country}} · {{count}} Länder",
+    "loadError": "Diese Karte konnte nicht geladen werden. Prüfe deine Verbindung und versuche es erneut."
   },
   "toast": {
     "saved": "Auf dem Server gespeichert.",

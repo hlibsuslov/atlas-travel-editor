@@ -1,26 +1,15 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CheckCircle2, FileJson, UploadCloud, X } from 'lucide-react';
-import { normalizeTravelData } from '@/domain/normalize';
-import { validateTravelData, type TravelData } from '@/domain/schema';
+import { type TravelData } from '@/domain/schema';
 import { useFocusTrap } from '@/lib/useFocusTrap';
+import { useImportPreview } from '@/features/editor/hooks/useImportPreview';
 
 interface ImportModalProps {
   open: boolean;
   onClose: () => void;
   onImport: (data: TravelData) => void;
 }
-
-type Preview =
-  | { state: 'empty' }
-  | { state: 'parse'; message: string }
-  | {
-      state: 'ok' | 'warn';
-      data: TravelData;
-      countries: number;
-      cities: number;
-      firstError?: string;
-    };
 
 export function ImportModal({ open, onClose, onImport }: ImportModalProps) {
   const { t } = useTranslation();
@@ -38,25 +27,7 @@ export function ImportModal({ open, onClose, onImport }: ImportModalProps) {
     return () => document.removeEventListener('keydown', onKey);
   }, [open, onClose]);
 
-  const preview = useMemo<Preview>(() => {
-    if (!raw.trim()) return { state: 'empty' };
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(raw);
-    } catch (err) {
-      return { state: 'parse', message: err instanceof Error ? err.message : 'invalid JSON' };
-    }
-    const data = normalizeTravelData(parsed);
-    const validation = validateTravelData(data);
-    const cities = data.travel.countries.reduce((sum, c) => sum + c.cities.length, 0);
-    return {
-      state: validation.ok ? 'ok' : 'warn',
-      data,
-      countries: data.travel.countries.length,
-      cities,
-      firstError: validation.errors[0],
-    };
-  }, [raw]);
+  const preview = useImportPreview(raw);
 
   if (!open) return null;
 
@@ -105,7 +76,8 @@ export function ImportModal({ open, onClose, onImport }: ImportModalProps) {
         </div>
 
         <div className="panel-body import-body">
-          <div
+          <button
+            type="button"
             className={`import-drop${dragging ? ' is-dragging' : ''}`}
             onDragOver={(e) => {
               e.preventDefault();
@@ -114,9 +86,6 @@ export function ImportModal({ open, onClose, onImport }: ImportModalProps) {
             onDragLeave={() => setDragging(false)}
             onDrop={onDrop}
             onClick={() => fileRef.current?.click()}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && fileRef.current?.click()}
           >
             <UploadCloud size={26} />
             <div>
@@ -133,7 +102,7 @@ export function ImportModal({ open, onClose, onImport }: ImportModalProps) {
                 if (f) readFile(f);
               }}
             />
-          </div>
+          </button>
 
           <div className="import-or kicker">{t('auth.or')}</div>
 
