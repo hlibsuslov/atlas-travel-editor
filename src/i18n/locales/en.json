@@ -53,7 +53,17 @@
     "sending": "Sending…",
     "linkSent": "Magic link sent to {{email}}. Check your inbox.",
     "or": "or",
-    "google": "Continue with Google"
+    "google": "Continue with Google",
+    "signUp": "Create account",
+    "emailLabel": "Email",
+    "noAccount": "Don't have an account?",
+    "haveAccount": "Already have an account?",
+    "toSignUp": "Create one",
+    "toSignIn": "Sign in",
+    "confirmEmail": "Account created. Check {{email}} to confirm your address, then sign in.",
+    "passwordHint": "At least 6 characters",
+    "passwordTooShort": "Password must be at least 6 characters.",
+    "emailInvalid": "Enter a valid email address."
   },
   "status": {
     "syncing": "Syncing…",

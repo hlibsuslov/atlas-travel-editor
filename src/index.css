@@ -1164,6 +1164,24 @@ textarea.input {
   display: flex;
   gap: 18px;
 }
+/* Sign in ↔ Create account switch under the credential form. */
+.auth-toggle {
+  margin-top: 12px;
+  text-align: center;
+}
+.auth-toggle-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--accent);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.auth-toggle-btn:hover {
+  text-decoration: underline;
+}
+
 .divider {
   display: flex;
   align-items: center;

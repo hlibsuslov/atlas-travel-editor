@@ -80,8 +80,23 @@ supabase db push          # against a linked project
 supabase start && supabase db reset
 ```
 
-Then enable an auth provider (email magic-link works out of the box; Google
-OAuth is wired in `AuthProvider`). After changing the schema, regenerate types:
+### Auth setup
+
+The login screen supports **email + password** (sign in and sign up), passwordless
+**magic link**, and **Google OAuth** — all wired in `AuthProvider`. For these to
+work end-to-end:
+
+1. In **Supabase → Authentication → Providers**, keep **Email** enabled (it is by
+   default). The **Confirm email** toggle decides whether new sign-ups must click
+   a link before they can sign in — the app handles both cases (it shows a
+   "check your inbox" message when confirmation is required).
+2. In **Supabase → Authentication → URL Configuration**, set the **Site URL** and
+   add the deployed origin (and `http://localhost:5173` for dev) to **Redirect
+   URLs**, so confirmation/magic links and OAuth return to the app.
+3. Google OAuth additionally needs the Google provider enabled with its client
+   credentials.
+
+After changing the schema, regenerate types:
 
 ```bash
 supabase gen types typescript --linked > src/lib/database.types.ts

@@ -10,7 +10,16 @@ interface AuthContextValue {
   loading: boolean;
   /** True when running with the local demo auth bypass. */
   demo: boolean;
-  signInWithPassword: (login: string, password: string) => Promise<{ error: string | null }>;
+  signInWithPassword: (email: string, password: string) => Promise<{ error: string | null }>;
+  /**
+   * Register a new email/password account. `needsConfirmation` is true when the
+   * Supabase project requires email confirmation (no session yet — the user must
+   * click the link in their inbox before they can sign in).
+   */
+  signUpWithPassword: (
+    email: string,
+    password: string,
+  ) => Promise<{ error: string | null; needsConfirmation: boolean }>;
   signInWithOtp: (email: string) => Promise<{ error: string | null }>;
   signInWithGoogle: () => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
@@ -73,6 +82,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           password,
         });
         return { error: error?.message ?? null };
+      },
+      signUpWithPassword: async (email, password) => {
+        if (demo) {
+          // No real registration in demo mode — accept and sign in locally.
+          const next = signInDemo(email, password);
+          if (next) setSession(next);
+          return { error: null, needsConfirmation: false };
+        }
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: { emailRedirectTo: window.location.origin },
+        });
+        if (error) return { error: error.message, needsConfirmation: false };
+        // When email confirmation is enabled, signUp returns a user but no
+        // session until the link is clicked. Otherwise the session arrives via
+        // onAuthStateChange and the app proceeds straight to the editor.
+        return { error: null, needsConfirmation: !data.session };
       },
       signInWithOtp: async (email) => {
         const { error } = await supabase.auth.signInWithOtp({
