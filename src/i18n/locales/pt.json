@@ -148,5 +148,14 @@
     "reset": "Redefinido para o exemplo padrão.",
     "resetConfirm": "Redefinir para o exemplo padrão? O trabalho atual será apagado.",
     "loadedOwn": "Seus dados foram carregados no mapa."
+  },
+  "profile": {
+    "title": "Seu perfil público",
+    "subtitle": "Como os amigos veem você no seu mapa compartilhado.",
+    "displayName": "Nome de exibição",
+    "namePlaceholder": "Seu nome",
+    "color": "Cor do avatar",
+    "save": "Salvar perfil",
+    "saved": "Perfil salvo"
   }
 }

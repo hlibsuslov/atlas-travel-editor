@@ -223,5 +223,14 @@
     "loadedOwn": "Loaded your data onto the map.",
     "imageExported": "Map image saved.",
     "imageFailed": "Could not export the map image."
+  },
+  "profile": {
+    "title": "Your public profile",
+    "subtitle": "How friends see you on your shared map.",
+    "displayName": "Display name",
+    "namePlaceholder": "Your name",
+    "color": "Avatar color",
+    "save": "Save profile",
+    "saved": "Profile saved"
   }
 }

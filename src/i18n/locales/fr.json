@@ -148,5 +148,14 @@
     "reset": "Réinitialisé à l'exemple par défaut.",
     "resetConfirm": "Réinitialiser à l'exemple par défaut ? Le travail actuel sera effacé.",
     "loadedOwn": "Vos données ont été chargées sur la carte."
+  },
+  "profile": {
+    "title": "Votre profil public",
+    "subtitle": "Comment vos amis vous voient sur votre carte partagée.",
+    "displayName": "Nom affiché",
+    "namePlaceholder": "Votre nom",
+    "color": "Couleur de l’avatar",
+    "save": "Enregistrer le profil",
+    "saved": "Profil enregistré"
   }
 }

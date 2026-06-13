@@ -148,5 +148,14 @@
     "reset": "Auf das Standardbeispiel zurückgesetzt.",
     "resetConfirm": "Auf das Standardbeispiel zurücksetzen? Die aktuelle Arbeit wird gelöscht.",
     "loadedOwn": "Deine Daten wurden auf die Karte geladen."
+  },
+  "profile": {
+    "title": "Dein öffentliches Profil",
+    "subtitle": "So sehen dich Freunde auf deiner geteilten Karte.",
+    "displayName": "Anzeigename",
+    "namePlaceholder": "Dein Name",
+    "color": "Avatar-Farbe",
+    "save": "Profil speichern",
+    "saved": "Profil gespeichert"
   }
 }

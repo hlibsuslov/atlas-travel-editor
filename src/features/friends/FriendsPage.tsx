@@ -7,6 +7,8 @@ import { toast } from 'sonner';
 import { ArrowRight, Plus } from 'lucide-react';
 import { addFriend, listFriends, removeFriend, type FriendLink } from './api';
 import { fetchPublicRecord } from '@/features/editor/api';
+import { fetchSharedProfile } from '@/features/profile/api';
+import { ProfileEditor } from '@/features/profile/ProfileEditor';
 import { computeStats, primaryStatus } from '@/domain/stats';
 import { MiniMap } from '@/features/map/WorldMap';
 
@@ -67,6 +69,8 @@ export function FriendsPage() {
         </form>
       </div>
 
+      <ProfileEditor />
+
       {friends.isLoading && <p className="empty-note">{t('common.loading')}</p>}
       {friends.data && friends.data.length === 0 && (
         <p className="empty-note">{t('friends.empty')}</p>
@@ -87,6 +91,10 @@ function FriendCard({ friend, onRemove }: { friend: FriendLink; onRemove: () => 
     queryKey: ['public-record', friend.slug],
     queryFn: () => fetchPublicRecord(friend.slug),
   });
+  const { data: profile } = useQuery({
+    queryKey: ['shared-profile', friend.slug],
+    queryFn: () => fetchSharedProfile(friend.slug),
+  });
 
   const stats = useMemo(() => (data ? computeStats(data) : null), [data]);
   const lived = useMemo(
@@ -98,12 +106,15 @@ function FriendCard({ friend, onRemove }: { friend: FriendLink; onRemove: () => 
         : 0,
     [data],
   );
-  const label = friend.label || friend.slug;
+  // Prefer the user's own nickname, then the owner's public display name, then
+  // the raw slug as a last resort.
+  const label = friend.label || profile?.display_name || friend.slug;
+  const avatarColor = profile?.accent_color || 'var(--accent)';
 
   return (
     <div className="friend-card">
       <div className="friend-head">
-        <div className="friend-av" style={{ background: 'var(--accent)' }}>
+        <div className="friend-av" style={{ background: avatarColor }}>
           {initials(label)}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>

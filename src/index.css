@@ -1029,6 +1029,48 @@ textarea.input {
   font-weight: 700;
   font-size: 15px;
 }
+
+/* Public profile editor (Friends page). */
+.profile-editor {
+  margin-bottom: var(--gap);
+}
+.profile-editor-body {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.profile-av {
+  width: 54px;
+  height: 54px;
+  font-size: 18px;
+}
+.profile-fields {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  flex: 1;
+  min-width: 0;
+}
+.profile-fields .field {
+  margin-bottom: 0;
+}
+.color-swatches {
+  display: inline-flex;
+  gap: 8px;
+}
+.color-swatch {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  padding: 0;
+}
+.color-swatch.is-active {
+  border-color: var(--ink);
+  box-shadow: 0 0 0 2px var(--panel);
+}
 .friend-code {
   font-family: var(--font-mono);
   font-size: 10.5px;
