@@ -70,11 +70,7 @@ export function TagList({ title, items, placeholder, validate, onAdd, onRemove }
           <Plus size={13} />
         </button>
       </div>
-      {error && (
-        <p className="empty-note" style={{ color: '#b4452f' }}>
-          {error}
-        </p>
-      )}
+      {error && <p className="empty-note field-error">{error}</p>}
     </div>
   );
 }

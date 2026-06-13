@@ -1,5 +1,6 @@
 import worldData from 'world-atlas/countries-50m.json';
 import type { TravelData } from '@/domain/schema';
+import { canonicalCountryName } from '@/domain/countries';
 
 /** Visual status of a country on the map, from strongest to weakest. */
 export type MapStatus = 'birthplace' | 'lived' | 'visited' | 'capital' | 'none';
@@ -21,16 +22,6 @@ export const STATUS_COLORS: Record<MapStatus, string> = {
   capital: 'var(--c-capital)',
   none: 'var(--c-none)',
 };
-
-/** Lowercase, strip accents and punctuation, collapse whitespace. */
-function strip(name: string): string {
-  return name
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, ' ')
-    .trim();
-}
 
 /**
  * Aliases mapping common name variants to the canonical key. Both the user's
@@ -74,7 +65,7 @@ const ALIASES: Record<string, string> = {
 
 /** Canonical comparison key for a country name. */
 export function canonical(name: string): string {
-  const s = strip(name);
+  const s = canonicalCountryName(name);
   return ALIASES[s] ?? s;
 }
 

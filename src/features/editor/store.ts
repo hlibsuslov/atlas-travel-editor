@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 import type { CountryStatus, TravelData } from '@/domain/schema';
 import { makeDefaultData, makeEmptyCountry } from '@/domain/normalize';
+import { canonicalCountryName } from '@/domain/countries';
 
 /**
  * Editor state. Holds the working travel document plus a `dirty` flag so the UI
@@ -121,15 +122,10 @@ export const useEditorStore = create<EditorState>()(
       }),
 
     ensureCountry: (name) => {
-      const norm = (v: string) =>
-        v
-          .normalize('NFD')
-          .replace(/[̀-ͯ]/g, '')
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, ' ')
-          .trim();
-      const key = norm(name);
-      const existing = get().data.travel.countries.findIndex((c) => norm(c.name) === key);
+      const key = canonicalCountryName(name);
+      const existing = get().data.travel.countries.findIndex(
+        (c) => canonicalCountryName(c.name) === key,
+      );
       if (existing !== -1) return existing;
       set((s) => {
         s.data.travel.countries.push({

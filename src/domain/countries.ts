@@ -205,6 +205,20 @@ const ISO_CODES = [
   'ZW',
 ] as const;
 
+/**
+ * Canonical comparison key for a country name: strip accents, lowercase, and
+ * collapse any non-alphanumeric runs to single spaces. Shared by the editor
+ * store (dedup) and the map matcher so name comparison is consistent everywhere.
+ */
+export function canonicalCountryName(name: string): string {
+  return name
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
 function displayNames(locale: string): Intl.DisplayNames {
   try {
     return new Intl.DisplayNames([locale], { type: 'region' });

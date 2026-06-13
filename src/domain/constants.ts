@@ -8,6 +8,9 @@ export const MIN_YEAR = 1900;
 /** Latest year we accept. Generous upper bound to allow near-future plans. */
 export const MAX_YEAR = 2100;
 
+/** The current calendar year — used as the default for one-tap "this year" inputs. */
+export const CURRENT_YEAR = new Date().getFullYear();
+
 /** Accepted free-form timeline string formats for country-level timelines. */
 export const TIMELINE_FORMATS = ['YYYY', 'YYYY-MM', 'YYYY-MM-DD', 'YYYY-YYYY'] as const;
 

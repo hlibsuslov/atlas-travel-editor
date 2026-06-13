@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Plus } from 'lucide-react';
 import { isValidYear } from '@/domain/timeline';
-import { MAX_YEAR, MIN_YEAR } from '@/domain/constants';
+import { CURRENT_YEAR, MAX_YEAR, MIN_YEAR } from '@/domain/constants';
 
 interface TimelineFieldProps {
   title: string;
@@ -12,7 +12,6 @@ interface TimelineFieldProps {
   onRemove: (index: number) => void;
 }
 
-const CURRENT_YEAR = new Date().getFullYear();
 const clampYear = (n: number) => Math.max(MIN_YEAR, Math.min(MAX_YEAR, n));
 
 /**
@@ -128,11 +127,7 @@ export function TimelineField({ title, mode, items, onAdd, onRemove }: TimelineF
           <Plus size={13} />
         </button>
       </div>
-      {error && (
-        <p className="empty-note" style={{ color: '#b4452f' }}>
-          {error}
-        </p>
-      )}
+      {error && <p className="empty-note field-error">{error}</p>}
     </div>
   );
 }
