@@ -39,7 +39,8 @@
     "confirmEmail": "Account creato. Controlla {{email}} per confermare il tuo indirizzo, poi accedi.",
     "passwordHint": "Almeno 6 caratteri",
     "passwordTooShort": "La password deve avere almeno 6 caratteri.",
-    "emailInvalid": "Inserisci un indirizzo email valido."
+    "emailInvalid": "Inserisci un indirizzo email valido.",
+    "passwordRequired": "Inserisci la password."
   },
   "status": {
     "syncing": "Sincronizzazione…",

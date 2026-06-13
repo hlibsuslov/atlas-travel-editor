@@ -39,7 +39,8 @@
     "confirmEmail": "Konto erstellt. Bestätige {{email}} über den Link und melde dich dann an.",
     "passwordHint": "Mindestens 6 Zeichen",
     "passwordTooShort": "Das Passwort muss mindestens 6 Zeichen haben.",
-    "emailInvalid": "Gib eine gültige E-Mail-Adresse ein."
+    "emailInvalid": "Gib eine gültige E-Mail-Adresse ein.",
+    "passwordRequired": "Gib dein Passwort ein."
   },
   "status": {
     "syncing": "Synchronisierung…",

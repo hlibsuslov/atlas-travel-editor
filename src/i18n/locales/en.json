@@ -63,7 +63,8 @@
     "confirmEmail": "Account created. Check {{email}} to confirm your address, then sign in.",
     "passwordHint": "At least 6 characters",
     "passwordTooShort": "Password must be at least 6 characters.",
-    "emailInvalid": "Enter a valid email address."
+    "emailInvalid": "Enter a valid email address.",
+    "passwordRequired": "Enter your password."
   },
   "status": {
     "syncing": "Syncing…",

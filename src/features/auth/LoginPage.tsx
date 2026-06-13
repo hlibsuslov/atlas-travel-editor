@@ -23,6 +23,9 @@ export function LoginPage() {
   const [error, setError] = useState(false);
   const [busy, setBusy] = useState(false);
 
+  // Sign-up only when not in demo mode (demo has no real registration).
+  const isSignup = mode === 'signup' && !demo;
+
   const fail = (msg: string) => {
     setError(true);
     setMessage(msg);
@@ -33,11 +36,13 @@ export function LoginPage() {
     setMessage('');
     setError(false);
 
-    // Demo mode accepts the configured demo credentials as-is; real auth needs a
-    // valid email and a password long enough for Supabase to accept.
+    // Real auth needs a valid email. The min-length rule applies only to sign-up
+    // (Supabase enforces it there too); on sign-in we must NOT pre-block short
+    // passwords, since an existing account may have one — let Supabase decide.
     if (!demo) {
       if (!EMAIL_RE.test(email.trim())) return fail(t('auth.emailInvalid'));
-      if (password.length < MIN_PASSWORD) return fail(t('auth.passwordTooShort'));
+      if (isSignup && password.length < MIN_PASSWORD) return fail(t('auth.passwordTooShort'));
+      if (!password) return fail(t('auth.passwordRequired'));
     }
 
     setBusy(true);
@@ -75,7 +80,6 @@ export function LoginPage() {
     setError(false);
   };
 
-  const isSignup = mode === 'signup' && !demo;
   const submitLabel = busy ? t('actions.saving') : isSignup ? t('auth.signUp') : t('auth.signIn');
 
   return (
