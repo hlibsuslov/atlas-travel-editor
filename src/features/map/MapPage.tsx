@@ -1,18 +1,25 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { ChevronDown, Image as ImageIcon, Layers } from 'lucide-react';
+import { ChevronDown, Image as ImageIcon, Layers, MapPin } from 'lucide-react';
 import { useEditorStore } from '@/features/editor/store';
 import { computeStats } from '@/domain/stats';
-import { WorldMap } from './WorldMap';
+import { WorldMap, type StatusChoice } from './WorldMap';
 import { Legend } from './Legend';
 import { MapEmptyState } from './MapEmptyState';
-import { STATUS_COLORS } from './countryMatch';
+import {
+  buildStatusMap,
+  computeCoverage,
+  STATUS_COLORS,
+  unmatchedCountryNames,
+} from './countryMatch';
 import { EXPORT_FORMATS, exportMapPng } from './mapExport';
 import { ImportModal } from '@/features/editor/components/ImportModal';
 
 export function MapPage() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const data = useEditorStore((s) => s.data);
   const setData = useEditorStore((s) => s.setData);
   const [importOpen, setImportOpen] = useState(false);
@@ -21,6 +28,10 @@ export function MapPage() {
   const exportRef = useRef<HTMLDivElement>(null);
 
   const stats = useMemo(() => computeStats(data), [data]);
+  // Coverage of the user's statused countries against the bundled atlas, plus the
+  // specific names that silently rendered as "none" so we can surface them.
+  const coverage = useMemo(() => computeCoverage(buildStatusMap(data)), [data]);
+  const unmatched = useMemo(() => unmatchedCountryNames(data), [data]);
 
   useEffect(() => {
     if (!exportOpen) return;
@@ -40,6 +51,29 @@ export function MapPage() {
     const current = c?.status.lived ? 'lived' : c?.status.visited ? 'visited' : 'none';
     const next = current === 'none' ? 'visited' : current === 'visited' ? 'lived' : 'none';
     store.setPrimaryStatus(idx, next);
+  };
+
+  // Modifier/long-press menu: set one of the four statuses (or clear) directly.
+  // "capital" is a separate flag from the primary status, so each choice sets
+  // both the dominant status and the capital-visit flag explicitly.
+  const onSetStatus = (geographyName: string, choice: StatusChoice) => {
+    const store = useEditorStore.getState();
+    const idx = store.ensureCountry(geographyName);
+    if (choice === 'capital') {
+      store.setPrimaryStatus(idx, 'none');
+      store.setCapitalVisit(idx, true);
+    } else {
+      store.setPrimaryStatus(idx, choice);
+      if (choice === 'none') store.setCapitalVisit(idx, false);
+    }
+  };
+
+  // Send the user to the editor with this country materialised, so an unmatched
+  // name is easy to find and fix. Cross-route selection isn't wired through a
+  // param yet, so we at least ensure the row exists and open the editor route.
+  const focusInEditor = (name: string) => {
+    useEditorStore.getState().ensureCountry(name);
+    navigate('/');
   };
 
   const exportImage = async (formatId: string) => {
@@ -121,9 +155,44 @@ export function MapPage() {
           </span>
         </div>
         <div className="panel-body" ref={mapRef}>
-          <WorldMap data={data} onCountryClick={onCountryClick} />
+          <WorldMap data={data} onCountryClick={onCountryClick} onSetStatus={onSetStatus} />
         </div>
       </div>
+
+      {coverage.total > 0 && (
+        <div className="panel-head" role="status" aria-live="polite" style={{ marginTop: 12 }}>
+          <span className="chip">
+            <MapPin size={13} />
+            {t('map.matched', {
+              defaultValue: '{{matched}} of {{total}} countries matched on the map',
+              matched: coverage.matched,
+              total: coverage.total,
+            })}
+          </span>
+          {unmatched.length > 0 && (
+            <span
+              className="kicker"
+              style={{ textTransform: 'none', display: 'flex', flexWrap: 'wrap', gap: 6 }}
+            >
+              {t('map.unmatchedLabel', { defaultValue: "Didn't match:" })}
+              {unmatched.map((name) => (
+                <button
+                  key={name}
+                  type="button"
+                  className="btn btn-sm btn-ghost"
+                  title={t('map.fixInEditor', {
+                    defaultValue: 'Open {{name}} in the editor to fix the name',
+                    name,
+                  })}
+                  onClick={() => focusInEditor(name)}
+                >
+                  {name}
+                </button>
+              ))}
+            </span>
+          )}
+        </div>
+      )}
 
       <ImportModal
         open={importOpen}

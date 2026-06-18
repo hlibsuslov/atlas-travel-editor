@@ -2,14 +2,17 @@ import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
-import { getDemoSession, isDemoMode, signInDemo, signOutDemo } from './demo';
+import { clearCache } from '@/features/editor/cache';
+import { getLocalSession, isLocalMode, isLocalOnlyMode, signInDemo, signOutDemo } from './demo';
 
 interface AuthContextValue {
   session: Session | null;
   user: User | null;
   loading: boolean;
-  /** True when running with the local demo auth bypass. */
+  /** True when running with a local synthetic session (local-only OR demo auth). */
   demo: boolean;
+  /** True for the no-backend local-first mode (no login wall). */
+  localOnly: boolean;
   signInWithPassword: (email: string, password: string) => Promise<{ error: string | null }>;
   /**
    * Register a new email/password account. `needsConfirmation` is true when the
@@ -30,14 +33,16 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const demo = isDemoMode();
+  const demo = isLocalMode();
+  const localOnly = isLocalOnlyMode();
 
   useEffect(() => {
     let mounted = true;
 
-    // Demo mode: resolve a synthetic session locally, skip Supabase entirely.
+    // Local/demo mode: resolve a synthetic session locally, skip Supabase
+    // entirely. Local-only is always signed in; demo waits for the `1/1` form.
     if (demo) {
-      setSession(getDemoSession());
+      setSession(getLocalSession());
       setLoading(false);
       return;
     }
@@ -70,6 +75,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user: session?.user ?? null,
       loading,
       demo,
+      localOnly,
       signInWithPassword: async (login, password) => {
         if (demo) {
           const next = signInDemo(login, password);
@@ -116,6 +122,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { error: error?.message ?? null };
       },
       signOut: async () => {
+        // Purge the signed-in user's local cache so it never leaks to the next
+        // person on a shared device.
+        const uid = session?.user?.id;
+        if (uid) clearCache(uid);
         if (demo) {
           signOutDemo();
           setSession(null);
@@ -124,7 +134,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await supabase.auth.signOut();
       },
     }),
-    [session, loading, demo],
+    [session, loading, demo, localOnly],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

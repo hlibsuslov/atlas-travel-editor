@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Questions & Discussions
+    url: https://github.com/hlibsuslov/atlas-travel-editor/discussions
+    about: Ask questions, share ideas, and discuss the project here.
+  - name: Documentation
+    url: https://github.com/hlibsuslov/atlas-travel-editor#readme
+    about: Read the README, self-hosting guide, and architecture docs.

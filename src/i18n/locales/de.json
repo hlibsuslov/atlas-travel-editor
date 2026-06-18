@@ -67,7 +67,8 @@
     "reorder": "Verschieben",
     "undo": "Rückgängig",
     "redo": "Wiederholen",
-    "retry": "Erneut versuchen"
+    "retry": "Erneut versuchen",
+    "clear": "Löschen"
   },
   "editor": {
     "title": "Editor",
@@ -77,7 +78,12 @@
     "required": "erforderlich",
     "countries": "Länder",
     "birthplacePlaceholder": "z. B. Ukraine",
-    "offlineNote": "Du bist offline – Änderungen werden lokal gespeichert und später synchronisiert."
+    "offlineNote": "Du bist offline – Änderungen werden lokal gespeichert und später synchronisiert.",
+    "fixToSave": "Behebe dies zum Speichern: {{message}}",
+    "editYear": "Jahr bearbeiten",
+    "editEntry": "Eintrag bearbeiten",
+    "actualized": "{{country}} {{year}} erfasst",
+    "actualizeYear": "Besuch in diesem Jahr erfassen ({{year}})"
   },
   "stats": {
     "countries": "Länder",
@@ -112,7 +118,20 @@
   "import": {
     "title": "JSON importieren",
     "placeholder": "Füge dein JSON hier ein...",
-    "failed": "Import fehlgeschlagen: {{message}}"
+    "failed": "Import fehlgeschlagen: {{message}}",
+    "tabJson": "JSON",
+    "tabList": "Liste einfügen",
+    "applyAs": "Anwenden als",
+    "replace": "Ersetzen",
+    "merge": "Zusammenführen",
+    "listSummary": "{{resolved}} erkannt · {{unmatched}} nicht erkannt",
+    "listCities": "{{cities}} Städte",
+    "unmatchedTitle": "Nicht gefunden:",
+    "listPlaceholder": "Ein Land pro Zeile, z. B.\nSpain: Madrid 2019, Barcelona 2021\nFrance\nJapan: Tokyo 2023"
+  },
+  "storage": {
+    "destination": "Speicherort",
+    "switched": "Wird jetzt in {{target}} gespeichert"
   },
   "validation": {
     "invalidTimeline": "Ungültiges Format. Verwende {{formats}}.",
@@ -124,12 +143,28 @@
     "loadOwn": "Meine Daten laden",
     "matched": "{{matched}} von {{total}} Ländern auf der Karte zugeordnet",
     "unmatchedHint": "Einige Namen konnten nicht zugeordnet werden. Verwende für beste Ergebnisse die offiziellen englischen Ländernamen.",
+    "regionAria": "{{name}}: {{status}}",
+    "mapAria": "Weltreisekarte",
+    "statusMenuAria": "Status für {{name}} festlegen",
+    "statusClear": "Löschen",
+    "zoomIn": "Vergrößern",
+    "zoomOut": "Verkleinern",
+    "zoomReset": "Ansicht zurücksetzen",
+    "unmatchedLabel": "Nicht zugeordnet:",
+    "fixInEditor": "{{name}} im Editor öffnen, um den Namen zu korrigieren",
     "legend": {
       "birthplace": "Geburtsort",
       "lived": "Wohnsitz",
       "visited": "Besucht",
       "capital": "Nur Hauptstadt",
-      "none": "Nicht besucht"
+      "none": "Nicht besucht",
+      "aria": "Kartenlegende",
+      "itemAria": "{{label}}, {{count}}"
+    },
+    "empty": {
+      "heading": "Deine Karte ist leer",
+      "hint": "Klicke auf ein Land, um es zu markieren, oder importiere deine vorhandenen Reisedaten.",
+      "import": "Daten importieren"
     }
   },
   "friends": {

@@ -4,6 +4,7 @@ import { useAuth } from '@/features/auth/AuthProvider';
 import { LoginPage } from '@/features/auth/LoginPage';
 import { AppShell } from '@/components/AppShell';
 import { EditorPage } from '@/features/editor/EditorPage';
+import { StorageProvider } from '@/features/storage/StorageProvider';
 
 // Code-split the heavier routes (world atlas, charts) so the editor's initial
 // bundle stays small.
@@ -27,36 +28,41 @@ function PageFallback() {
 }
 
 function RequireAuth({ children }: { children: ReactNode }) {
-  const { session, loading } = useAuth();
+  const { session, loading, localOnly } = useAuth();
   if (loading) return <PageFallback />;
+  // No-backend local-first mode is always "signed in" as the synthetic local
+  // user — skip the login wall entirely.
+  if (localOnly) return <>{children}</>;
   return session ? <>{children}</> : <LoginPage />;
 }
 
 export function App() {
   return (
-    <BrowserRouter>
-      <div className="atlas-app">
-        <Suspense fallback={<PageFallback />}>
-          <Routes>
-            <Route path="/share/:slug" element={<SharePage />} />
+    <StorageProvider>
+      <BrowserRouter>
+        <div className="atlas-app">
+          <Suspense fallback={<PageFallback />}>
+            <Routes>
+              <Route path="/share/:slug" element={<SharePage />} />
 
-            <Route
-              element={
-                <RequireAuth>
-                  <AppShell />
-                </RequireAuth>
-              }
-            >
-              <Route path="/" element={<EditorPage />} />
-              <Route path="/map" element={<MapPage />} />
-              <Route path="/stats" element={<DashboardPage />} />
-              <Route path="/friends" element={<FriendsPage />} />
-            </Route>
+              <Route
+                element={
+                  <RequireAuth>
+                    <AppShell />
+                  </RequireAuth>
+                }
+              >
+                <Route path="/" element={<EditorPage />} />
+                <Route path="/map" element={<MapPage />} />
+                <Route path="/stats" element={<DashboardPage />} />
+                <Route path="/friends" element={<FriendsPage />} />
+              </Route>
 
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </Suspense>
-      </div>
-    </BrowserRouter>
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </Suspense>
+        </div>
+      </BrowserRouter>
+    </StorageProvider>
   );
 }

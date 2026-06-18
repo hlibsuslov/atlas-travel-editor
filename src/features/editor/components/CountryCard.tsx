@@ -1,8 +1,11 @@
 import { memo, useState } from 'react';
+import type { MouseEvent } from 'react';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
 import { useShallow } from 'zustand/react/shallow';
-import { ChevronRight, Star, X } from 'lucide-react';
+import { CalendarPlus, ChevronRight, Star, X } from 'lucide-react';
 import type { Country } from '@/domain/schema';
+import { CURRENT_YEAR } from '@/domain/constants';
 import { primaryStatus } from '@/domain/stats';
 import { canonical } from '@/features/map/countryMatch';
 import { useEditorStore } from '@/features/editor/store';
@@ -25,6 +28,7 @@ const useCountryActions = () =>
     useShallow((s) => ({
       setCountryName: s.setCountryName,
       removeCountry: s.removeCountry,
+      actualizeCountry: s.actualizeCountry,
       setStatus: s.setStatus,
       setCapitalVisit: s.setCapitalVisit,
       addCountryTimeline: s.addCountryTimeline,
@@ -50,8 +54,24 @@ function CountryCardImpl({ country, index, invalid, defaultOpen }: CountryCardPr
   const status = isBirthplace ? 'birthplace' : primaryStatus(country);
   const cityCount = country.cities.length;
 
+  // Quick-actualize: log a visit for the current year straight from the
+  // collapsed header. The store dedupes, so repeated taps are harmless.
+  const onActualize = (e: MouseEvent) => {
+    e.stopPropagation();
+    store.actualizeCountry(country.name, CURRENT_YEAR);
+    toast.success(
+      t('editor.actualized', 'Recorded {{country}} {{year}}', {
+        country: country.name,
+        year: CURRENT_YEAR,
+      }),
+    );
+  };
+
   return (
-    <div className={`country-card${open ? ' open' : ''}${invalid ? ' invalid' : ''}`}>
+    <div
+      id={`country-card-${index}`}
+      className={`country-card${open ? ' open' : ''}${invalid ? ' invalid' : ''}`}
+    >
       <div
         className="country-top"
         role="button"
@@ -86,6 +106,21 @@ function CountryCardImpl({ country, index, invalid, defaultOpen }: CountryCardPr
             <span className="chip birthplace-chip" title={t('country.birthplace')}>
               <Star size={11} /> {t('country.birthplace')}
             </span>
+          )}
+          {!open && country.name && (
+            <button
+              type="button"
+              className="btn btn-sm btn-ghost"
+              aria-label={t('editor.actualizeYear', 'Record a visit this year ({{year}})', {
+                year: CURRENT_YEAR,
+              })}
+              title={t('editor.actualizeYear', 'Record a visit this year ({{year}})', {
+                year: CURRENT_YEAR,
+              })}
+              onClick={onActualize}
+            >
+              <CalendarPlus size={13} /> {CURRENT_YEAR}
+            </button>
           )}
           <button
             type="button"

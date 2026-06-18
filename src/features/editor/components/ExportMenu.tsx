@@ -1,9 +1,21 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ChevronDown, Cloud, Copy, Download, HardDrive, Mail, Send, Share2 } from 'lucide-react';
+import {
+  Check,
+  ChevronDown,
+  Cloud,
+  Copy,
+  Download,
+  HardDrive,
+  Mail,
+  Send,
+  Share2,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import type { TravelData } from '@/domain/schema';
 import { downloadText } from '@/lib/download';
+import { useStorage } from '@/features/storage/StorageProvider';
+import type { StoreId } from '@/lib/storage/types';
 
 /**
  * Save / export menu. Local actions (download, copy) work today; cloud
@@ -32,6 +44,7 @@ const CLOUD_TARGETS: CloudTarget[] = [
 
 export function ExportMenu({ data }: { data: TravelData }) {
   const { t } = useTranslation();
+  const { stores, activeId, setActive } = useStorage();
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -72,6 +85,20 @@ export function ExportMenu({ data }: { data: TravelData }) {
     setOpen(false);
   };
 
+  // Switch the active storage backend (where the editor loads/saves). Ready
+  // stores activate immediately; not-yet-implemented ones show a "coming soon".
+  const chooseStore = (id: StoreId, label: string, ready: boolean) => {
+    if (!ready) {
+      toast(t('export.soon', { target: label }));
+      return;
+    }
+    if (id !== activeId) {
+      setActive(id);
+      toast.success(t('storage.switched', 'Now saving to {{target}}', { target: label }));
+    }
+    setOpen(false);
+  };
+
   const iconFor = (id: string) => {
     if (id === 'google-drive' || id === 'icloud' || id === 'dropbox' || id === 'onedrive')
       return <HardDrive size={15} />;
@@ -94,6 +121,25 @@ export function ExportMenu({ data }: { data: TravelData }) {
 
       {open && (
         <div className="export-popover" role="menu">
+          <div className="export-group-label">
+            {t('storage.destination', 'Storage destination')}
+          </div>
+          {stores.map((store) => (
+            <button
+              key={store.id}
+              type="button"
+              className="export-item"
+              role="menuitemradio"
+              aria-checked={store.id === activeId}
+              disabled={store.id === activeId}
+              onClick={() => chooseStore(store.id, store.label, store.ready)}
+            >
+              <HardDrive size={15} /> {store.label}
+              {store.id === activeId && <Check size={15} />}
+              {!store.ready && <span className="export-soon">{t('export.soonBadge')}</span>}
+            </button>
+          ))}
+
           <div className="export-group-label">{t('export.local')}</div>
           <button type="button" className="export-item" role="menuitem" onClick={download}>
             <Download size={15} /> {t('export.download')}

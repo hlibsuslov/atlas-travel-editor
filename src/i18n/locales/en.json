@@ -91,7 +91,8 @@
     "reorder": "Reorder",
     "undo": "Undo",
     "redo": "Redo",
-    "retry": "Try again"
+    "retry": "Try again",
+    "clear": "Clear"
   },
   "editor": {
     "title": "Editor",
@@ -109,7 +110,12 @@
     "birthplacePlaceholder": "e.g., Ukraine",
     "filter": "Filter countries…",
     "noMatches": "No countries match your filter.",
-    "offlineNote": "You're offline — changes are saved locally and will sync when you're back."
+    "offlineNote": "You're offline — changes are saved locally and will sync when you're back.",
+    "fixToSave": "Fix this to save: {{message}}",
+    "editYear": "Edit year",
+    "editEntry": "Edit entry",
+    "actualized": "Recorded {{country}} {{year}}",
+    "actualizeYear": "Record a visit this year ({{year}})"
   },
   "stats": {
     "countries": "Countries",
@@ -168,7 +174,20 @@
     "dropTitle": "Drop a .json file",
     "dropHint": "or click to browse",
     "summary": "{{countries}} countries · {{cities}} cities",
-    "failed": "Invalid JSON: {{message}}"
+    "failed": "Invalid JSON: {{message}}",
+    "tabJson": "JSON",
+    "tabList": "Paste list",
+    "applyAs": "Apply as",
+    "replace": "Replace",
+    "merge": "Merge",
+    "listSummary": "{{resolved}} resolved · {{unmatched}} unmatched",
+    "listCities": "{{cities}} cities",
+    "unmatchedTitle": "Couldn't match:",
+    "listPlaceholder": "One country per line, e.g.\nSpain: Madrid 2019, Barcelona 2021\nFrance\nJapan: Tokyo 2023"
+  },
+  "storage": {
+    "destination": "Storage destination",
+    "switched": "Now saving to {{target}}"
   },
   "validation": {
     "invalidTimeline": "Invalid format. Use {{formats}}.",
@@ -190,12 +209,28 @@
     "clickHint": "Click a country to cycle status · scroll to zoom · drag to pan · double-click to zoom in",
     "matched": "{{matched}} of {{total}} countries matched on the map",
     "unmatchedHint": "Some names didn't match the map. Use official English country names for best results.",
+    "regionAria": "{{name}}: {{status}}",
+    "mapAria": "World travel map",
+    "statusMenuAria": "Set status for {{name}}",
+    "statusClear": "Clear",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out",
+    "zoomReset": "Reset view",
+    "unmatchedLabel": "Didn't match:",
+    "fixInEditor": "Open {{name}} in the editor to fix the name",
     "legend": {
       "birthplace": "Birthplace",
       "lived": "Lived",
       "visited": "Visited",
       "capital": "Capital only",
-      "none": "Not visited"
+      "none": "Not visited",
+      "aria": "Map legend",
+      "itemAria": "{{label}}, {{count}}"
+    },
+    "empty": {
+      "heading": "Your map is empty",
+      "hint": "Click a country to mark it, or import your existing travel data.",
+      "import": "Import data"
     }
   },
   "friends": {

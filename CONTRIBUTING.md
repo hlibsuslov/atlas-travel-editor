@@ -12,6 +12,21 @@ cp .env.example .env
 npm run dev
 ```
 
+New here? Look for the [**`good first issue`**](https://github.com/OWNER/atlas-travel-editor/labels/good%20first%20issue)
+label — those are scoped, low-context tasks that are a good on-ramp. If none are
+open, comment on any issue you'd like to pick up and we'll help you scope it.
+
+<!-- TODO: replace OWNER above with the GitHub org/user once the repo slug is final. -->
+
+## Run modes
+
+You don't need a Supabase account to develop. The app runs in three modes —
+**local-only / no backend**, **hosted Supabase**, and **fully self-hosted
+Supabase** — selected via `.env`. For local work, the no-backend mode is fastest:
+set `VITE_LOCAL_ONLY=1` (or `VITE_DEMO_AUTH=1`, login `1` / `1`) and the editor,
+map, and import/export work with no server. Copy-paste setup for every mode is in
+[`docs/SELF_HOSTING.md`](docs/SELF_HOSTING.md).
+
 ## Workflow
 
 1. Branch from `main` (e.g. `feat/share-qr`, `fix/timeline-range`).

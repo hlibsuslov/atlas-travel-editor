@@ -1,0 +1,3 @@
+# Default owner for everything in this repository.
+# Order matters; the last matching pattern wins.
+*       @hlibsuslov

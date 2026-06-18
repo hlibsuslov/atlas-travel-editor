@@ -67,7 +67,8 @@
     "reorder": "Reordenar",
     "undo": "Deshacer",
     "redo": "Rehacer",
-    "retry": "Reintentar"
+    "retry": "Reintentar",
+    "clear": "Borrar"
   },
   "editor": {
     "title": "Editor",
@@ -77,7 +78,12 @@
     "required": "obligatorio",
     "countries": "Países",
     "birthplacePlaceholder": "p. ej., Ucrania",
-    "offlineNote": "Estás sin conexión: los cambios se guardan localmente y se sincronizarán al volver."
+    "offlineNote": "Estás sin conexión: los cambios se guardan localmente y se sincronizarán al volver.",
+    "fixToSave": "Corrige esto para guardar: {{message}}",
+    "editYear": "Editar año",
+    "editEntry": "Editar entrada",
+    "actualized": "Registrado {{country}} {{year}}",
+    "actualizeYear": "Registrar una visita este año ({{year}})"
   },
   "stats": {
     "countries": "Países",
@@ -112,7 +118,20 @@
   "import": {
     "title": "Importar JSON",
     "placeholder": "Pega tu JSON aquí...",
-    "failed": "Error al importar: {{message}}"
+    "failed": "Error al importar: {{message}}",
+    "tabJson": "JSON",
+    "tabList": "Pegar lista",
+    "applyAs": "Aplicar como",
+    "replace": "Reemplazar",
+    "merge": "Combinar",
+    "listSummary": "{{resolved}} resueltos · {{unmatched}} sin coincidencia",
+    "listCities": "{{cities}} ciudades",
+    "unmatchedTitle": "No se pudo encontrar:",
+    "listPlaceholder": "Un país por línea, p. ej.\nSpain: Madrid 2019, Barcelona 2021\nFrance\nJapan: Tokyo 2023"
+  },
+  "storage": {
+    "destination": "Destino de almacenamiento",
+    "switched": "Ahora se guarda en {{target}}"
   },
   "validation": {
     "invalidTimeline": "Formato no válido. Usa {{formats}}.",
@@ -124,12 +143,28 @@
     "loadOwn": "Cargar mis datos",
     "matched": "{{matched}} de {{total}} países coincidieron en el mapa",
     "unmatchedHint": "Algunos nombres no coincidieron con el mapa. Usa los nombres oficiales en inglés para mejores resultados.",
+    "regionAria": "{{name}}: {{status}}",
+    "mapAria": "Mapa de viajes del mundo",
+    "statusMenuAria": "Establecer estado de {{name}}",
+    "statusClear": "Borrar",
+    "zoomIn": "Acercar",
+    "zoomOut": "Alejar",
+    "zoomReset": "Restablecer vista",
+    "unmatchedLabel": "Sin coincidencia:",
+    "fixInEditor": "Abrir {{name}} en el editor para corregir el nombre",
     "legend": {
       "birthplace": "Nacimiento",
       "lived": "Residencia",
       "visited": "Visitado",
       "capital": "Solo capital",
-      "none": "No visitado"
+      "none": "No visitado",
+      "aria": "Leyenda del mapa",
+      "itemAria": "{{label}}, {{count}}"
+    },
+    "empty": {
+      "heading": "Tu mapa está vacío",
+      "hint": "Haz clic en un país para marcarlo, o importa tus datos de viajes existentes.",
+      "import": "Importar datos"
     }
   },
   "friends": {
