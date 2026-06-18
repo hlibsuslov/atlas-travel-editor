@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { current, type Draft } from 'immer';
 import { immer } from 'zustand/middleware/immer';
-import type { CountryStatus, TravelData } from '@/domain/schema';
+import type { Country, CountryStatus, TravelData } from '@/domain/schema';
 import { makeDefaultData, makeEmptyCountry } from '@/domain/normalize';
 import { canonicalCountryName } from '@/domain/countries';
 
@@ -46,6 +46,14 @@ export interface EditorState {
   reorderCountries: (from: number, to: number) => void;
   /** Find a country by name (case/format-insensitive) or create it; returns its index. */
   ensureCountry: (name: string) => number;
+  /**
+   * Merge a batch of incoming countries into the document as a single undo step.
+   * Matches existing countries by canonical name and unions their status, capital
+   * visit, timelines, and cities; otherwise appends the new country.
+   */
+  mergeCountries: (countries: Country[]) => void;
+  /** Mark a country (creating it if needed) as visited in the given calendar year. */
+  actualizeCountry: (name: string, year: number) => void;
 
   // Country timelines (validated string entries)
   addCountryTimeline: (index: number, field: 'visited' | 'lived', value: string) => void;
@@ -53,6 +61,8 @@ export interface EditorState {
 
   // Cities
   addCity: (index: number, name: string, year?: number) => void;
+  /** Move a city within a country from one position to another. */
+  reorderCities: (countryIndex: number, from: number, to: number) => void;
   removeCity: (index: number, cityIndex: number) => void;
   renameCity: (index: number, cityIndex: number, name: string) => void;
   addCityYear: (index: number, cityIndex: number, year: number) => void;
@@ -188,6 +198,65 @@ export const useEditorStore = create<EditorState>()(
         return get().data.travel.countries.length - 1;
       },
 
+      mergeCountries: (countries) =>
+        mutate((s) => {
+          for (const incoming of countries) {
+            const key = canonicalCountryName(incoming.name);
+            const target = s.data.travel.countries.find(
+              (c) => canonicalCountryName(c.name) === key,
+            );
+            if (!target) {
+              s.data.travel.countries.push(structuredClone(incoming));
+              continue;
+            }
+            // Union status booleans and capital visit.
+            target.status.visited ||= incoming.status.visited;
+            target.status.lived ||= incoming.status.lived;
+            target.status.birthplace ||= incoming.status.birthplace;
+            target.capitalVisit.visited ||= incoming.capitalVisit.visited;
+            // Append timeline entries, de-duplicating.
+            for (const field of ['visited', 'lived'] as const) {
+              for (const entry of incoming.timeline[field]) {
+                if (!target.timeline[field].includes(entry)) target.timeline[field].push(entry);
+              }
+            }
+            // Merge cities by name (canonical, like the country rule): union
+            // visited years (dedupe + sort).
+            for (const city of incoming.cities) {
+              const cityKey = canonicalCountryName(city.name);
+              const existingCity = target.cities.find(
+                (c) => canonicalCountryName(c.name) === cityKey,
+              );
+              if (!existingCity) {
+                target.cities.push(structuredClone(city));
+                continue;
+              }
+              const years = new Set(existingCity.timeline.visited);
+              for (const y of city.timeline.visited) years.add(y);
+              existingCity.timeline.visited = Array.from(years).sort((a, b) => a - b);
+            }
+          }
+        }),
+
+      actualizeCountry: (name, year) =>
+        mutate((s) => {
+          const key = canonicalCountryName(name);
+          let c = s.data.travel.countries.find((x) => canonicalCountryName(x.name) === key);
+          if (!c) {
+            c = {
+              name,
+              status: { visited: false, lived: false, birthplace: false },
+              capitalVisit: { visited: false },
+              timeline: { visited: [], lived: [] },
+              cities: [],
+            };
+            s.data.travel.countries.push(c);
+          }
+          c.status.visited = true;
+          const entry = String(year);
+          if (!c.timeline.visited.includes(entry)) c.timeline.visited.push(entry);
+        }),
+
       addCountryTimeline: (index, field, value) =>
         mutate((s) => {
           const c = s.data.travel.countries[index];
@@ -204,6 +273,15 @@ export const useEditorStore = create<EditorState>()(
         mutate((s) => {
           const c = s.data.travel.countries[index];
           if (c) c.cities.push({ name, timeline: { visited: year !== undefined ? [year] : [] } });
+        }),
+
+      reorderCities: (countryIndex, from, to) =>
+        mutate((s) => {
+          const arr = s.data.travel.countries[countryIndex]?.cities;
+          if (!arr) return;
+          if (from < 0 || from >= arr.length || to < 0 || to >= arr.length || from === to) return;
+          const [moved] = arr.splice(from, 1);
+          arr.splice(to, 0, moved!);
         }),
 
       removeCity: (index, cityIndex) =>

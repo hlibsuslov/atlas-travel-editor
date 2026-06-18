@@ -1,5 +1,5 @@
-import { useMemo, useRef, useState } from 'react';
-import type { MouseEvent } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import type { MouseEvent, PointerEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ComposableMap, Geographies, Geography, ZoomableGroup } from 'react-simple-maps';
 import worldData from 'world-atlas/countries-50m.json';
@@ -11,6 +11,22 @@ import { CRIMEA_FEATURES, CRIMEA_OWNER } from './crimea';
 
 const GEO = worldData as unknown as Record<string, unknown>;
 
+/**
+ * Status a country can be set to from the map's modifier/long-press menu. Mirrors
+ * the four legend tiers plus "clear"; `MapPage` translates each into the right
+ * `setPrimaryStatus` / `setCapitalVisit` store calls.
+ */
+export type StatusChoice = 'visited' | 'lived' | 'capital' | 'birthplace' | 'none';
+
+// Items shown in the per-country status menu, top to bottom. `none` is the clear
+// action and is rendered with a separating rule above it.
+const MENU_CHOICES: readonly StatusChoice[] = ['visited', 'lived', 'capital', 'birthplace', 'none'];
+
+// Hold this long (ms) on a country to open the status menu on touch / no-modifier
+// pointers. Chosen above the 220ms double-click defer so a quick double-tap to
+// zoom never trips it.
+const LONG_PRESS_MS = 480;
+
 interface Hover {
   name: string;
   iso: string;
@@ -19,13 +35,21 @@ interface Hover {
   y: number;
 }
 
+interface StatusMenu {
+  name: string;
+  x: number;
+  y: number;
+}
+
 interface WorldMapProps {
   data: TravelData;
   onCountryClick?: (geographyName: string) => void;
+  /** Set a country to an explicit status from the modifier/long-press menu. */
+  onSetStatus?: (geographyName: string, choice: StatusChoice) => void;
   readOnly?: boolean;
 }
 
-export function WorldMap({ data, onCountryClick, readOnly }: WorldMapProps) {
+export function WorldMap({ data, onCountryClick, onSetStatus, readOnly }: WorldMapProps) {
   const { t, i18n } = useTranslation();
   const statusMap = useMemo(() => buildStatusMap(data), [data]);
 
@@ -40,26 +64,115 @@ export function WorldMap({ data, onCountryClick, readOnly }: WorldMapProps) {
     });
   const crimeaStatus = statusForGeography(CRIMEA_OWNER, statusMap);
   const [hover, setHover] = useState<Hover | null>(null);
+  const [menu, setMenu] = useState<StatusMenu | null>(null);
   const { position, setPosition, setZoom, reset, zoomToGeo, deferClick } = useMapZoom();
   const wrapRef = useRef<HTMLDivElement>(null);
+  // Pending long-press; cleared on pointer up / move / leave or when it fires.
+  const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Set when a long-press opened the menu, so the trailing click doesn't also
+  // cycle the country's status.
+  const pressFired = useRef(false);
+
+  // The status menu can only ever appear on the editable map.
+  const editable = !readOnly && !!onSetStatus;
+
+  // Translate viewport coords to a point inside the map wrapper for absolute
+  // positioning of the tooltip / menu.
+  const localPoint = (clientX: number, clientY: number) => {
+    const rect = wrapRef.current?.getBoundingClientRect();
+    if (!rect) return null;
+    return { x: clientX - rect.left, y: clientY - rect.top };
+  };
 
   const moveTip = (e: MouseEvent, name: string, status: MapStatus) => {
-    const rect = wrapRef.current?.getBoundingClientRect();
-    if (!rect) return;
+    const p = localPoint(e.clientX, e.clientY);
+    if (!p) return;
     setHover({
       name,
       iso: codeForEnglishName(name) ?? '—',
       status,
-      x: e.clientX - rect.left + 14,
-      y: e.clientY - rect.top + 14,
+      x: p.x + 14,
+      y: p.y + 14,
+    });
+  };
+
+  const clearPress = () => {
+    if (pressTimer.current) {
+      clearTimeout(pressTimer.current);
+      pressTimer.current = null;
+    }
+  };
+
+  // Width reserved for the menu when keeping it inside the map's right edge.
+  const MENU_WIDTH = 176;
+
+  // Open the per-country status menu at the given viewport point, nudged so it
+  // stays inside the map wrapper horizontally.
+  const openMenu = (name: string, clientX: number, clientY: number) => {
+    const rect = wrapRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    setHover(null);
+    setMenu({
+      name,
+      x: Math.min(clientX - rect.left, Math.max(0, rect.width - MENU_WIDTH)),
+      y: clientY - rect.top,
     });
   };
 
   // Single-click cycles status, but is deferred so a follow-up double-click
   // (zoom-to-fit) can cancel it — double-click never triggers a status change.
-  const handleCountryClick = (name: string) => {
-    if (readOnly) return;
+  // A modifier-click (Alt/Option) instead opens the explicit status menu.
+  const handleCountryClick = (e: MouseEvent, name: string) => {
+    if (!editable) return;
+    // A long-press just opened the menu — swallow the trailing click.
+    if (pressFired.current) {
+      pressFired.current = false;
+      return;
+    }
+    if (e.altKey) {
+      deferClick(() => {}); // cancel any pending cycle without scheduling a new one
+      openMenu(name, e.clientX, e.clientY);
+      return;
+    }
     deferClick(() => onCountryClick?.(name));
+  };
+
+  // Long-press (primary button / touch) opens the menu — the touch-friendly
+  // equivalent of Alt-click. We hold the geometry/coords by value so the timer
+  // callback doesn't depend on React state.
+  const handlePointerDown = (e: PointerEvent, name: string) => {
+    if (!editable || e.button !== 0) return;
+    const { clientX, clientY } = e;
+    clearPress();
+    pressTimer.current = setTimeout(() => {
+      pressTimer.current = null;
+      pressFired.current = true;
+      openMenu(name, clientX, clientY);
+    }, LONG_PRESS_MS);
+  };
+
+  // Close the menu on outside click / Escape.
+  useEffect(() => {
+    if (!menu) return;
+    const onDown = (e: globalThis.MouseEvent) => {
+      if (!(e.target as HTMLElement | null)?.closest('.atlas-menu')) setMenu(null);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMenu(null);
+    };
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [menu]);
+
+  useEffect(() => clearPress, []);
+
+  const chooseStatus = (choice: StatusChoice) => {
+    if (menu) onSetStatus?.(menu.name, choice);
+    setMenu(null);
   };
 
   const cursor = readOnly ? 'grab' : 'pointer';
@@ -108,7 +221,10 @@ export function WorldMap({ data, onCountryClick, readOnly }: WorldMapProps) {
                         strokeWidth={0.4}
                         onMouseMove={(e) => moveTip(e, geo.properties.name, status)}
                         onMouseEnter={(e) => moveTip(e, geo.properties.name, status)}
-                        onClick={() => handleCountryClick(geo.properties.name)}
+                        onPointerDown={(e) => handlePointerDown(e, geo.properties.name)}
+                        onPointerUp={clearPress}
+                        onPointerLeave={clearPress}
+                        onClick={(e) => handleCountryClick(e, geo.properties.name)}
                         onDoubleClick={() => zoomToGeo(geo)}
                         style={{
                           default: { outline: 'none', transition: 'fill .25s ease' },
@@ -135,7 +251,10 @@ export function WorldMap({ data, onCountryClick, readOnly }: WorldMapProps) {
                     strokeWidth={0.4}
                     onMouseMove={(e) => moveTip(e, 'Crimea (Ukraine)', crimeaStatus)}
                     onMouseEnter={(e) => moveTip(e, 'Crimea (Ukraine)', crimeaStatus)}
-                    onClick={() => handleCountryClick(CRIMEA_OWNER)}
+                    onPointerDown={(e) => handlePointerDown(e, CRIMEA_OWNER)}
+                    onPointerUp={clearPress}
+                    onPointerLeave={clearPress}
+                    onClick={(e) => handleCountryClick(e, CRIMEA_OWNER)}
                     onDoubleClick={() => zoomToGeo(geo)}
                     style={{
                       default: { outline: 'none', transition: 'fill .25s ease' },
@@ -149,7 +268,7 @@ export function WorldMap({ data, onCountryClick, readOnly }: WorldMapProps) {
           </ZoomableGroup>
         </ComposableMap>
 
-        {hover && (
+        {hover && !menu && (
           <div className="atlas-tip" style={{ left: hover.x, top: hover.y }}>
             <span className="atlas-tip-iso mono">{hover.iso}</span>
             <span className="atlas-tip-name">{hover.name}</span>
@@ -157,6 +276,89 @@ export function WorldMap({ data, onCountryClick, readOnly }: WorldMapProps) {
               <i style={{ background: STATUS_COLORS[hover.status] }} />
               {t(`map.legend.${hover.status}`)}
             </span>
+          </div>
+        )}
+
+        {menu && (
+          <div
+            className="atlas-menu"
+            // Inline styles keep this component self-contained (its CSS class is
+            // not in any locale/stylesheet owned here); tokens mirror the export
+            // popover so it stays on-palette.
+            style={{
+              position: 'absolute',
+              zIndex: 30,
+              left: menu.x,
+              top: menu.y,
+              minWidth: 168,
+              background: 'var(--panel)',
+              border: '1px solid var(--line-strong)',
+              borderRadius: 'var(--radius-lg)',
+              boxShadow: 'var(--shadow)',
+              padding: 6,
+            }}
+            role="menu"
+            aria-label={t('map.statusMenuAria', {
+              defaultValue: 'Set status for {{name}}',
+              name: localizedCountryName(menu.name, i18n.language),
+            })}
+          >
+            <div
+              style={{
+                padding: '4px 8px 6px',
+                fontFamily: 'var(--font-display)',
+                fontSize: 13,
+                fontWeight: 700,
+                color: 'var(--ink)',
+              }}
+            >
+              {localizedCountryName(menu.name, i18n.language)}
+            </div>
+            {MENU_CHOICES.map((choice) => (
+              <button
+                key={choice}
+                type="button"
+                role="menuitem"
+                className="atlas-menu-item"
+                onClick={() => chooseStatus(choice)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  width: '100%',
+                  padding: '7px 8px',
+                  border: 'none',
+                  background: 'transparent',
+                  borderRadius: 'var(--radius)',
+                  borderTop: choice === 'none' ? '1px solid var(--line)' : undefined,
+                  marginTop: choice === 'none' ? 4 : undefined,
+                  fontFamily: 'var(--font-ui)',
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: choice === 'none' ? 'var(--ink-soft)' : 'var(--ink)',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                }}
+              >
+                {choice === 'none' ? (
+                  t('map.statusClear', { defaultValue: 'Clear' })
+                ) : (
+                  <>
+                    <i
+                      aria-hidden="true"
+                      style={{
+                        width: 10,
+                        height: 10,
+                        borderRadius: '50%',
+                        background: STATUS_COLORS[choice],
+                        flex: '0 0 auto',
+                      }}
+                    />
+                    {t(`map.legend.${choice}`)}
+                  </>
+                )}
+              </button>
+            ))}
           </div>
         )}
 

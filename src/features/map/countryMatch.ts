@@ -114,6 +114,11 @@ const GEO_NAMES: ReadonlySet<string> = new Set(
   ).objects.countries.geometries.map((g) => canonical(g.properties.name)),
 );
 
+/** Whether a (canonical) key exists on the bundled atlas. */
+export function isOnAtlas(name: string): boolean {
+  return GEO_NAMES.has(canonical(name));
+}
+
 /** How many of the user's statused countries actually appear on the atlas. */
 export function computeCoverage(statusMap: Map<string, MapStatus>): {
   matched: number;
@@ -121,4 +126,32 @@ export function computeCoverage(statusMap: Map<string, MapStatus>): {
 } {
   const keys = [...statusMap.keys()];
   return { total: keys.length, matched: keys.filter((k) => GEO_NAMES.has(k)).length };
+}
+
+/**
+ * The user's statused country names that do NOT resolve to any geography on the
+ * bundled atlas — i.e. the silently-uncoloured entries `computeCoverage` counts
+ * as missed. Returns the original display names (deduped by canonical key, first
+ * spelling wins, sorted) so the UI can list them and link back to the editor.
+ */
+export function unmatchedCountryNames(data: TravelData): string[] {
+  const byKey = new Map<string, string>();
+  const consider = (name: string) => {
+    const display = name.trim();
+    if (!display) return;
+    const key = canonical(display);
+    if (GEO_NAMES.has(key) || byKey.has(key)) return;
+    byKey.set(key, display);
+  };
+
+  consider(data.person.birthplace.country);
+  for (const c of data.travel.countries) {
+    // Only flag countries that actually carry a status — an empty/placeholder
+    // row isn't a "missed match", it's just unfinished.
+    const statused =
+      c.status.visited || c.status.lived || c.status.birthplace || c.capitalVisit.visited;
+    if (statused) consider(c.name);
+  }
+
+  return [...byKey.values()].sort((a, b) => a.localeCompare(b));
 }

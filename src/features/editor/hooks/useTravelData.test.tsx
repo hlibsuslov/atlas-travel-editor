@@ -16,10 +16,24 @@ vi.mock('@/features/auth/AuthProvider', () => ({
   useAuth: () => ({ user: { id: 'user-1' }, session: {}, loading: false }),
 }));
 
+// Make the storage registry resolve to the Supabase backend (which delegates to
+// the mocked api below), so the hook exercises the authenticated cloud path.
+vi.mock('@/lib/env', () => ({
+  env: {
+    supabaseConfigured: true,
+    backendOptional: false,
+    localOnly: false,
+    demoAuth: false,
+    appUrl: 'http://localhost',
+  },
+  envError: null,
+}));
+
 vi.mock('@/features/editor/api', () => ({
   fetchMyRecord: mockFetch,
   saveMyRecord: mockSave,
   setSharing: vi.fn(),
+  fetchPublicRecord: vi.fn(),
 }));
 
 const { useTravelData } = await import('./useTravelData');

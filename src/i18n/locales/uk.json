@@ -67,7 +67,8 @@
     "reorder": "Перемістити",
     "undo": "Скасувати",
     "redo": "Повторити",
-    "retry": "Спробувати ще раз"
+    "retry": "Спробувати ще раз",
+    "clear": "Очистити"
   },
   "editor": {
     "title": "Редактор",
@@ -77,7 +78,12 @@
     "required": "обовʼязково",
     "countries": "Країни",
     "birthplacePlaceholder": "напр., Україна",
-    "offlineNote": "Ви офлайн — зміни зберігаються локально та синхронізуються пізніше."
+    "offlineNote": "Ви офлайн — зміни зберігаються локально та синхронізуються пізніше.",
+    "fixToSave": "Виправте, щоб зберегти: {{message}}",
+    "editYear": "Змінити рік",
+    "editEntry": "Змінити запис",
+    "actualized": "Записано: {{country}} {{year}}",
+    "actualizeYear": "Позначити візит цього року ({{year}})"
   },
   "stats": {
     "countries": "Країни",
@@ -112,7 +118,20 @@
   "import": {
     "title": "Імпорт JSON",
     "placeholder": "Вставте ваш JSON сюди...",
-    "failed": "Помилка імпорту: {{message}}"
+    "failed": "Помилка імпорту: {{message}}",
+    "tabJson": "JSON",
+    "tabList": "Вставити список",
+    "applyAs": "Застосувати як",
+    "replace": "Замінити",
+    "merge": "Об’єднати",
+    "listSummary": "розпізнано: {{resolved}} · не розпізнано: {{unmatched}}",
+    "listCities": "міст: {{cities}}",
+    "unmatchedTitle": "Не вдалося розпізнати:",
+    "listPlaceholder": "По одній країні в рядку, напр.\nSpain: Madrid 2019, Barcelona 2021\nFrance\nJapan: Tokyo 2023"
+  },
+  "storage": {
+    "destination": "Місце збереження",
+    "switched": "Тепер зберігається в {{target}}"
   },
   "validation": {
     "invalidTimeline": "Невірний формат. Використовуйте {{formats}}.",
@@ -124,12 +143,28 @@
     "loadOwn": "Завантажити мої дані",
     "matched": "Зіставлено країн на карті: {{matched}} з {{total}}",
     "unmatchedHint": "Деякі назви не збіглися з картою. Для кращого результату використовуйте офіційні англійські назви країн.",
+    "regionAria": "{{name}}: {{status}}",
+    "mapAria": "Карта подорожей світом",
+    "statusMenuAria": "Задати статус для {{name}}",
+    "statusClear": "Очистити",
+    "zoomIn": "Наблизити",
+    "zoomOut": "Віддалити",
+    "zoomReset": "Скинути вигляд",
+    "unmatchedLabel": "Не збіглося:",
+    "fixInEditor": "Відкрити {{name}} у редакторі, щоб виправити назву",
     "legend": {
       "birthplace": "Місце народження",
       "lived": "Проживання",
       "visited": "Відвідування",
       "capital": "Лише столиця",
-      "none": "Не відвідано"
+      "none": "Не відвідано",
+      "aria": "Легенда карти",
+      "itemAria": "{{label}}, {{count}}"
+    },
+    "empty": {
+      "heading": "Ваша карта порожня",
+      "hint": "Натисніть на країну, щоб позначити її, або імпортуйте свої дані про подорожі.",
+      "import": "Імпортувати дані"
     }
   },
   "friends": {

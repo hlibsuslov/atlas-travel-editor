@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { Check, Globe, Redo2, Share2, Undo2, WifiOff } from 'lucide-react';
+import { AlertTriangle, Check, Globe, Redo2, Share2, Undo2, WifiOff } from 'lucide-react';
 import { useEditorStore } from '@/features/editor/store';
 import { useTravelData } from '@/features/editor/hooks/useTravelData';
 import { useAutosave } from '@/features/editor/hooks/useAutosave';
@@ -41,6 +41,34 @@ export function EditorPage() {
     }
     return set;
   }, [validation]);
+
+  // The first blocking validation issue, surfaced inline next to Save so the
+  // user doesn't have to hunt the JSON pane. We keep the human-readable message
+  // (after the path prefix) and where to send focus when it's clicked.
+  const firstBlocker = useMemo(() => {
+    const issue = validation.errors[0];
+    if (!issue) return null;
+    const sep = issue.indexOf(': ');
+    const message = sep === -1 ? issue : issue.slice(sep + 2);
+    const country = /^travel\.countries\.(\d+)\b/.exec(issue);
+    if (country) return { message, target: `country-card-${Number(country[1])}` };
+    if (/^person\.birthplace\b/.test(issue)) return { message, target: 'birthplace-field' };
+    return { message, target: null as string | null };
+  }, [validation]);
+
+  // Scroll to and focus the element behind the first blocking issue. The country
+  // card root carries `id="country-card-<index>"`; we move focus to its header
+  // button (the focusable child) so keyboard users land on it too.
+  const revealBlocker = () => {
+    if (!firstBlocker?.target) return;
+    const el = document.getElementById(firstBlocker.target);
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const focusable = el.matches('input, [tabindex], button')
+      ? el
+      : el.querySelector<HTMLElement>('[tabindex], input, button');
+    focusable?.focus({ preventScroll: true });
+  };
 
   const visibleCountries = useMemo(() => {
     const q = filter.trim().toLowerCase();
@@ -143,6 +171,22 @@ export function EditorPage() {
             {t('actions.import')}
           </button>
           <ExportMenu data={data} />
+          {!validation.ok && firstBlocker && (
+            <button
+              type="button"
+              className="pill pill-bad"
+              style={{ cursor: 'pointer', maxWidth: 260, border: 'none' }}
+              title={t('editor.fixToSave', 'Fix this to save: {{message}}', {
+                message: firstBlocker.message,
+              })}
+              onClick={revealBlocker}
+            >
+              <AlertTriangle size={13} style={{ flexShrink: 0 }} />
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {firstBlocker.message}
+              </span>
+            </button>
+          )}
           <button
             className="btn btn-sm btn-primary"
             disabled={save.isPending || !validation.ok}
@@ -180,7 +224,7 @@ export function EditorPage() {
               </div>
             </div>
             <div className="panel-body">
-              <div className="field" style={{ marginBottom: 0 }}>
+              <div id="birthplace-field" className="field" style={{ marginBottom: 0 }}>
                 <div className="field-label">
                   <span>{t('editor.birthplace')}</span>
                   <span className="req">{t('editor.required')}</span>
