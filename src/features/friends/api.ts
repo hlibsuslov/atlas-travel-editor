@@ -1,8 +1,12 @@
 import {
   atlasAddFollow,
+  atlasDiscover,
+  atlasFeed,
   atlasListFollows,
   atlasRemoveFollow,
   getAtlasUrl,
+  type AtlasDiscoverProfile,
+  type AtlasFeedEntry,
   type AtlasFollow,
 } from '@/lib/atlas/client';
 
@@ -52,4 +56,19 @@ export async function addFriend(input: string, label?: string): Promise<FriendLi
 export async function removeFriend(handle: string | null): Promise<void> {
   if (!connected() || !handle) return;
   await atlasRemoveFollow(handle);
+}
+
+export type FeedEntry = AtlasFeedEntry;
+export type DiscoverProfile = AtlasDiscoverProfile;
+
+/** Recent shared-map updates from people you follow. Empty without a server. */
+export async function feed(): Promise<FeedEntry[]> {
+  if (!connected()) return [];
+  return atlasFeed();
+}
+
+/** Search discoverable public profiles. Empty without a server / blank query. */
+export async function discoverProfiles(q: string): Promise<DiscoverProfile[]> {
+  if (!connected() || q.trim().length < 1) return [];
+  return atlasDiscover(q);
 }

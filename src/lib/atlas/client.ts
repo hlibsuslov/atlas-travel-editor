@@ -268,3 +268,32 @@ export async function atlasAddFollow(target: {
 export async function atlasRemoveFollow(handle: string): Promise<void> {
   await req(`/follows/${encodeURIComponent(handle)}`, { method: 'DELETE' });
 }
+
+export interface AtlasFeedEntry {
+  handle: string | null;
+  display_name: string;
+  accent_color: string;
+  share_slug: string | null;
+  updated_at: string;
+  country_count: number;
+}
+
+/** Recent shared-map updates from people the signed-in user follows. */
+export async function atlasFeed(): Promise<AtlasFeedEntry[]> {
+  const res = await req('/feed');
+  if (!res.ok) return [];
+  return (await res.json()) as AtlasFeedEntry[];
+}
+
+export interface AtlasDiscoverProfile {
+  handle: string | null;
+  display_name: string;
+  accent_color: string;
+}
+
+/** Search discoverable public profiles by handle or display name. */
+export async function atlasDiscover(q: string): Promise<AtlasDiscoverProfile[]> {
+  const res = await req(`/discover/profiles?q=${encodeURIComponent(q)}`);
+  if (!res.ok) return [];
+  return (await res.json()) as AtlasDiscoverProfile[];
+}
