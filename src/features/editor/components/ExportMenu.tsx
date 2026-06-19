@@ -14,6 +14,7 @@ import {
 import { toast } from 'sonner';
 import type { TravelData } from '@/domain/schema';
 import { downloadText } from '@/lib/download';
+import { wrapEnvelope } from '@/lib/storage/envelope';
 import { useStorage } from '@/features/storage/StorageProvider';
 import type { StoreId } from '@/lib/storage/types';
 
@@ -62,10 +63,14 @@ export function ExportMenu({ data }: { data: TravelData }) {
     };
   }, [open]);
 
-  const json = () => JSON.stringify(data, null, 2);
+  // Export the self-describing portable envelope ({app,schemaVersion,updatedAt,data})
+  // so the file is forward-compatible and round-trips through import and the
+  // file/IndexedDB stores without translation.
+  const json = () => JSON.stringify(wrapEnvelope(data), null, 2);
+  const exportFilename = () => `travel-data-${new Date().toISOString().slice(0, 10)}.json`;
 
   const download = () => {
-    downloadText('travel-data.json', json());
+    downloadText(exportFilename(), json());
     setOpen(false);
   };
 

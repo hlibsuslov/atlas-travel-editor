@@ -30,6 +30,23 @@ describe('portable envelope', () => {
     expect(read.updatedAt).toBeUndefined();
   });
 
+  it('treats an object lacking a numeric schemaVersion as a bare legacy doc', () => {
+    // An object with our app id but no numeric schemaVersion is NOT a valid
+    // envelope, so it is read as a bare document (and normalizes to defaults).
+    const notEnvelope = { app: APP_ID, data: makeDefaultData() };
+    const read = readEnvelope(notEnvelope);
+    expect(read.updatedAt).toBeUndefined();
+    // Read as bare: the top-level object has no person/travel, so it defaults out.
+    expect(read.data.travel.countries).toEqual([]);
+  });
+
+  it('reads a future schemaVersion forward-compatibly', () => {
+    const future = { app: APP_ID, schemaVersion: 999, updatedAt: '2030-01-01T00:00:00.000Z', data: makeDefaultData() };
+    const read = readEnvelope(future);
+    expect(read.data.person.birthplace.country).toBe('Ukraine');
+    expect(read.updatedAt).toBe('2030-01-01T00:00:00.000Z');
+  });
+
   it('normalizes the data on read (coerces legacy / loose input)', () => {
     // A loosely-shaped blob inside an envelope: missing fields, string city.
     const loose = {
