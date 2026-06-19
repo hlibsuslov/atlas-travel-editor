@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { getAtlasUrl } from '@/lib/atlas/client';
 import { getMyProfile, saveMyProfile } from './api';
 
 /** Palette of CSP-safe avatar accent colors (drawn from the design tokens). */
@@ -30,16 +31,19 @@ export function ProfileEditor() {
 
   const [name, setName] = useState('');
   const [color, setColor] = useState(COLORS[0]!);
+  const [handle, setHandle] = useState('');
+  const connected = !!getAtlasUrl();
 
   // Hydrate the form once the saved profile arrives.
   useEffect(() => {
     if (!profile.data) return;
     setName(profile.data.display_name);
     if (profile.data.accent_color) setColor(profile.data.accent_color);
+    setHandle(profile.data.public_handle ?? '');
   }, [profile.data]);
 
   const save = useMutation({
-    mutationFn: () => saveMyProfile(name, color),
+    mutationFn: () => saveMyProfile(name, color, handle.trim().toLowerCase() || null),
     onSuccess: (saved) => {
       queryClient.setQueryData(['my-profile'], saved);
       toast.success(t('profile.saved'));
@@ -89,6 +93,29 @@ export function ProfileEditor() {
                 />
               ))}
             </div>
+          </div>
+          <div className="field">
+            <label className="field-label" htmlFor="profile-handle">
+              {t('profile.handle', 'Handle')}
+            </label>
+            <input
+              id="profile-handle"
+              className="input mono"
+              value={handle}
+              maxLength={30}
+              placeholder="yourname"
+              disabled={!connected}
+              aria-describedby="profile-handle-hint"
+              onChange={(e) => setHandle(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
+            />
+            <span id="profile-handle-hint" className="helper">
+              {connected
+                ? t('profile.handleHint', {
+                    handle: handle || 'yourname',
+                    defaultValue: 'Your public address: /u/{{handle}}',
+                  })
+                : t('profile.serverNeeded', 'Connect an Atlas Server to claim a public handle.')}
+            </span>
           </div>
         </div>
         <button
