@@ -115,6 +115,13 @@ function CityRow({ city, onRename, onRemove, onAddYear, onRemoveYear, onEditYear
       revertingRef.current = false;
       return;
     }
+    // An empty / whitespace-only name is invalid (the schema requires a non-empty
+    // city name) and would block saving the whole document. Revert to the last
+    // good name instead of committing the broken interim value.
+    if (!draftName.trim()) {
+      setDraftName(city.name);
+      return;
+    }
     if (draftName !== city.name) onRename(draftName);
   };
 

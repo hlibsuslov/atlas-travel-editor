@@ -17,6 +17,12 @@ import { canonicalCountryName } from '@/domain/countries';
 export interface EditorState {
   data: TravelData;
   dirty: boolean;
+  /**
+   * The last synced/saved document — the "clean" baseline. `dirty` is derived by
+   * comparing `data` against this, so undoing (or editing) back to the saved state
+   * correctly clears `dirty` instead of leaving a phantom unsaved flag.
+   */
+  cleanData: TravelData;
   /** Past document snapshots, oldest first; the tail is the most recent. */
   past: TravelData[];
   /** Undone snapshots available for redo, newest first. */
@@ -75,6 +81,15 @@ const HISTORY_LIMIT = 50;
 /** Plain, detached snapshot of a draft's current document. */
 const snapshot = (data: Draft<TravelData>): TravelData => structuredClone(current(data));
 
+/**
+ * Structural equality of two documents. Our documents are small and built with a
+ * stable key order (schema defaults, clones), so a JSON comparison is reliable
+ * here. Used only to derive `dirty`; a false "different" verdict would at worst
+ * trigger one redundant save, never drop a needed one. Accepts Immer drafts or
+ * plain objects — `JSON.stringify` serializes both, so no `current()` is needed.
+ */
+const sameDoc = (a: unknown, b: unknown): boolean => JSON.stringify(a) === JSON.stringify(b);
+
 export const useEditorStore = create<EditorState>()(
   immer((set, get) => {
     /**
@@ -87,19 +102,30 @@ export const useEditorStore = create<EditorState>()(
         if (s.past.length > HISTORY_LIMIT) s.past.shift();
         s.future = [];
         recipe(s);
-        s.dirty = true;
+        // Derive dirty from the clean baseline so editing back to the saved state
+        // clears it (and so this stays correct under undo/redo below).
+        s.dirty = !sameDoc(s.data, s.cleanData);
       });
 
     return {
       data: makeDefaultData(),
       dirty: false,
+      cleanData: makeDefaultData(),
       past: [],
       future: [],
 
       setData: (data, opts) =>
         set((s) => {
           s.data = data;
-          s.dirty = !opts?.markClean;
+          if (opts?.markClean) {
+            // A synced load: this IS the new clean baseline.
+            s.cleanData = structuredClone(data);
+            s.dirty = false;
+          } else {
+            // An unsaved load/import (e.g. "Load own data"): dirty relative to the
+            // last saved baseline, which is left intact.
+            s.dirty = !sameDoc(data, s.cleanData);
+          }
           // A load/import is a fresh baseline — there is nothing to undo past it.
           s.past = [];
           s.future = [];
@@ -109,6 +135,8 @@ export const useEditorStore = create<EditorState>()(
 
       markClean: () =>
         set((s) => {
+          // The current document is now the saved baseline.
+          s.cleanData = snapshot(s.data);
           s.dirty = false;
         }),
 
@@ -118,7 +146,7 @@ export const useEditorStore = create<EditorState>()(
           if (!prev) return;
           s.future.unshift(snapshot(s.data));
           s.data = prev;
-          s.dirty = true;
+          s.dirty = !sameDoc(prev, s.cleanData);
         }),
 
       redo: () =>
@@ -127,7 +155,7 @@ export const useEditorStore = create<EditorState>()(
           if (!next) return;
           s.past.push(snapshot(s.data));
           s.data = next;
-          s.dirty = true;
+          s.dirty = !sameDoc(next, s.cleanData);
         }),
 
       setBirthplace: (country) =>
@@ -296,14 +324,18 @@ export const useEditorStore = create<EditorState>()(
           if (city) city.name = name;
         }),
 
-      addCityYear: (index, cityIndex, year) =>
+      addCityYear: (index, cityIndex, year) => {
+        // Skip no-op adds (missing city or duplicate year) BEFORE mutating, so a
+        // re-add never pushes an empty snapshot onto the undo stack.
+        const city = get().data.travel.countries[index]?.cities[cityIndex];
+        if (!city || city.timeline.visited.includes(year)) return;
         mutate((s) => {
-          const city = s.data.travel.countries[index]?.cities[cityIndex];
-          if (city && !city.timeline.visited.includes(year)) {
-            city.timeline.visited.push(year);
-            city.timeline.visited.sort((a, b) => a - b);
-          }
-        }),
+          const c = s.data.travel.countries[index]?.cities[cityIndex];
+          if (!c) return;
+          c.timeline.visited.push(year);
+          c.timeline.visited.sort((a, b) => a - b);
+        });
+      },
 
       removeCityYear: (index, cityIndex, yearIndex) =>
         mutate((s) => {

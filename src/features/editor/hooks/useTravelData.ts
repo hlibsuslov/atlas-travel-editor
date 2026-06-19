@@ -78,8 +78,18 @@ export function useTravelData() {
   useEffect(() => {
     if (!enabled || !query.isSuccess) return;
     const serverData = query.data?.data ?? makeDefaultData();
-    setStoreData(serverData, { markClean: true });
+    // Keep the offline cache fresh regardless of whether we adopt the payload.
     writeCache(cacheKey, serverData);
+    const store = useEditorStore.getState();
+    // Never clobber unsaved local edits made during the load window — adopting the
+    // server payload here would silently discard them. The edits stay; the next
+    // save reconciles. (A field-level merge is a deferred follow-up.)
+    if (store.dirty) return;
+    // Only adopt when the server actually differs — re-`setData` wipes undo history
+    // and re-renders, so skipping identical payloads avoids needless churn (e.g. a
+    // refetch returning the same document, or the post-save query update).
+    if (JSON.stringify(store.data) === JSON.stringify(serverData)) return;
+    setStoreData(serverData, { markClean: true });
   }, [enabled, query.isSuccess, query.data, setStoreData, cacheKey]);
 
   const save = useMutation({

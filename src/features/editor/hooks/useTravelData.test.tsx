@@ -84,6 +84,30 @@ describe('useTravelData', () => {
     });
   });
 
+  it('does not clobber unsaved local edits that arrive during the load window', async () => {
+    const server = makeDefaultData();
+    server.person.birthplace.country = 'ServerLand';
+    let resolve!: (r: TravelRecord) => void;
+    mockFetch.mockReturnValue(new Promise<TravelRecord>((res) => (resolve = res)));
+
+    const { result } = renderHook(() => useTravelData(), { wrapper });
+
+    // The user edits while the network request is still in flight.
+    act(() => useEditorStore.getState().setBirthplace('LocalEdit'));
+    expect(useEditorStore.getState().dirty).toBe(true);
+
+    // The server response now arrives.
+    await act(async () => {
+      resolve(record(server));
+      await Promise.resolve(); // flush the resolved-promise microtask chain
+    });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    // The in-flight edit survives — it was NOT overwritten by the server payload.
+    expect(useEditorStore.getState().data.person.birthplace.country).toBe('LocalEdit');
+    expect(useEditorStore.getState().dirty).toBe(true);
+  });
+
   it('marks the store clean after a successful save', async () => {
     mockFetch.mockResolvedValue(record());
     mockSave.mockResolvedValue(record());

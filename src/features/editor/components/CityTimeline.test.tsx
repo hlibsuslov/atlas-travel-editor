@@ -101,6 +101,23 @@ describe('<CityTimeline> bound to the store', () => {
     expect(screen.getByDisplayValue('Vienna')).toBeInTheDocument();
   });
 
+  it('reverts a blank rename instead of committing an invalid empty name', async () => {
+    const user = userEvent.setup();
+    render(<TimelineUnderTest />);
+    const undoDepthBefore = useEditorStore.getState().past.length;
+
+    const field = screen.getByDisplayValue('Vienna');
+    await user.clear(field);
+    await user.type(field, '   '); // whitespace only
+    await user.tab(); // blur
+
+    // The store keeps the original name and no undo entry is created.
+    expect(firstCountry().cities[0]!.name).toBe('Vienna');
+    expect(useEditorStore.getState().past.length).toBe(undoDepthBefore);
+    // The field snaps back to the last good value.
+    expect(screen.getByDisplayValue('Vienna')).toBeInTheDocument();
+  });
+
   it('edits an existing year chip in place', async () => {
     const user = userEvent.setup();
     // Seed an existing year on the city.
