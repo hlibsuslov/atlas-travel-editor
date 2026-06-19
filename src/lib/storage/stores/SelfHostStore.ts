@@ -1,44 +1,58 @@
 import type { TravelData } from '@/domain/schema';
-import type { Capabilities, DocumentStore, StorageDoc, VersionToken } from '../types';
+import { atlasLoadDoc, atlasSaveDoc, getAtlasUrl, getToken } from '@/lib/atlas/client';
+import {
+  ConflictError,
+  type Capabilities,
+  type DocumentStore,
+  type StorageDoc,
+  type VersionToken,
+} from '../types';
 
 /**
- * PLACEHOLDER adapter for the self-hostable **Atlas Server** — our own OSS sharing
- * and social backend. It reserves the seam slot and the `selfhost` StoreId so that
- * a later sprint only needs to fill in the `fetch()` bodies (auth, document
- * load/save with `If-Match` optimistic concurrency, sharing, public reads) without
- * structural churn.
+ * DocumentStore backed by a self-hosted **Atlas Server** instance. It is the first
+ * store with real token concurrency: a stale save surfaces as the shared
+ * {@link ConflictError} carrying the remote document, so the editor's
+ * keep-mine / take-theirs flow works unchanged. Local-first stays the source of
+ * truth; this store only engages when the user has connected a server.
  *
- * It is registered as NOT ready (`READY.selfhost = false`), so it is never the
- * active store yet; `load`/`save` throw a clear "not yet available" error if ever
- * reached. This will become the first store with BOTH `sharing` AND real token
- * concurrency — exactly what the {@link DocumentStore} seam was designed for.
+ * Normalize-on-load and validate-on-save are enforced centrally by the registry
+ * wrapper, so this adapter only shapes bytes ↔ StorageDoc.
  */
 const SELFHOST_CAPS: Capabilities = {
-  sharing: true,
+  // Sharing endpoints land in the next sprint; advertise them then.
+  sharing: false,
   concurrency: 'token',
   watch: false,
   list: false,
   auth: true,
 };
 
-const NOT_AVAILABLE = 'Self-host backend not yet available.';
-
 export class SelfHostStore implements DocumentStore {
   readonly id = 'selfhost' as const;
   readonly label = 'Atlas Server (self-hosted)';
   readonly capabilities = SELFHOST_CAPS;
 
-  load(): Promise<StorageDoc | null> {
-    return Promise.reject(new Error(NOT_AVAILABLE));
+  async load(): Promise<StorageDoc | null> {
+    const res = await atlasLoadDoc();
+    if (!res) return null;
+    return {
+      data: res.data as TravelData,
+      meta: { version: res.version, isPublic: res.is_public, shareSlug: res.share_slug },
+    };
   }
 
-  save(_data: TravelData, _expected?: VersionToken): Promise<StorageDoc> {
-    void _data;
-    void _expected;
-    return Promise.reject(new Error(NOT_AVAILABLE));
+  async save(data: TravelData, expected?: VersionToken): Promise<StorageDoc> {
+    const expectedVersion = typeof expected === 'number' ? expected : null;
+    const { conflict, doc } = await atlasSaveDoc(data, expectedVersion);
+    const result: StorageDoc = {
+      data: doc.data as TravelData,
+      meta: { version: doc.version, isPublic: doc.is_public, shareSlug: doc.share_slug },
+    };
+    if (conflict) throw new ConflictError(result);
+    return result;
   }
 
   isConnected(): boolean {
-    return false;
+    return !!getAtlasUrl() && !!getToken();
   }
 }
