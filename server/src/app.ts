@@ -47,7 +47,8 @@ import { normalizeTravelData } from './domain/normalize';
 
 export const APP_NAME = 'atlas-server';
 export const APP_VERSION = '0.1.0';
-export const SCHEMA_VERSION = 1;
+/** Highest TravelData schema version the server understands (v2 = diary stays). */
+export const SCHEMA_VERSION = 2;
 const ENVELOPE_APP_ID = 'travel-editor';
 const TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 

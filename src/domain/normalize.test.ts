@@ -58,6 +58,42 @@ describe('normalizeTravelData', () => {
       birthplace: false,
     });
   });
+
+  // --- Diary stays (schema v2, additive) -----------------------------------
+  it('omits the stays key entirely for legacy documents (stays stay slim)', () => {
+    const result = normalizeTravelData({ travel: { countries: [] } });
+    expect('stays' in result.travel).toBe(false);
+  });
+
+  it('coerces loose diary stays and validates the result', () => {
+    const result = normalizeTravelData({
+      person: { birthplace: { country: 'Ukraine' } },
+      travel: {
+        countries: [],
+        stays: [
+          { name: '  Hotel  ', city: 'Rome', cost: { amount: '12000', currency: 'usd' } },
+          { name: '' }, // dropped (no name)
+          'garbage',
+        ],
+      },
+    });
+    expect(result.travel.stays).toHaveLength(1);
+    expect(result.travel.stays![0]).toEqual({
+      name: 'Hotel',
+      city: 'Rome',
+      cost: { amount: 12000, currency: 'USD' },
+    });
+    expect(validateTravelData(result).ok).toBe(true);
+  });
+
+  it('drops an invalid money cost rather than failing the whole stay', () => {
+    const result = normalizeTravelData({
+      person: { birthplace: { country: 'Ukraine' } },
+      travel: { countries: [], stays: [{ name: 'Place', cost: { amount: 1, currency: 'euro' } }] },
+    });
+    expect(result.travel.stays![0]!.cost).toBeUndefined();
+    expect(validateTravelData(result).ok).toBe(true);
+  });
 });
 
 describe('factories', () => {
