@@ -232,3 +232,67 @@ export function getPublicByHandle(db: DB, handle: string): PublicView | undefine
     .get(profile.user_id) as DocRow | undefined;
   return doc ? { doc, profile } : undefined;
 }
+
+/** A directed follow edge, enriched with the target's public profile + live slug. */
+export interface FollowView {
+  target_id: string;
+  handle: string | null;
+  display_name: string;
+  accent_color: string;
+  /** The target's current public/unlisted slug (for rendering their map), else null. */
+  share_slug: string | null;
+  label: string | null;
+}
+
+/** Resolve a follow target by handle or by a share slug → its user id. */
+export function resolveTargetId(
+  db: DB,
+  by: { handle?: string; slug?: string },
+): string | undefined {
+  if (by.handle) return getProfileByHandle(db, by.handle)?.user_id;
+  if (by.slug) return getPublicBySlug(db, by.slug)?.doc.user_id;
+  return undefined;
+}
+
+/** Create a directed follow edge. Throws on the PK (already-following) collision. */
+export function addFollow(
+  db: DB,
+  followerId: string,
+  targetId: string,
+  label: string | null,
+): void {
+  db.prepare(
+    'INSERT INTO follows (follower_id, target_id, label, created_at) VALUES (?, ?, ?, ?)',
+  ).run(followerId, targetId, label, now());
+}
+
+export function removeFollow(db: DB, followerId: string, targetId: string): void {
+  db.prepare('DELETE FROM follows WHERE follower_id = ? AND target_id = ?').run(
+    followerId,
+    targetId,
+  );
+}
+
+/** The people the follower follows, with each target's public profile + live slug. */
+export function listFollows(db: DB, followerId: string): FollowView[] {
+  return db
+    .prepare(
+      `SELECT f.target_id, p.handle, p.display_name, p.accent_color, f.label,
+              CASE WHEN d.visibility IN ('unlisted', 'public') THEN d.share_slug ELSE NULL END AS share_slug
+         FROM follows f
+         JOIN profiles p ON p.user_id = f.target_id
+         LEFT JOIN documents d ON d.user_id = f.target_id
+        WHERE f.follower_id = ?
+        ORDER BY f.created_at DESC`,
+    )
+    .all(followerId) as unknown as FollowView[];
+}
+
+/** How many people follow this user (for mutual-follow detection later). */
+export function followersCount(db: DB, userId: string): number {
+  return (
+    db.prepare('SELECT COUNT(*) AS n FROM follows WHERE target_id = ?').get(userId) as {
+      n: number;
+    }
+  ).n;
+}

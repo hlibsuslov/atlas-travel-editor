@@ -62,5 +62,14 @@ function migrate(db: DB): void {
       version    INTEGER NOT NULL DEFAULT 0,
       updated_at TEXT NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS follows (
+      follower_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      target_id   TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      label       TEXT,
+      created_at  TEXT NOT NULL,
+      PRIMARY KEY (follower_id, target_id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_follows_target ON follows(target_id);
   `);
 }
