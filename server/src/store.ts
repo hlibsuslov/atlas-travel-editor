@@ -244,12 +244,15 @@ export interface FollowView {
   label: string | null;
 }
 
-/** Resolve a follow target by handle or by a share slug → its user id. */
+/** Resolve a follow target by handle, falling back to a share slug → its user id. */
 export function resolveTargetId(
   db: DB,
   by: { handle?: string; slug?: string },
 ): string | undefined {
-  if (by.handle) return getProfileByHandle(db, by.handle)?.user_id;
+  if (by.handle) {
+    const byHandle = getProfileByHandle(db, by.handle)?.user_id;
+    if (byHandle) return byHandle;
+  }
   if (by.slug) return getPublicBySlug(db, by.slug)?.doc.user_id;
   return undefined;
 }
