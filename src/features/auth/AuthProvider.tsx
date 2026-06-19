@@ -1,13 +1,28 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
-import type { Session, User } from '@supabase/supabase-js';
-import { supabase } from '@/lib/supabase';
 import { clearCache } from '@/features/editor/cache';
-import { getLocalSession, isLocalMode, isLocalOnlyMode, signInDemo, signOutDemo } from './demo';
+import {
+  getLocalSession,
+  isLocalMode,
+  isLocalOnlyMode,
+  signInDemo,
+  signOutDemo,
+  type LocalSession,
+  type LocalUser,
+} from './demo';
+
+/**
+ * Authentication context. The app is local-first: by default it runs with a
+ * synthetic local session and NO login wall. Real accounts arrive when a
+ * self-hostable Atlas Server is wired up (a later sprint); until then the
+ * password / OTP / OAuth methods are graceful no-ops that report that no backend
+ * is configured. The public surface is kept stable so consumers never change.
+ */
+const NO_BACKEND = 'No backend configured. Atlas runs locally; connect a server to sign in.';
 
 interface AuthContextValue {
-  session: Session | null;
-  user: User | null;
+  session: LocalSession | null;
+  user: LocalUser | null;
   loading: boolean;
   /** True when running with a local synthetic session (local-only OR demo auth). */
   demo: boolean;
@@ -15,9 +30,8 @@ interface AuthContextValue {
   localOnly: boolean;
   signInWithPassword: (email: string, password: string) => Promise<{ error: string | null }>;
   /**
-   * Register a new email/password account. `needsConfirmation` is true when the
-   * Supabase project requires email confirmation (no session yet — the user must
-   * click the link in their inbox before they can sign in).
+   * Register a new account. `needsConfirmation` is reserved for a future server
+   * flow that requires email confirmation before a session is issued.
    */
   signUpWithPassword: (
     email: string,
@@ -31,42 +45,17 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [session, setSession] = useState<Session | null>(null);
+  const [session, setSession] = useState<LocalSession | null>(null);
   const [loading, setLoading] = useState(true);
   const demo = isLocalMode();
   const localOnly = isLocalOnlyMode();
 
   useEffect(() => {
-    let mounted = true;
-
-    // Local/demo mode: resolve a synthetic session locally, skip Supabase
-    // entirely. Local-only is always signed in; demo waits for the `1/1` form.
-    if (demo) {
-      setSession(getLocalSession());
-      setLoading(false);
-      return;
-    }
-
-    void supabase.auth
-      .getSession()
-      .then(({ data }) => {
-        if (mounted) {
-          setSession(data.session);
-          setLoading(false);
-        }
-      })
-      .catch(() => {
-        if (mounted) setLoading(false);
-      });
-
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, next) => {
-      setSession(next);
-    });
-
-    return () => {
-      mounted = false;
-      sub.subscription.unsubscribe();
-    };
+    // Local/demo mode: resolve the synthetic session locally. Local-only is always
+    // signed in; demo waits for the `1/1` form. With no backend configured there is
+    // nothing async to wait for.
+    setSession(getLocalSession());
+    setLoading(false);
   }, [demo]);
 
   const value = useMemo<AuthContextValue>(
@@ -76,62 +65,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       loading,
       demo,
       localOnly,
-      signInWithPassword: async (login, password) => {
+      signInWithPassword: (login, password) => {
         if (demo) {
           const next = signInDemo(login, password);
-          if (!next) return { error: 'Invalid demo credentials.' };
+          if (!next) return Promise.resolve({ error: 'Invalid demo credentials.' });
           setSession(next);
-          return { error: null };
+          return Promise.resolve({ error: null });
         }
-        const { error } = await supabase.auth.signInWithPassword({
-          email: login,
-          password,
-        });
-        return { error: error?.message ?? null };
+        return Promise.resolve({ error: NO_BACKEND });
       },
-      signUpWithPassword: async (email, password) => {
+      signUpWithPassword: (email, password) => {
         if (demo) {
           // No real registration in demo mode — accept and sign in locally.
           const next = signInDemo(email, password);
           if (next) setSession(next);
-          return { error: null, needsConfirmation: false };
+          return Promise.resolve({ error: null, needsConfirmation: false });
         }
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: { emailRedirectTo: window.location.origin },
-        });
-        if (error) return { error: error.message, needsConfirmation: false };
-        // When email confirmation is enabled, signUp returns a user but no
-        // session until the link is clicked. Otherwise the session arrives via
-        // onAuthStateChange and the app proceeds straight to the editor.
-        return { error: null, needsConfirmation: !data.session };
+        return Promise.resolve({ error: NO_BACKEND, needsConfirmation: false });
       },
-      signInWithOtp: async (email) => {
-        const { error } = await supabase.auth.signInWithOtp({
-          email,
-          options: { emailRedirectTo: window.location.origin },
-        });
-        return { error: error?.message ?? null };
-      },
-      signInWithGoogle: async () => {
-        const { error } = await supabase.auth.signInWithOAuth({
-          provider: 'google',
-          options: { redirectTo: window.location.origin },
-        });
-        return { error: error?.message ?? null };
-      },
-      signOut: async () => {
+      signInWithOtp: () => Promise.resolve({ error: NO_BACKEND }),
+      signInWithGoogle: () => Promise.resolve({ error: NO_BACKEND }),
+      signOut: () => {
         // Purge the signed-in user's local cache so it never leaks to the next
         // person on a shared device.
         const uid = session?.user?.id;
         if (uid) clearCache(uid);
-        if (demo) {
-          signOutDemo();
-          setSession(null);
-          return;
-        }
-        await supabase.auth.signOut();
+        signOutDemo();
+        setSession(null);
+        return Promise.resolve();
       },
     }),
     [session, loading, demo, localOnly],

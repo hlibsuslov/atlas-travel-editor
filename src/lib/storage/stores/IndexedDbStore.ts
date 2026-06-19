@@ -8,7 +8,7 @@ import { wrapEnvelope, readEnvelope, type PortableEnvelope } from '../envelope';
  * Account-less local-first store. Persists the single travel document in
  * IndexedDB (durable, async, far larger than the 5MB localStorage cache) with a
  * monotonic integer version counter for optimistic concurrency. This is the
- * default when no Supabase backend is configured: no login wall, no network.
+ * the local-first default backend: no account, no login wall, no network.
  *
  * The blob is stored inside the portable envelope so the same bytes round-trip
  * through file export/import without translation.

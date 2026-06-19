@@ -14,8 +14,8 @@ import type { StorageDoc } from '@/lib/storage/types';
  * Bridges the active storage backend, the offline cache, and the editor store.
  *
  * The backend is resolved from the storage registry rather than imported
- * directly, so the same hook drives Supabase, IndexedDB, a local file, or any
- * future provider — while keeping the public return shape EXACTLY the same
+ * directly, so the same hook drives IndexedDB, a local file, the Atlas Server, or
+ * any future provider — while keeping the public return shape EXACTLY the same
  * (`{ record, isLoading, isOffline, save, share }`) so consumers need no change.
  *
  * On mount it hydrates the store from cache immediately (instant UI), then
@@ -116,8 +116,8 @@ export function useTravelData() {
         shareSlug: null,
         version: 0,
       };
-      // Sharing is a Supabase-only capability; degrade gracefully on backends
-      // that lack it by returning the current record unchanged.
+      // Sharing is a backend capability (the Atlas Server); degrade gracefully on
+      // backends that lack it by returning the current record unchanged.
       if (!store.setSharing) return base;
       const meta = await store.setSharing(isPublic);
       return {
