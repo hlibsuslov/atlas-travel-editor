@@ -237,3 +237,34 @@ export async function atlasHandleAvailable(handle: string): Promise<boolean> {
   if (!res.ok) return false;
   return ((await res.json()) as { available: boolean }).available;
 }
+
+export interface AtlasFollow {
+  handle: string | null;
+  display_name: string;
+  accent_color: string;
+  share_slug: string | null;
+  label: string | null;
+}
+
+/** The people the signed-in user follows, each with their public profile + slug. */
+export async function atlasListFollows(): Promise<AtlasFollow[]> {
+  const res = await req('/follows');
+  if (!res.ok) return [];
+  return (await res.json()) as AtlasFollow[];
+}
+
+/** Follow someone by handle and/or share slug (the server resolves the target). */
+export async function atlasAddFollow(target: {
+  handle?: string;
+  slug?: string;
+  label?: string;
+}): Promise<AtlasFollow> {
+  const res = await req('/follows', { method: 'POST', body: JSON.stringify(target) });
+  if (!res.ok) throw new Error(await errorMessage(res));
+  return (await res.json()) as AtlasFollow;
+}
+
+/** Unfollow by handle. */
+export async function atlasRemoveFollow(handle: string): Promise<void> {
+  await req(`/follows/${encodeURIComponent(handle)}`, { method: 'DELETE' });
+}
