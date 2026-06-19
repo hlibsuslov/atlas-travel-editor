@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ArrowRight, Compass, Globe, Share2, UserPlus } from 'lucide-react';
+import { ArrowRight, Globe, Share2, UserPlus } from 'lucide-react';
 import { useAuth } from './AuthProvider';
+import { BrandMark } from '@/components/brand/BrandMark';
 import { LanguageSwitcher } from '@/features/settings/LanguageSwitcher';
 import { makeDefaultData } from '@/domain/normalize';
 import { MiniMap } from '@/features/map/WorldMap';
@@ -37,8 +38,8 @@ export function LoginPage() {
     setError(false);
 
     // Real auth needs a valid email. The min-length rule applies only to sign-up
-    // (Supabase enforces it there too); on sign-in we must NOT pre-block short
-    // passwords, since an existing account may have one — let Supabase decide.
+    // (the backend enforces it there too); on sign-in we must NOT pre-block short
+    // passwords, since an existing account may have one — let the backend decide.
     if (!demo) {
       if (!EMAIL_RE.test(email.trim())) return fail(t('auth.emailInvalid'));
       if (isSignup && password.length < MIN_PASSWORD) return fail(t('auth.passwordTooShort'));
@@ -96,9 +97,7 @@ export function LoginPage() {
           }}
         />
         <div className="brand" style={{ position: 'relative', zIndex: 2, color: '#f3efe6' }}>
-          <div className="brand-mark" style={{ borderColor: '#f3efe6', color: '#f3efe6' }}>
-            <Compass size={21} />
-          </div>
+          <BrandMark size={40} className="brand-mark" color="#f3efe6" ring="rgba(243,239,230,.4)" />
           <div className="brand-text">
             <span className="brand-name">{t('app.name')}</span>
             <span className="brand-sub" style={{ color: 'rgba(243,239,230,.6)' }}>

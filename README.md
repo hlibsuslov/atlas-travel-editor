@@ -222,6 +222,7 @@ the [`Security Policy`](.github/SECURITY.md).
 - [Run modes & self-hosting](docs/SELF_HOSTING.md) — local-only, hosted Supabase, fully self-hosted
 - [Architecture & strategy](docs/STRATEGY.md)
 - [Architecture overview](docs/ARCHITECTURE.md)
+- [Brand & assets](docs/brand/BRAND.md) — logo, palette, type, favicon, social card
 - [Security model](docs/SECURITY.md)
 - [Contributing](CONTRIBUTING.md)
 - [Code of Conduct](CODE_OF_CONDUCT.md)

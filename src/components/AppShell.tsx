@@ -2,6 +2,7 @@ import { NavLink, Outlet } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Compass, LogOut, Map as MapIcon, PencilLine, Users } from 'lucide-react';
 import { useAuth } from '@/features/auth/AuthProvider';
+import { BrandMark } from '@/components/brand/BrandMark';
 import { LanguageSwitcher } from '@/features/settings/LanguageSwitcher';
 
 const NAV = [
@@ -21,9 +22,7 @@ export function AppShell() {
     <>
       <header className="topbar">
         <div className="brand">
-          <div className="brand-mark">
-            <Compass size={21} strokeWidth={1.7} />
-          </div>
+          <BrandMark size={40} className="brand-mark" />
           <div className="brand-text">
             <span className="brand-name">{t('app.name')}</span>
             <span className="brand-sub">{t('app.tagline')}</span>

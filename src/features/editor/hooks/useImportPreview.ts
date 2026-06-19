@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
-import { normalizeTravelData } from '@/domain/normalize';
 import { validateTravelData, type TravelData } from '@/domain/schema';
+import { readEnvelope } from '@/lib/storage/envelope';
 
 /** Result of inspecting pasted/loaded JSON before importing it. */
 export type ImportPreview =
@@ -28,7 +28,9 @@ export function useImportPreview(raw: string): ImportPreview {
     } catch (err) {
       return { state: 'parse', message: err instanceof Error ? err.message : 'invalid JSON' };
     }
-    const data = normalizeTravelData(parsed);
+    // Accept both the portable envelope ({app,schemaVersion,updatedAt,data}) and a
+    // bare legacy TravelData document; `readEnvelope` unwraps + normalizes both.
+    const { data } = readEnvelope(parsed);
     const validation = validateTravelData(data);
     const cities = data.travel.countries.reduce((sum, c) => sum + c.cities.length, 0);
     return {

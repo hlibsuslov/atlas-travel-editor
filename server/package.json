@@ -1,0 +1,29 @@
+{
+  "name": "@atlas/server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Atlas Server — the self-hostable, open-source sharing & social backend for Atlas (a local-first travel map). Node + Hono + built-in node:sqlite. No native dependencies.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "tsx src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test \"src/**/*.test.ts\"",
+    "check:domain": "node scripts/check-domain-drift.mjs",
+    "ci": "npm run check:domain && npm run typecheck && npm run test"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.13.7",
+    "hono": "^4.6.14",
+    "tsx": "^4.19.2",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.6.2"
+  }
+}

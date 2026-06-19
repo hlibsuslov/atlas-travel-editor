@@ -1,7 +1,6 @@
 import type { TravelData } from '@/domain/schema';
 import { validateTravelData } from '@/domain/schema';
 import { normalizeTravelData } from '@/domain/normalize';
-import { env } from '@/lib/env';
 import type {
   Capabilities,
   DocMeta,
@@ -10,9 +9,9 @@ import type {
   StoreId,
   VersionToken,
 } from './types';
-import { SupabaseStore } from './stores/SupabaseStore';
 import { IndexedDbStore } from './stores/IndexedDbStore';
 import { LocalFileStore } from './stores/LocalFileStore';
+import { SelfHostStore } from './stores/SelfHostStore';
 import { GithubStore } from './stores/GithubStore';
 import { WebdavStore } from './stores/WebdavStore';
 import { GdriveStore } from './stores/GdriveStore';
@@ -36,9 +35,9 @@ const PROVIDER_KEY = 'travel-editor:storage-provider';
 
 /** Stores that are fully implemented this wave (selectable & usable). */
 const READY: Record<string, boolean> = {
-  supabase: true,
   indexeddb: true,
   localfile: true,
+  selfhost: true,
   github: false,
   webdav: false,
   gdrive: false,
@@ -50,18 +49,16 @@ export interface StoreInfo {
   id: StoreId;
   label: string;
   capabilities: Capabilities;
-  /** False for cloud stubs — listed as "coming soon" / disabled. */
+  /** False for not-yet-implemented backends — listed as "coming soon" / disabled. */
   ready: boolean;
-  /** True only for backends that need real Supabase config to function. */
-  requiresSupabase: boolean;
 }
 
 // One instance per backend. Stores are cheap and mostly stateless (file/cloud
 // stores hold a connection handle), so a module-level singleton list is fine.
 const STORES: DocumentStore[] = [
-  new SupabaseStore(),
   new IndexedDbStore(),
   new LocalFileStore(),
+  new SelfHostStore(),
   new GithubStore(),
   new WebdavStore(),
   new GdriveStore(),
@@ -77,7 +74,6 @@ export function listStores(): StoreInfo[] {
     label: s.label,
     capabilities: s.capabilities,
     ready: READY[s.id] ?? false,
-    requiresSupabase: s.id === 'supabase',
   }));
 }
 
@@ -86,13 +82,12 @@ function getStore(id: StoreId): DocumentStore | undefined {
 }
 
 /**
- * Default backend when the user hasn't explicitly chosen one:
- *   - Supabase when it's configured (regardless of auth — the auth gate lives in
- *     the app shell, and Supabase is the intended default for the hosted build).
- *   - Otherwise IndexedDB: account-less, local-first, always available.
+ * Default backend when the user hasn't explicitly chosen one: always IndexedDB —
+ * account-less, local-first, offline, always available. A remote backend (the
+ * Atlas Server) is only ever used when the user explicitly opts in via the picker.
  */
 function defaultStoreId(): StoreId {
-  return env.supabaseConfigured ? 'supabase' : 'indexeddb';
+  return 'indexeddb';
 }
 
 function readChoice(): StoreId | null {

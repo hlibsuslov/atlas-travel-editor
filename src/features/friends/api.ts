@@ -1,19 +1,24 @@
-import { supabase } from '@/lib/supabase';
-import { env } from '@/lib/env';
-
-export interface FriendLink {
-  id: string;
-  slug: string;
-  label: string | null;
-}
+import {
+  atlasAddFollow,
+  atlasDiscover,
+  atlasFeed,
+  atlasListFollows,
+  atlasRemoveFollow,
+  getAtlasUrl,
+  type AtlasDiscoverProfile,
+  type AtlasFeedEntry,
+  type AtlasFollow,
+} from '@/lib/atlas/client';
 
 /**
- * Whether a real Supabase backend is available for social features. Friends are a
- * server-only capability: in backendless (local-only / demo) mode there is no
- * cloud to hold friend links, so every call degrades gracefully (empty / no-op)
- * instead of throwing — backing the "degrade gracefully" promise.
+ * Following / friends data access. A follow is a directed edge to another user,
+ * keyed on their handle (or resolved from a pasted share link). It requires a
+ * connected Atlas Server; in pure local-first mode there is no social graph, so
+ * every call degrades gracefully (empty / clear error / no-op).
  */
-const cloudAvailable = (): boolean => env.supabaseConfigured && !env.backendOptional;
+export type FriendLink = AtlasFollow;
+
+const connected = (): boolean => !!getAtlasUrl();
 
 /** Normalize a pasted share code or full share URL down to the slug. */
 export function extractSlug(input: string): string {
@@ -23,35 +28,47 @@ export function extractSlug(input: string): string {
 }
 
 export async function listFriends(): Promise<FriendLink[]> {
-  if (!cloudAvailable()) return [];
-  const { data, error } = await supabase
-    .from('friend_links')
-    .select('id, slug, label')
-    .order('created_at', { ascending: false });
-  if (error) throw new Error(error.message);
-  return data ?? [];
+  if (!connected()) return [];
+  return atlasListFollows();
 }
 
-export async function addFriend(slugOrUrl: string, label?: string): Promise<FriendLink> {
-  const slug = extractSlug(slugOrUrl);
-  if (!slug) throw new Error('Empty share code.');
-  if (!cloudAvailable()) throw new Error('Friends require a connected account.');
-
-  const { data: auth } = await supabase.auth.getUser();
-  const userId = auth.user?.id;
-  if (!userId) throw new Error('Not authenticated.');
-
-  const { data, error } = await supabase
-    .from('friend_links')
-    .insert({ user_id: userId, slug, label: label?.trim() || null })
-    .select('id, slug, label')
-    .single();
-  if (error) throw new Error(error.message);
-  return data;
+/**
+ * Follow someone from free-form input: a handle, a `/u/:handle` link, a
+ * `/share/:slug` link, or a bare token. Ambiguous bare tokens are sent as BOTH a
+ * handle and a slug; the server resolves a handle first, then a slug.
+ */
+export async function addFriend(input: string, label?: string): Promise<FriendLink> {
+  if (!connected()) throw new Error('Friends require a connected Atlas Server.');
+  const raw = input.trim();
+  let target: { handle?: string; slug?: string; label?: string };
+  if (/\/share\//.test(raw)) {
+    target = { slug: extractSlug(raw), label };
+  } else if (/\/u\//.test(raw)) {
+    const handle = (/\/u\/([^/?#\s]+)/.exec(raw)?.[1] ?? '').toLowerCase();
+    target = { handle, label };
+  } else {
+    const cleaned = raw.replace(/[^A-Za-z0-9_-]/g, '');
+    target = { handle: cleaned.toLowerCase(), slug: cleaned, label };
+  }
+  return atlasAddFollow(target);
 }
 
-export async function removeFriend(id: string): Promise<void> {
-  if (!cloudAvailable()) return;
-  const { error } = await supabase.from('friend_links').delete().eq('id', id);
-  if (error) throw new Error(error.message);
+export async function removeFriend(handle: string | null): Promise<void> {
+  if (!connected() || !handle) return;
+  await atlasRemoveFollow(handle);
+}
+
+export type FeedEntry = AtlasFeedEntry;
+export type DiscoverProfile = AtlasDiscoverProfile;
+
+/** Recent shared-map updates from people you follow. Empty without a server. */
+export async function feed(): Promise<FeedEntry[]> {
+  if (!connected()) return [];
+  return atlasFeed();
+}
+
+/** Search discoverable public profiles. Empty without a server / blank query. */
+export async function discoverProfiles(q: string): Promise<DiscoverProfile[]> {
+  if (!connected() || q.trim().length < 1) return [];
+  return atlasDiscover(q);
 }

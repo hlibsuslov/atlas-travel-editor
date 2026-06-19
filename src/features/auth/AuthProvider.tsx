@@ -1,24 +1,54 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
-import type { Session, User } from '@supabase/supabase-js';
-import { supabase } from '@/lib/supabase';
 import { clearCache } from '@/features/editor/cache';
-import { getLocalSession, isLocalMode, isLocalOnlyMode, signInDemo, signOutDemo } from './demo';
+import {
+  atlasLogin,
+  atlasLogout,
+  atlasMe,
+  atlasRegister,
+  getAtlasUrl,
+  getToken,
+} from '@/lib/atlas/client';
+import { env } from '@/lib/env';
+import {
+  getLocalSession,
+  isDemoMode,
+  signInDemo,
+  signOutDemo,
+  type LocalSession,
+  type LocalUser,
+} from './demo';
+
+/**
+ * Authentication context. Two modes, chosen at mount by whether a self-hostable
+ * Atlas Server is connected (its URL is configured):
+ *
+ *  - **Local-first (no server connected):** a synthetic local session, no login
+ *    wall. The default.
+ *  - **Server connected:** real accounts against the Atlas Server — register /
+ *    login / logout / session hydrate via the opaque Bearer token.
+ *
+ * Connecting or disconnecting a server reloads the app, so this provider always
+ * re-reads a consistent mode at mount. The public surface is stable so consumers
+ * (App routing, the editor, the login page) never change.
+ */
+const NO_BACKEND = 'No backend configured. Atlas runs locally; connect a server to sign in.';
+
+/** Derive a server username from an email local-part (3–30 of [a-z0-9_]). */
+function deriveUsername(email: string): string {
+  const base = (email.split('@')[0] ?? '').toLowerCase().replace(/[^a-z0-9_]/g, '');
+  return (base || 'user').slice(0, 30).padEnd(3, '0');
+}
 
 interface AuthContextValue {
-  session: Session | null;
-  user: User | null;
+  session: LocalSession | null;
+  user: LocalUser | null;
   loading: boolean;
-  /** True when running with a local synthetic session (local-only OR demo auth). */
+  /** True when running with a local synthetic session (no server connected). */
   demo: boolean;
   /** True for the no-backend local-first mode (no login wall). */
   localOnly: boolean;
   signInWithPassword: (email: string, password: string) => Promise<{ error: string | null }>;
-  /**
-   * Register a new email/password account. `needsConfirmation` is true when the
-   * Supabase project requires email confirmation (no session yet — the user must
-   * click the link in their inbox before they can sign in).
-   */
   signUpWithPassword: (
     email: string,
     password: string,
@@ -31,43 +61,37 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [session, setSession] = useState<Session | null>(null);
+  const connected = !!getAtlasUrl();
+  // The demo login form only applies when no real server is connected.
+  const demo = !connected && (env.demoAuth || isDemoMode());
+  const localOnly = !connected;
+
+  const [session, setSession] = useState<LocalSession | null>(null);
   const [loading, setLoading] = useState(true);
-  const demo = isLocalMode();
-  const localOnly = isLocalOnlyMode();
 
   useEffect(() => {
-    let mounted = true;
-
-    // Local/demo mode: resolve a synthetic session locally, skip Supabase
-    // entirely. Local-only is always signed in; demo waits for the `1/1` form.
-    if (demo) {
+    let active = true;
+    if (!connected) {
+      // Local-first: resolve the synthetic session locally (no network).
       setSession(getLocalSession());
       setLoading(false);
       return;
     }
-
-    void supabase.auth
-      .getSession()
-      .then(({ data }) => {
-        if (mounted) {
-          setSession(data.session);
-          setLoading(false);
-        }
-      })
-      .catch(() => {
-        if (mounted) setLoading(false);
-      });
-
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, next) => {
-      setSession(next);
+    // Server connected: hydrate the session from the token, if any.
+    if (!getToken()) {
+      setSession(null);
+      setLoading(false);
+      return;
+    }
+    void atlasMe().then((me) => {
+      if (!active) return;
+      setSession(me ? { user: { id: me.user.id, email: me.user.email } } : null);
+      setLoading(false);
     });
-
     return () => {
-      mounted = false;
-      sub.subscription.unsubscribe();
+      active = false;
     };
-  }, [demo]);
+  }, [connected]);
 
   const value = useMemo<AuthContextValue>(
     () => ({
@@ -77,64 +101,60 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       demo,
       localOnly,
       signInWithPassword: async (login, password) => {
+        if (connected) {
+          try {
+            const u = await atlasLogin(login, password);
+            setSession({ user: { id: u.id, email: u.email } });
+            return { error: null };
+          } catch (e) {
+            return { error: e instanceof Error ? e.message : 'Sign-in failed.' };
+          }
+        }
         if (demo) {
           const next = signInDemo(login, password);
           if (!next) return { error: 'Invalid demo credentials.' };
           setSession(next);
           return { error: null };
         }
-        const { error } = await supabase.auth.signInWithPassword({
-          email: login,
-          password,
-        });
-        return { error: error?.message ?? null };
+        return { error: NO_BACKEND };
       },
       signUpWithPassword: async (email, password) => {
+        if (connected) {
+          try {
+            const u = await atlasRegister(email, deriveUsername(email), password);
+            setSession({ user: { id: u.id, email: u.email } });
+            return { error: null, needsConfirmation: false };
+          } catch (e) {
+            return {
+              error: e instanceof Error ? e.message : 'Sign-up failed.',
+              needsConfirmation: false,
+            };
+          }
+        }
         if (demo) {
-          // No real registration in demo mode — accept and sign in locally.
           const next = signInDemo(email, password);
           if (next) setSession(next);
           return { error: null, needsConfirmation: false };
         }
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: { emailRedirectTo: window.location.origin },
-        });
-        if (error) return { error: error.message, needsConfirmation: false };
-        // When email confirmation is enabled, signUp returns a user but no
-        // session until the link is clicked. Otherwise the session arrives via
-        // onAuthStateChange and the app proceeds straight to the editor.
-        return { error: null, needsConfirmation: !data.session };
+        return { error: NO_BACKEND, needsConfirmation: false };
       },
-      signInWithOtp: async (email) => {
-        const { error } = await supabase.auth.signInWithOtp({
-          email,
-          options: { emailRedirectTo: window.location.origin },
-        });
-        return { error: error?.message ?? null };
-      },
-      signInWithGoogle: async () => {
-        const { error } = await supabase.auth.signInWithOAuth({
-          provider: 'google',
-          options: { redirectTo: window.location.origin },
-        });
-        return { error: error?.message ?? null };
-      },
+      signInWithOtp: () =>
+        Promise.resolve({
+          error: connected ? 'Magic-link sign-in is not available yet.' : NO_BACKEND,
+        }),
+      signInWithGoogle: () =>
+        Promise.resolve({
+          error: connected ? 'Google sign-in is not available yet.' : NO_BACKEND,
+        }),
       signOut: async () => {
-        // Purge the signed-in user's local cache so it never leaks to the next
-        // person on a shared device.
         const uid = session?.user?.id;
         if (uid) clearCache(uid);
-        if (demo) {
-          signOutDemo();
-          setSession(null);
-          return;
-        }
-        await supabase.auth.signOut();
+        if (connected) await atlasLogout();
+        else signOutDemo();
+        setSession(null);
       },
     }),
-    [session, loading, demo, localOnly],
+    [session, loading, demo, localOnly, connected],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

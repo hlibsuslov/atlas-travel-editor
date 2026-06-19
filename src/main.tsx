@@ -7,7 +7,7 @@ import { AuthProvider } from '@/features/auth/AuthProvider';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { ConfigError } from '@/components/ConfigError';
 import { queryClient } from '@/lib/queryClient';
-import { env, envError } from '@/lib/env';
+import { envError } from '@/lib/env';
 import { initObservability } from '@/lib/observability';
 import '@/i18n';
 import './index.css';
@@ -15,13 +15,11 @@ import './index.css';
 const rootEl = document.getElementById('root');
 if (!rootEl) throw new Error('Root element #root not found.');
 
-// If required env vars are missing/invalid the app can't talk to its backend.
-// Show a readable configuration screen instead of a blank white page (the most
-// common cause is unset VITE_* vars on the host at build time).
-//
-// In backendless mode (local-only or demo auth) Supabase config is optional, so
-// we skip this gate entirely and boot straight into the local-first editor.
-if (envError && !env.backendOptional) {
+// The app is local-first and needs no backend, so a clean clone boots straight
+// into the editor. `envError` is non-null only when an OPTIONAL var is malformed
+// (e.g. a bad VITE_SELFHOST_URL / VITE_APP_URL); show a readable configuration
+// screen instead of a blank white page in that case.
+if (envError) {
   createRoot(rootEl).render(
     <StrictMode>
       <ConfigError detail={envError} />

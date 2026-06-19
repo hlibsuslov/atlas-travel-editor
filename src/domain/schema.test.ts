@@ -54,4 +54,34 @@ describe('validateTravelData', () => {
     expect(validateTravelData('string').ok).toBe(false);
     expect(validateTravelData(42).ok).toBe(false);
   });
+
+  // --- Diary (schema v2, additive + optional) ------------------------------
+  it('accepts a legacy v1 document with no stays (backward compatible)', () => {
+    const data = makeDefaultData();
+    expect('stays' in data.travel).toBe(false);
+    expect(validateTravelData(data).ok).toBe(true);
+  });
+
+  it('accepts a document with valid diary stays (name + dates + cost)', () => {
+    const data = makeDefaultData();
+    data.travel.stays = [
+      {
+        name: 'Hotel Sacher',
+        city: 'Vienna',
+        from: '2022-05',
+        to: '2022-05',
+        cost: { amount: 42000, currency: 'EUR' },
+      },
+      { name: 'A friend’s couch' },
+    ];
+    expect(validateTravelData(data).ok).toBe(true);
+  });
+
+  it('rejects an invalid money cost (bad currency / non-integer amount)', () => {
+    const data = makeDefaultData();
+    data.travel.stays = [{ name: 'X', cost: { amount: 10.5, currency: 'eur' } }];
+    const result = validateTravelData(data);
+    expect(result.ok).toBe(false);
+    expect(result.errors.some((e) => e.includes('stays.0.cost'))).toBe(true);
+  });
 });

@@ -14,7 +14,9 @@ import {
 import { toast } from 'sonner';
 import type { TravelData } from '@/domain/schema';
 import { downloadText } from '@/lib/download';
+import { wrapEnvelope } from '@/lib/storage/envelope';
 import { useStorage } from '@/features/storage/StorageProvider';
+import { AtlasConnect } from '@/features/storage/AtlasConnect';
 import type { StoreId } from '@/lib/storage/types';
 
 /**
@@ -62,10 +64,14 @@ export function ExportMenu({ data }: { data: TravelData }) {
     };
   }, [open]);
 
-  const json = () => JSON.stringify(data, null, 2);
+  // Export the self-describing portable envelope ({app,schemaVersion,updatedAt,data})
+  // so the file is forward-compatible and round-trips through import and the
+  // file/IndexedDB stores without translation.
+  const json = () => JSON.stringify(wrapEnvelope(data), null, 2);
+  const exportFilename = () => `travel-data-${new Date().toISOString().slice(0, 10)}.json`;
 
   const download = () => {
-    downloadText('travel-data.json', json());
+    downloadText(exportFilename(), json());
     setOpen(false);
   };
 
@@ -124,21 +130,26 @@ export function ExportMenu({ data }: { data: TravelData }) {
           <div className="export-group-label">
             {t('storage.destination', 'Storage destination')}
           </div>
-          {stores.map((store) => (
-            <button
-              key={store.id}
-              type="button"
-              className="export-item"
-              role="menuitemradio"
-              aria-checked={store.id === activeId}
-              disabled={store.id === activeId}
-              onClick={() => chooseStore(store.id, store.label, store.ready)}
-            >
-              <HardDrive size={15} /> {store.label}
-              {store.id === activeId && <Check size={15} />}
-              {!store.ready && <span className="export-soon">{t('export.soonBadge')}</span>}
-            </button>
-          ))}
+          {/* The self-hosted Atlas Server is connected via the form below, not as a
+              one-click destination, since it needs a URL + account. */}
+          {stores
+            .filter((store) => store.id !== 'selfhost')
+            .map((store) => (
+              <button
+                key={store.id}
+                type="button"
+                className="export-item"
+                role="menuitemradio"
+                aria-checked={store.id === activeId}
+                disabled={store.id === activeId}
+                onClick={() => chooseStore(store.id, store.label, store.ready)}
+              >
+                <HardDrive size={15} /> {store.label}
+                {store.id === activeId && <Check size={15} />}
+                {!store.ready && <span className="export-soon">{t('export.soonBadge')}</span>}
+              </button>
+            ))}
+          <AtlasConnect />
 
           <div className="export-group-label">{t('export.local')}</div>
           <button type="button" className="export-item" role="menuitem" onClick={download}>

@@ -14,8 +14,8 @@ import type { StorageDoc } from '@/lib/storage/types';
  * Bridges the active storage backend, the offline cache, and the editor store.
  *
  * The backend is resolved from the storage registry rather than imported
- * directly, so the same hook drives Supabase, IndexedDB, a local file, or any
- * future provider — while keeping the public return shape EXACTLY the same
+ * directly, so the same hook drives IndexedDB, a local file, the Atlas Server, or
+ * any future provider — while keeping the public return shape EXACTLY the same
  * (`{ record, isLoading, isOffline, save, share }`) so consumers need no change.
  *
  * On mount it hydrates the store from cache immediately (instant UI), then
@@ -78,8 +78,18 @@ export function useTravelData() {
   useEffect(() => {
     if (!enabled || !query.isSuccess) return;
     const serverData = query.data?.data ?? makeDefaultData();
-    setStoreData(serverData, { markClean: true });
+    // Keep the offline cache fresh regardless of whether we adopt the payload.
     writeCache(cacheKey, serverData);
+    const store = useEditorStore.getState();
+    // Never clobber unsaved local edits made during the load window — adopting the
+    // server payload here would silently discard them. The edits stay; the next
+    // save reconciles. (A field-level merge is a deferred follow-up.)
+    if (store.dirty) return;
+    // Only adopt when the server actually differs — re-`setData` wipes undo history
+    // and re-renders, so skipping identical payloads avoids needless churn (e.g. a
+    // refetch returning the same document, or the post-save query update).
+    if (JSON.stringify(store.data) === JSON.stringify(serverData)) return;
+    setStoreData(serverData, { markClean: true });
   }, [enabled, query.isSuccess, query.data, setStoreData, cacheKey]);
 
   const save = useMutation({
@@ -106,8 +116,8 @@ export function useTravelData() {
         shareSlug: null,
         version: 0,
       };
-      // Sharing is a Supabase-only capability; degrade gracefully on backends
-      // that lack it by returning the current record unchanged.
+      // Sharing is a backend capability (the Atlas Server); degrade gracefully on
+      // backends that lack it by returning the current record unchanged.
       if (!store.setSharing) return base;
       const meta = await store.setSharing(isPublic);
       return {

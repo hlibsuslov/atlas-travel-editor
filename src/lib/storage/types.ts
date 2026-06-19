@@ -1,10 +1,11 @@
 import type { TravelData } from '@/domain/schema';
 
 /**
- * The pluggable storage seam. Every persistence backend (Supabase, IndexedDB, a
- * local file, or a BYO cloud) implements the same {@link DocumentStore} contract,
- * so the editor only ever loads/saves one self-contained `TravelData` blob plus a
- * little sync metadata — and never knows or cares which backend is behind it.
+ * The pluggable storage seam. Every persistence backend (IndexedDB, a local file,
+ * the self-hostable Atlas Server, or a BYO cloud) implements the same
+ * {@link DocumentStore} contract, so the editor only ever loads/saves one
+ * self-contained `TravelData` blob plus a little sync metadata — and never knows
+ * or cares which backend is behind it.
  *
  * The cross-cutting invariants (normalize-on-load, validate-on-save) are enforced
  * once, centrally, in the registry wrapper (see `registry.ts`) so no individual
@@ -12,9 +13,9 @@ import type { TravelData } from '@/domain/schema';
  */
 
 /**
- * An opaque per-backend concurrency token: Supabase row `version` (int), a Drive
- * `headRevisionId`, a Dropbox `rev`, a GitHub blob `sha`, a WebDAV `ETag`, or an
- * IndexedDB monotonic counter. `null` means "nothing stored yet / not tracked".
+ * An opaque per-backend concurrency token: an Atlas Server row `version` (int), a
+ * Drive `headRevisionId`, a Dropbox `rev`, a GitHub blob `sha`, a WebDAV `ETag`, or
+ * an IndexedDB monotonic counter. `null` means "nothing stored yet / not tracked".
  */
 export type VersionToken = string | number | null;
 
@@ -31,7 +32,7 @@ export interface StorageDoc {
 }
 
 export interface Capabilities {
-  /** Public read-only sharing (Supabase only). */
+  /** Public read-only sharing (sharing-capable backends — the Atlas Server). */
   sharing: boolean;
   /** Optimistic-concurrency support: `'token'` if `save()` can reject stale writes. */
   concurrency: 'token' | 'none';
@@ -43,11 +44,11 @@ export interface Capabilities {
   auth: boolean;
 }
 
-/** All store ids known to the registry. The cloud ids are stubs this wave. */
+/** All store ids known to the registry. `selfhost` + the cloud ids are stubs this wave. */
 export type StoreId =
-  | 'supabase'
   | 'indexeddb'
   | 'localfile'
+  | 'selfhost'
   | 'gdrive'
   | 'dropbox'
   | 'webdav'
@@ -80,10 +81,10 @@ export interface DocumentStore {
    */
   save(data: TravelData, expected?: VersionToken): Promise<StorageDoc>;
 
-  /** Toggle public sharing (Supabase only). */
+  /** Toggle public sharing (sharing-capable backends — the Atlas Server). */
   setSharing?(isPublic: boolean): Promise<DocMeta>;
 
-  /** Resolve a public share slug to its document (Supabase only). */
+  /** Resolve a public share slug to its document (sharing-capable backends). */
   readPublic?(slug: string): Promise<TravelData | null>;
 
   /** Establish a connection / grant (OAuth, file handle, …). */

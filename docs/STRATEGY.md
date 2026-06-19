@@ -1,5 +1,12 @@
 # Travel Editor — Architecture & Strategy
 
+> **⚠️ Superseded (2026-06-19).** The current product direction lives in
+> [`PRODUCT_PLAN.md`](./PRODUCT_PLAN.md): a local-first travel **social network**
+> with **our own open-source self-hostable backend** (Supabase is being removed
+> entirely). This document is kept for its still-accurate subsystem analysis and
+> storage-seam design, but its "keep Supabase as the default backend" conclusion no
+> longer holds — read `PRODUCT_PLAN.md` first.
+
 > Decision-grade reference for the maintainer. Integrates the subsystem analysis, the judged storage design, and the UX/OSS design into one execution plan. Every claim is grounded in real file paths. Effort key: **S** < 0.5 day, **M** 0.5–2 days, **L** 2–5 days, **XL** > 5 days.
 
 ---
