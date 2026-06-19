@@ -2,83 +2,74 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-// Mock the Supabase client so auth can be tested with no live backend.
-const { mockSignUp, mockSignIn, mockGetSession, mockOnAuthStateChange } = vi.hoisted(() => ({
-  mockSignUp: vi.fn(),
-  mockSignIn: vi.fn(),
-  mockGetSession: vi.fn(),
-  mockOnAuthStateChange: vi.fn(),
-}));
-
-vi.mock('@/lib/supabase', () => ({
-  supabase: {
-    auth: {
-      signUp: mockSignUp,
-      signInWithPassword: mockSignIn,
-      getSession: mockGetSession,
-      onAuthStateChange: mockOnAuthStateChange,
-    },
+/**
+ * The AuthProvider is fully local (no third-party auth SDK). A mutable env mock
+ * lets each test pick the mode: local-first (no login wall, synthetic session) vs.
+ * a configured-but-not-yet-wired backend (sign-in reports no backend).
+ */
+const { mockEnv } = vi.hoisted(() => ({
+  mockEnv: {
+    localOnly: true,
+    demoAuth: false,
+    socialBackendConfigured: false,
+    selfHostUrl: undefined as string | undefined,
+    appUrl: 'http://localhost',
+    sentryDsn: undefined as string | undefined,
   },
 }));
 
+vi.mock('@/lib/env', () => ({ env: mockEnv, envError: null }));
+
 const { AuthProvider, useAuth } = await import('./AuthProvider');
 
-function SignUpProbe() {
-  const { signUpWithPassword } = useAuth();
+function Probe() {
+  const { user, signInWithPassword } = useAuth();
   return (
-    <button
-      onClick={async () => {
-        const res = await signUpWithPassword('new@user.io', 'sixchars');
-        const node = document.getElementById('result')!;
-        node.textContent = `${res.error ?? 'ok'}:${res.needsConfirmation}`;
-      }}
-    >
-      go
-    </button>
+    <div>
+      <span data-testid="uid">{user?.id ?? 'none'}</span>
+      <button
+        onClick={async () => {
+          const r = await signInWithPassword('a@b.co', 'secret');
+          document.getElementById('err')!.textContent = r.error ?? 'ok';
+        }}
+      >
+        signin
+      </button>
+      <div id="err" />
+    </div>
+  );
+}
+
+function renderProbe() {
+  return render(
+    <AuthProvider>
+      <Probe />
+    </AuthProvider>,
   );
 }
 
 beforeEach(() => {
   vi.clearAllMocks();
-  mockGetSession.mockResolvedValue({ data: { session: null } });
-  mockOnAuthStateChange.mockReturnValue({ data: { subscription: { unsubscribe: vi.fn() } } });
+  localStorage.clear();
+  mockEnv.localOnly = true;
+  mockEnv.demoAuth = false;
+  mockEnv.socialBackendConfigured = false;
 });
 
-async function renderAndSignUp() {
-  render(
-    <AuthProvider>
-      <SignUpProbe />
-      <div id="result" />
-    </AuthProvider>,
-  );
-  await userEvent.click(screen.getByText('go'));
-}
-
-describe('AuthProvider.signUpWithPassword', () => {
-  it('flags needsConfirmation when Supabase returns no session (email confirmation on)', async () => {
-    mockSignUp.mockResolvedValue({ data: { user: { id: 'u1' }, session: null }, error: null });
-    await renderAndSignUp();
-    await waitFor(() => expect(document.getElementById('result')!.textContent).toBe('ok:true'));
-    expect(mockSignUp).toHaveBeenCalledWith(
-      expect.objectContaining({ email: 'new@user.io', password: 'sixchars' }),
-    );
+describe('AuthProvider (local-first)', () => {
+  it('local-only mode is signed in with a synthetic local session (no login wall)', async () => {
+    mockEnv.localOnly = true;
+    renderProbe();
+    await waitFor(() => expect(screen.getByTestId('uid').textContent).toBe('local-user'));
   });
 
-  it('does not require confirmation when a session is returned immediately', async () => {
-    mockSignUp.mockResolvedValue({
-      data: { user: { id: 'u1' }, session: { access_token: 't' } },
-      error: null,
-    });
-    await renderAndSignUp();
-    await waitFor(() => expect(document.getElementById('result')!.textContent).toBe('ok:false'));
-  });
-
-  it('surfaces the error message on failure', async () => {
-    mockSignUp.mockResolvedValue({
-      data: { user: null, session: null },
-      error: { message: 'taken' },
-    });
-    await renderAndSignUp();
-    await waitFor(() => expect(document.getElementById('result')!.textContent).toBe('taken:false'));
+  it('with a backend configured but not local, sign-in reports no backend wired yet', async () => {
+    mockEnv.localOnly = false;
+    mockEnv.demoAuth = false;
+    renderProbe();
+    // Not local mode → no synthetic session.
+    await waitFor(() => expect(screen.getByTestId('uid').textContent).toBe('none'));
+    await userEvent.click(screen.getByText('signin'));
+    await waitFor(() => expect(document.getElementById('err')!.textContent).toMatch(/No backend/));
   });
 });

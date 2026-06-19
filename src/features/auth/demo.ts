@@ -1,19 +1,28 @@
-import type { Session, User } from '@supabase/supabase-js';
 import { env } from '@/lib/env';
 
 /**
- * Local-first / demo authentication. Lets the app run end-to-end without a live
- * Supabase project, in two flavors:
+ * Local session types. The app is local-first, so identity is a lightweight local
+ * shape (no third-party auth SDK). When a self-hostable Atlas Server is wired up
+ * (later sprint), the same shape is populated from the server's `/me` response.
+ */
+export interface LocalUser {
+  id: string;
+  email?: string;
+}
+export interface LocalSession {
+  user: LocalUser;
+}
+
+/**
+ * Local-first / demo authentication. Lets the app run end-to-end with no backend:
  *
- *  - **Local-only** (`VITE_LOCAL_ONLY=1`): a first-class no-backend mode. A
+ *  - **Local-only** (the default, or `VITE_LOCAL_ONLY=1`): no-backend mode. A
  *    synthetic `local-user` session is established automatically — there is no
  *    login wall at all. Data lives in the active local backend (IndexedDB / a
- *    local file) and server-only features (sharing/friends/profile) degrade.
+ *    local file) and server-only features (sharing/friends/profile) stay hidden.
  *  - **Demo** (`VITE_DEMO_AUTH=1`): the explorable demo. A username/password form
  *    accepts the configured demo credentials (default `1` / `1`) and creates the
  *    same synthetic session.
- *
- * Both paths are OFF by default; the hosted build still uses real Supabase auth.
  */
 const KEY = 'travel-editor:demo-session';
 
@@ -38,25 +47,9 @@ export function isLocalMode(): boolean {
   return env.localOnly || env.demoAuth;
 }
 
-/** Build a minimal Supabase-shaped session for the synthetic local user. */
-function makeLocalSession(): Session {
-  const user = {
-    id: LOCAL_USER_ID,
-    email: 'local@local',
-    aud: 'authenticated',
-    role: 'authenticated',
-    app_metadata: {},
-    user_metadata: { local: true },
-    created_at: new Date(0).toISOString(),
-  } as unknown as User;
-
-  return {
-    access_token: 'local',
-    refresh_token: 'local',
-    expires_in: 3600,
-    token_type: 'bearer',
-    user,
-  } as unknown as Session;
+/** Build the synthetic session for the local user. */
+function makeLocalSession(): LocalSession {
+  return { user: { id: LOCAL_USER_ID, email: 'local@local' } };
 }
 
 /**
@@ -64,7 +57,7 @@ function makeLocalSession(): Session {
  *  - Local-only: always signed in (no persisted flag needed — there's no login).
  *  - Demo: signed in only after the user submitted the demo credentials.
  */
-export function getLocalSession(): Session | null {
+export function getLocalSession(): LocalSession | null {
   if (isLocalOnlyMode()) return makeLocalSession();
   if (!isDemoMode()) return null;
   try {
@@ -77,7 +70,7 @@ export function getLocalSession(): Session | null {
 /** @deprecated kept for back-compat — use {@link getLocalSession}. */
 export const getDemoSession = getLocalSession;
 
-export function signInDemo(login: string, password: string): Session | null {
+export function signInDemo(login: string, password: string): LocalSession | null {
   if (login.trim() === DEMO_LOGIN && password === DEMO_PASSWORD) {
     try {
       localStorage.setItem(KEY, '1');

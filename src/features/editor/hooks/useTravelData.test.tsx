@@ -5,35 +5,38 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { makeDefaultData } from '@/domain/normalize';
 import { useEditorStore } from '@/features/editor/store';
 import { writeCache } from '@/features/editor/cache';
-import type { TravelRecord } from '@/features/editor/api';
+import type { StorageDoc } from '@/lib/storage/types';
 
-const { mockFetch, mockSave } = vi.hoisted(() => ({
-  mockFetch: vi.fn(),
-  mockSave: vi.fn(),
+/**
+ * useTravelData is backend-agnostic: it resolves the active DocumentStore from the
+ * registry and drives hydrate-from-cache → reconcile → save. We mock the registry
+ * with a controllable fake store so the hook's reconcile/save logic is exercised
+ * independently of any concrete backend (IndexedDB, the Atlas Server, …).
+ */
+const { mockLoad, mockSave } = vi.hoisted(() => ({ mockLoad: vi.fn(), mockSave: vi.fn() }));
+
+const fakeStore = {
+  id: 'indexeddb' as const,
+  label: 'fake',
+  capabilities: {
+    sharing: false,
+    concurrency: 'token' as const,
+    watch: false,
+    list: false,
+    auth: false,
+  },
+  load: mockLoad,
+  save: mockSave,
+  isConnected: () => true,
+};
+
+vi.mock('@/lib/storage/registry', () => ({
+  getActiveStoreId: () => 'indexeddb',
+  getStoreById: () => fakeStore,
 }));
 
 vi.mock('@/features/auth/AuthProvider', () => ({
   useAuth: () => ({ user: { id: 'user-1' }, session: {}, loading: false }),
-}));
-
-// Make the storage registry resolve to the Supabase backend (which delegates to
-// the mocked api below), so the hook exercises the authenticated cloud path.
-vi.mock('@/lib/env', () => ({
-  env: {
-    supabaseConfigured: true,
-    backendOptional: false,
-    localOnly: false,
-    demoAuth: false,
-    appUrl: 'http://localhost',
-  },
-  envError: null,
-}));
-
-vi.mock('@/features/editor/api', () => ({
-  fetchMyRecord: mockFetch,
-  saveMyRecord: mockSave,
-  setSharing: vi.fn(),
-  fetchPublicRecord: vi.fn(),
 }));
 
 const { useTravelData } = await import('./useTravelData');
@@ -43,12 +46,11 @@ function wrapper({ children }: { children: ReactNode }) {
   return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
 }
 
-const record = (data = makeDefaultData()): TravelRecord => ({
-  data,
-  isPublic: false,
-  shareSlug: null,
-  version: 1,
-});
+const doc = (country = 'Ukraine', version = 1): StorageDoc => {
+  const data = makeDefaultData();
+  data.person.birthplace.country = country;
+  return { data, meta: { version, isPublic: false, shareSlug: null } };
+};
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -57,12 +59,11 @@ beforeEach(() => {
 });
 
 describe('useTravelData', () => {
-  it('hydrates the store from the offline cache before the network resolves', async () => {
+  it('hydrates the store from the offline cache before the backend resolves', async () => {
     const cached = makeDefaultData();
     cached.person.birthplace.country = 'CachedLand';
     writeCache('user-1', cached);
-    // Network stays pending so only the cache path runs.
-    mockFetch.mockReturnValue(new Promise(() => {}));
+    mockLoad.mockReturnValue(new Promise(() => {})); // stays pending
 
     renderHook(() => useTravelData(), { wrapper });
 
@@ -72,10 +73,8 @@ describe('useTravelData', () => {
     expect(useEditorStore.getState().dirty).toBe(false);
   });
 
-  it('reconciles the store with server data once it arrives', async () => {
-    const server = makeDefaultData();
-    server.person.birthplace.country = 'ServerLand';
-    mockFetch.mockResolvedValue(record(server));
+  it('reconciles the store with backend data once it arrives', async () => {
+    mockLoad.mockResolvedValue(doc('ServerLand'));
 
     renderHook(() => useTravelData(), { wrapper });
 
@@ -85,37 +84,33 @@ describe('useTravelData', () => {
   });
 
   it('does not clobber unsaved local edits that arrive during the load window', async () => {
-    const server = makeDefaultData();
-    server.person.birthplace.country = 'ServerLand';
-    let resolve!: (r: TravelRecord) => void;
-    mockFetch.mockReturnValue(new Promise<TravelRecord>((res) => (resolve = res)));
+    let resolve!: (d: StorageDoc) => void;
+    mockLoad.mockReturnValue(new Promise<StorageDoc>((res) => (resolve = res)));
 
     const { result } = renderHook(() => useTravelData(), { wrapper });
 
-    // The user edits while the network request is still in flight.
+    // The user edits while the load is still in flight.
     act(() => useEditorStore.getState().setBirthplace('LocalEdit'));
     expect(useEditorStore.getState().dirty).toBe(true);
 
-    // The server response now arrives.
     await act(async () => {
-      resolve(record(server));
-      await Promise.resolve(); // flush the resolved-promise microtask chain
+      resolve(doc('ServerLand'));
+      await Promise.resolve();
     });
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-    // The in-flight edit survives — it was NOT overwritten by the server payload.
+    // The in-flight edit survives — it was NOT overwritten by the backend payload.
     expect(useEditorStore.getState().data.person.birthplace.country).toBe('LocalEdit');
     expect(useEditorStore.getState().dirty).toBe(true);
   });
 
   it('marks the store clean after a successful save', async () => {
-    mockFetch.mockResolvedValue(record());
-    mockSave.mockResolvedValue(record());
+    mockLoad.mockResolvedValue(doc());
+    mockSave.mockResolvedValue(doc('Edited', 2));
 
     const { result } = renderHook(() => useTravelData(), { wrapper });
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-    // Make a local edit, then save.
     act(() => useEditorStore.getState().setBirthplace('Edited'));
     expect(useEditorStore.getState().dirty).toBe(true);
 

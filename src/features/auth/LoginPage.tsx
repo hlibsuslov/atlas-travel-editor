@@ -38,8 +38,8 @@ export function LoginPage() {
     setError(false);
 
     // Real auth needs a valid email. The min-length rule applies only to sign-up
-    // (Supabase enforces it there too); on sign-in we must NOT pre-block short
-    // passwords, since an existing account may have one — let Supabase decide.
+    // (the backend enforces it there too); on sign-in we must NOT pre-block short
+    // passwords, since an existing account may have one — let the backend decide.
     if (!demo) {
       if (!EMAIL_RE.test(email.trim())) return fail(t('auth.emailInvalid'));
       if (isSignup && password.length < MIN_PASSWORD) return fail(t('auth.passwordTooShort'));
@@ -97,12 +97,7 @@ export function LoginPage() {
           }}
         />
         <div className="brand" style={{ position: 'relative', zIndex: 2, color: '#f3efe6' }}>
-          <BrandMark
-            size={40}
-            className="brand-mark"
-            color="#f3efe6"
-            ring="rgba(243,239,230,.4)"
-          />
+          <BrandMark size={40} className="brand-mark" color="#f3efe6" ring="rgba(243,239,230,.4)" />
           <div className="brand-text">
             <span className="brand-name">{t('app.name')}</span>
             <span className="brand-sub" style={{ color: 'rgba(243,239,230,.6)' }}>

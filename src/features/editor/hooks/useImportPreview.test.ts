@@ -42,12 +42,18 @@ describe('useImportPreview', () => {
       app: 'travel-editor',
       schemaVersion: 1,
       updatedAt: '2026-01-01T00:00:00.000Z',
-      data: { person: { birthplace: { country: 'Japan' } }, travel: { countries: [{ name: 'Italy', cities: ['Rome'] }] } },
+      data: {
+        person: { birthplace: { country: 'Japan' } },
+        travel: { countries: [{ name: 'Italy', cities: ['Rome'] }] },
+      },
     });
     const p = preview(raw);
     expect(p.state === 'ok' || p.state === 'warn').toBe(true);
     if (p.state === 'ok' || p.state === 'warn') {
-      expect(p.data.travel.countries[0]!.cities[0]).toEqual({ name: 'Rome', timeline: { visited: [] } });
+      expect(p.data.travel.countries[0]!.cities[0]).toEqual({
+        name: 'Rome',
+        timeline: { visited: [] },
+      });
     }
   });
 });

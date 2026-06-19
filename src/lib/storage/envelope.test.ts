@@ -41,7 +41,12 @@ describe('portable envelope', () => {
   });
 
   it('reads a future schemaVersion forward-compatibly', () => {
-    const future = { app: APP_ID, schemaVersion: 999, updatedAt: '2030-01-01T00:00:00.000Z', data: makeDefaultData() };
+    const future = {
+      app: APP_ID,
+      schemaVersion: 999,
+      updatedAt: '2030-01-01T00:00:00.000Z',
+      data: makeDefaultData(),
+    };
     const read = readEnvelope(future);
     expect(read.data.person.birthplace.country).toBe('Ukraine');
     expect(read.updatedAt).toBe('2030-01-01T00:00:00.000Z');

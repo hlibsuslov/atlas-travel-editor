@@ -1,47 +1,47 @@
-import { supabase } from '@/lib/supabase';
 import { env } from '@/lib/env';
-import type { MyProfile, SharedProfile } from '@/lib/database.types';
 
 /**
- * Profile data access. The owner reads/writes their own profile; the public
- * slice (name + color) of a friend is resolved from their share slug. All
- * scoping is enforced server-side (auth.uid()) and by RLS.
- *
- * Profiles are a server-only capability: in backendless (local-only / demo) mode
- * there is no cloud profile, so reads return empty and writes no-op gracefully
- * instead of throwing.
+ * Profile data access. A profile is the public identity (display name + avatar
+ * color, and later a `handle`) that friends see on shared maps. Profiles are a
+ * social capability: in pure local-first mode there is no backend, so reads return
+ * empty and writes echo the input (so optimistic UI still works) instead of
+ * throwing. Real profiles arrive with the self-hostable Atlas Server (later sprint).
  */
 
-export type { MyProfile, SharedProfile };
+/** The signed-in user's own profile. */
+export interface MyProfile {
+  display_name: string;
+  accent_color: string;
+  /** Public handle for the `/u/:handle` address. Reserved; wired with the backend. */
+  public_handle: string | null;
+}
 
-const cloudAvailable = (): boolean => env.supabaseConfigured && !env.backendOptional;
+/** The publicly visible slice of a profile, resolved from a share slug. */
+export interface SharedProfile {
+  display_name: string;
+  accent_color: string;
+}
 
-/** Fetch the signed-in user's profile, or `null` if they haven't set one. */
-export async function getMyProfile(): Promise<MyProfile | null> {
-  if (!cloudAvailable()) return null;
-  const { data, error } = await supabase.rpc('get_my_profile');
-  if (error) throw new Error(error.message);
-  return data ?? null;
+const socialAvailable = (): boolean => env.socialBackendConfigured;
+
+/** Fetch the signed-in user's profile, or `null` if none / no backend. */
+export function getMyProfile(): Promise<MyProfile | null> {
+  return Promise.resolve(null);
 }
 
 /** Create or update the signed-in user's profile. */
-export async function saveMyProfile(displayName: string, accentColor: string): Promise<MyProfile> {
-  if (!cloudAvailable()) {
-    // No cloud to persist to — echo the values back so optimistic UI still works.
-    return { display_name: displayName.trim(), accent_color: accentColor, public_handle: null };
-  }
-  const { data, error } = await supabase.rpc('save_my_profile', {
-    p_display_name: displayName.trim(),
-    p_accent_color: accentColor,
+export function saveMyProfile(displayName: string, accentColor: string): Promise<MyProfile> {
+  // No backend to persist to — echo the values back so optimistic UI still works.
+  void socialAvailable();
+  return Promise.resolve({
+    display_name: displayName.trim(),
+    accent_color: accentColor,
+    public_handle: null,
   });
-  if (error) throw new Error(error.message);
-  return data;
 }
 
 /** Resolve a public share slug to its owner's display name + avatar color. */
-export async function fetchSharedProfile(slug: string): Promise<SharedProfile | null> {
-  if (!cloudAvailable()) return null;
-  const { data, error } = await supabase.rpc('get_shared_profile', { p_slug: slug });
-  if (error) throw new Error(error.message);
-  return data ?? null;
+export function fetchSharedProfile(_slug: string): Promise<SharedProfile | null> {
+  void _slug;
+  return Promise.resolve(null);
 }

@@ -29,7 +29,12 @@ export default defineConfig({
         icons: [
           { src: '/favicon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
           { src: '/maskable-icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'maskable' },
-          { src: '/maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' },
+          {
+            src: '/maskable-512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'any maskable',
+          },
           { src: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png', purpose: 'any' },
         ],
       },
@@ -62,7 +67,6 @@ export default defineConfig({
         // Split vendor chunks so app code can be cached independently of deps.
         manualChunks: {
           react: ['react', 'react-dom'],
-          supabase: ['@supabase/supabase-js'],
           query: ['@tanstack/react-query'],
         },
       },
