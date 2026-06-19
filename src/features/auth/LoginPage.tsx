@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ArrowRight, Compass, Globe, Share2, UserPlus } from 'lucide-react';
+import { ArrowRight, Globe, Share2, UserPlus } from 'lucide-react';
 import { useAuth } from './AuthProvider';
+import { BrandMark } from '@/components/brand/BrandMark';
 import { LanguageSwitcher } from '@/features/settings/LanguageSwitcher';
 import { makeDefaultData } from '@/domain/normalize';
 import { MiniMap } from '@/features/map/WorldMap';
@@ -96,9 +97,12 @@ export function LoginPage() {
           }}
         />
         <div className="brand" style={{ position: 'relative', zIndex: 2, color: '#f3efe6' }}>
-          <div className="brand-mark" style={{ borderColor: '#f3efe6', color: '#f3efe6' }}>
-            <Compass size={21} />
-          </div>
+          <BrandMark
+            size={40}
+            className="brand-mark"
+            color="#f3efe6"
+            ring="rgba(243,239,230,.4)"
+          />
           <div className="brand-text">
             <span className="brand-name">{t('app.name')}</span>
             <span className="brand-sub" style={{ color: 'rgba(243,239,230,.6)' }}>

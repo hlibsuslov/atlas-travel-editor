@@ -105,27 +105,12 @@ body {
   gap: 13px;
   min-width: 0;
 }
+/* The compass rings + needle are now drawn by the <BrandMark> SVG itself
+   (src/components/brand/BrandMark.tsx); this class only positions it and sets
+   the colour the mark inherits via currentColor on light surfaces. */
 .brand-mark {
-  width: 40px;
-  height: 40px;
-  display: grid;
-  place-items: center;
-  border: 1.5px solid var(--ink);
-  border-radius: 50%;
-  position: relative;
   flex-shrink: 0;
   color: var(--ink);
-}
-.brand-mark::after {
-  content: '';
-  position: absolute;
-  inset: 6px;
-  border-radius: 50%;
-  border: 1px solid var(--line-strong);
-}
-.brand-mark svg {
-  position: relative;
-  z-index: 1;
 }
 .brand-text {
   display: flex;
