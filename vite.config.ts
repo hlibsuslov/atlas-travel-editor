@@ -77,6 +77,9 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
     css: false,
+    // Only the client's own tests. `server/` is a separate package with its own
+    // test runner (Node's built-in, for node:sqlite), so keep it out of here.
+    include: ['src/**/*.{test,spec}.{ts,tsx}'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html', 'lcov'],

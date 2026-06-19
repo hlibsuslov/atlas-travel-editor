@@ -8,7 +8,9 @@ export default tseslint.config(
   // `scripts/` holds Workflow-tool orchestration templates (run by the Workflow
   // runtime, not bundled), which use top-level await/return — not lintable as
   // plain modules. They are reviewed as docs, not app code.
-  { ignores: ['dist', 'coverage', 'node_modules', 'scripts'] },
+  // `server/` is a separate package with its own toolchain (typecheck + node:test);
+  // it is not part of the client's TS project, so it is linted there, not here.
+  { ignores: ['dist', 'coverage', 'node_modules', 'scripts', 'server'] },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommendedTypeChecked],
     files: ['**/*.{ts,tsx}'],
