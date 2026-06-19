@@ -37,7 +37,7 @@ const PROVIDER_KEY = 'travel-editor:storage-provider';
 const READY: Record<string, boolean> = {
   indexeddb: true,
   localfile: true,
-  selfhost: false,
+  selfhost: true,
   github: false,
   webdav: false,
   gdrive: false,
