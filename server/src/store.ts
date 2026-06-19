@@ -161,3 +161,74 @@ export function setVisibility(db: DB, userId: string, visibility: string): DocRo
   ).run(visibility, slug, ts, userId);
   return { ...current, visibility, share_slug: slug, updated_at: ts };
 }
+
+/** Rotate (or, if now private, clear) the share slug — revokes the old link. */
+export function rotateSlug(db: DB, userId: string): DocRow | undefined {
+  const current = getDocument(db, userId);
+  if (!current) return undefined;
+  const slug = current.visibility === 'private' ? null : newSlug();
+  const ts = now();
+  db.prepare('UPDATE documents SET share_slug = ?, updated_at = ? WHERE user_id = ?').run(
+    slug,
+    ts,
+    userId,
+  );
+  return { ...current, share_slug: slug, updated_at: ts };
+}
+
+/** Update the user's public profile (name, color, optional handle). Handle is stored
+ * lowercased; a UNIQUE-constraint violation propagates for the caller to map to 409. */
+export function updateProfile(
+  db: DB,
+  userId: string,
+  displayName: string,
+  accentColor: string,
+  handle: string | null,
+): ProfileRow {
+  const ts = now();
+  db.prepare(
+    'UPDATE profiles SET display_name = ?, accent_color = ?, handle = ?, updated_at = ? WHERE user_id = ?',
+  ).run(displayName, accentColor, handle, ts, userId);
+  return getProfile(db, userId)!;
+}
+
+export function getProfileByHandle(db: DB, handle: string): ProfileRow | undefined {
+  return db.prepare('SELECT * FROM profiles WHERE lower(handle) = ?').get(handle.toLowerCase()) as
+    | ProfileRow
+    | undefined;
+}
+
+/** Whether a handle is already claimed by someone other than `exceptUserId`. */
+export function handleTaken(db: DB, handle: string, exceptUserId?: string): boolean {
+  const row = db
+    .prepare('SELECT user_id FROM profiles WHERE lower(handle) = ?')
+    .get(handle.toLowerCase()) as { user_id: string } | undefined;
+  return !!row && row.user_id !== exceptUserId;
+}
+
+export interface PublicView {
+  doc: DocRow;
+  profile: ProfileRow;
+}
+
+/** Resolve a share slug to a document visible by link (unlisted) or publicly. */
+export function getPublicBySlug(db: DB, slug: string): PublicView | undefined {
+  const doc = db
+    .prepare(
+      "SELECT * FROM documents WHERE share_slug = ? AND visibility IN ('unlisted', 'public')",
+    )
+    .get(slug) as DocRow | undefined;
+  if (!doc) return undefined;
+  const profile = getProfile(db, doc.user_id);
+  return profile ? { doc, profile } : undefined;
+}
+
+/** Resolve a handle to its owner's PUBLICLY-discoverable map (visibility = public). */
+export function getPublicByHandle(db: DB, handle: string): PublicView | undefined {
+  const profile = getProfileByHandle(db, handle);
+  if (!profile) return undefined;
+  const doc = db
+    .prepare("SELECT * FROM documents WHERE user_id = ? AND visibility = 'public'")
+    .get(profile.user_id) as DocRow | undefined;
+  return doc ? { doc, profile } : undefined;
+}

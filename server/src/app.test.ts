@@ -23,6 +23,11 @@ const putJson = (body: unknown, headers: Record<string, string> = {}) => ({
   method: 'PUT',
 });
 
+const patchJson = (body: unknown, headers: Record<string, string> = {}) => ({
+  ...json(body, headers),
+  method: 'PATCH',
+});
+
 const doc = (country = 'Ukraine') => ({
   person: { birthplace: { country } },
   travel: {
@@ -133,5 +138,96 @@ describe('Atlas Server', () => {
     const res = await app.request('/me/document', putJson({ data: invalid }, auth));
     assert.equal(res.status, 422);
     assert.match(((await res.json()) as { error: string }).error, /Cannot save invalid data/);
+  });
+});
+
+describe('Atlas Server — sharing & public reads', () => {
+  async function setup(): Promise<Record<string, string>> {
+    const token = await register('pubby');
+    const auth = { Authorization: `Bearer ${token}` };
+    await app.request('/me/document', putJson({ data: doc('Ukraine') }, auth));
+    return auth;
+  }
+
+  const slugOf = async (res: Response): Promise<string> =>
+    ((await res.json()) as { share_slug: string }).share_slug;
+
+  it('publishes publicly + sets a handle, readable by slug and by handle', async () => {
+    const auth = await setup();
+    assert.equal(
+      (await app.request('/me/profile', putJson({ display_name: 'Pub', handle: 'pubby' }, auth)))
+        .status,
+      200,
+    );
+    const vis = await app.request(
+      '/me/document/visibility',
+      patchJson({ visibility: 'public' }, auth),
+    );
+    assert.equal(vis.status, 200);
+    const slug = await slugOf(vis);
+    assert.ok(slug);
+
+    const bySlug = await app.request(`/share/${slug}`);
+    assert.equal(bySlug.status, 200);
+    const body = (await bySlug.json()) as {
+      data: { person: { birthplace: { country: string } } };
+      profile: { handle: string };
+    };
+    assert.equal(body.data.person.birthplace.country, 'Ukraine');
+    assert.equal(body.profile.handle, 'pubby');
+
+    assert.equal((await app.request('/u/pubby/map')).status, 200);
+    assert.equal((await app.request('/u/pubby')).status, 200);
+  });
+
+  it('never leaks sensitive fields in public responses', async () => {
+    const auth = await setup();
+    await app.request('/me/profile', putJson({ display_name: 'Pub', handle: 'leaky' }, auth));
+    const slug = await slugOf(
+      await app.request('/me/document/visibility', patchJson({ visibility: 'public' }, auth)),
+    );
+    for (const path of [`/share/${slug}`, `/share/${slug}/profile`, '/u/leaky', '/u/leaky/map']) {
+      const text = await (await app.request(path)).text();
+      for (const banned of ['user_id', 'password', 'token', '"version"', '@example.com', 'email']) {
+        assert.ok(!text.includes(banned), `${path} leaked "${banned}"`);
+      }
+    }
+  });
+
+  it('does not publicly serve a private document (generic 404)', async () => {
+    const auth = await setup();
+    const slug = await slugOf(
+      await app.request('/me/document/visibility', patchJson({ visibility: 'public' }, auth)),
+    );
+    await app.request('/me/document/visibility', patchJson({ visibility: 'private' }, auth));
+    assert.equal((await app.request(`/share/${slug}`)).status, 404);
+  });
+
+  it('rotating the slug revokes the old link', async () => {
+    const auth = await setup();
+    const oldSlug = await slugOf(
+      await app.request('/me/document/visibility', patchJson({ visibility: 'unlisted' }, auth)),
+    );
+    assert.equal((await app.request(`/share/${oldSlug}`)).status, 200);
+    const newSlug = await slugOf(
+      await app.request('/me/document/rotate-slug', { method: 'POST', headers: auth }),
+    );
+    assert.notEqual(newSlug, oldSlug);
+    assert.equal((await app.request(`/share/${oldSlug}`)).status, 404);
+    assert.equal((await app.request(`/share/${newSlug}`)).status, 200);
+  });
+
+  it('reports handle availability', async () => {
+    const auth = await setup();
+    await app.request('/me/profile', putJson({ handle: 'taken' }, auth));
+    const other = { Authorization: `Bearer ${await register('other')}` };
+    const taken = (await (
+      await app.request('/handles/taken/available', { headers: other })
+    ).json()) as { available: boolean };
+    assert.equal(taken.available, false);
+    const free = (await (
+      await app.request('/handles/freeone/available', { headers: other })
+    ).json()) as { available: boolean };
+    assert.equal(free.available, true);
   });
 });

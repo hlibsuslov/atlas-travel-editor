@@ -12,11 +12,20 @@ import {
   emailOrUsernameTaken,
   getDocument,
   getProfile,
+  getProfileByHandle,
+  getPublicByHandle,
+  getPublicBySlug,
   getSessionUserId,
   getUserById,
   getUserByLogin,
+  handleTaken,
   putDocument,
+  rotateSlug,
+  setVisibility,
+  updateProfile,
   type DocRow,
+  type ProfileRow,
+  type PublicView,
 } from './store';
 import { validateTravelData } from './domain/schema';
 import { normalizeTravelData } from './domain/normalize';
@@ -44,6 +53,36 @@ const registerBody = z.object({
 });
 const loginBody = z.object({ login: z.string().min(1), password: z.string().min(1) });
 const documentBody = z.object({ data: z.unknown() });
+const HANDLE_RE = /^[a-z0-9_]{3,30}$/;
+const profileBody = z.object({
+  display_name: z.string().max(60).optional(),
+  accent_color: z.string().max(32).optional(),
+  handle: z.union([z.string(), z.null()]).optional(),
+});
+const visibilityBody = z.object({ visibility: z.enum(['private', 'unlisted', 'public']) });
+
+/** The public, column-minimized profile slice — never ids/email/internal columns. */
+function profileSlice(p: ProfileRow): {
+  display_name: string;
+  accent_color: string;
+  handle: string | null;
+} {
+  return { display_name: p.display_name, accent_color: p.accent_color, handle: p.handle };
+}
+
+/** A public document view: the map data + the owner's public profile slice ONLY. */
+function publicView(view: PublicView): {
+  data: unknown;
+  profile: ReturnType<typeof profileSlice>;
+} {
+  let data: unknown = null;
+  try {
+    data = (JSON.parse(view.doc.envelope) as { data?: unknown }).data ?? null;
+  } catch {
+    data = null;
+  }
+  return { data: normalizeTravelData(data), profile: profileSlice(view.profile) };
+}
 
 /** Map a stored document row to the client-facing record shape. */
 function docToResponse(row: DocRow): {
@@ -180,6 +219,76 @@ export function createApp(db: DB) {
       }
       throw err;
     }
+  });
+
+  // --- Profile + handles -----------------------------------------------------
+  app.get('/handles/:handle/available', requireAuth(db), (c) => {
+    const handle = c.req.param('handle').toLowerCase();
+    if (!HANDLE_RE.test(handle)) return c.json({ available: false, reason: 'invalid' });
+    return c.json({ available: !handleTaken(db, handle, c.get('userId')) });
+  });
+
+  app.put('/me/profile', requireAuth(db), async (c) => {
+    const userId = c.get('userId');
+    const parsed = profileBody.safeParse(await c.req.json().catch(() => null));
+    if (!parsed.success) return c.json({ error: 'Invalid body' }, 400);
+    const existing = getProfile(db, userId);
+
+    // handle: undefined = leave unchanged; '' / null = clear; else validate + claim.
+    let handle = parsed.data.handle === undefined ? (existing?.handle ?? null) : parsed.data.handle;
+    if (typeof handle === 'string') {
+      handle = handle.trim().toLowerCase();
+      if (handle === '') handle = null;
+      else if (!HANDLE_RE.test(handle))
+        return c.json({ error: 'Handle must be 3-30 chars: a-z, 0-9, _' }, 400);
+      else if (handleTaken(db, handle, userId))
+        return c.json({ error: 'That handle is taken.' }, 409);
+    }
+
+    const displayName = parsed.data.display_name?.trim() ?? existing?.display_name ?? '';
+    const accentColor = parsed.data.accent_color ?? existing?.accent_color ?? '#2f6df0';
+    try {
+      return c.json(profileSlice(updateProfile(db, userId, displayName, accentColor, handle)));
+    } catch {
+      return c.json({ error: 'That handle is taken.' }, 409);
+    }
+  });
+
+  // --- Document visibility / sharing -----------------------------------------
+  app.patch('/me/document/visibility', requireAuth(db), async (c) => {
+    const parsed = visibilityBody.safeParse(await c.req.json().catch(() => null));
+    if (!parsed.success) return c.json({ error: 'Invalid body' }, 400);
+    const row = setVisibility(db, c.get('userId'), parsed.data.visibility);
+    if (!row) return c.json({ error: 'No document yet' }, 404);
+    return c.json(docToResponse(row));
+  });
+
+  app.post('/me/document/rotate-slug', requireAuth(db), (c) => {
+    const row = rotateSlug(db, c.get('userId'));
+    if (!row) return c.json({ error: 'No document yet' }, 404);
+    return c.json(docToResponse(row));
+  });
+
+  // --- Public reads (no auth; column-minimized; identical generic 404 so missing
+  //     / private / revoked can't be distinguished) ----------------------------
+  app.get('/share/:slug', (c) => {
+    const view = getPublicBySlug(db, c.req.param('slug'));
+    return view ? c.json(publicView(view)) : c.json({ error: 'Not found' }, 404);
+  });
+
+  app.get('/share/:slug/profile', (c) => {
+    const view = getPublicBySlug(db, c.req.param('slug'));
+    return view ? c.json(profileSlice(view.profile)) : c.json({ error: 'Not found' }, 404);
+  });
+
+  app.get('/u/:handle', (c) => {
+    const profile = getProfileByHandle(db, c.req.param('handle'));
+    return profile ? c.json(profileSlice(profile)) : c.json({ error: 'Not found' }, 404);
+  });
+
+  app.get('/u/:handle/map', (c) => {
+    const view = getPublicByHandle(db, c.req.param('handle'));
+    return view ? c.json(publicView(view)) : c.json({ error: 'Not found' }, 404);
   });
 
   return app;
