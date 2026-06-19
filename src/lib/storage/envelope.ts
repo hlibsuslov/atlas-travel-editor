@@ -9,13 +9,14 @@ import { normalizeTravelData } from '@/domain/normalize';
  */
 export interface PortableEnvelope {
   app: 'travel-editor';
-  schemaVersion: 1;
+  schemaVersion: number;
   updatedAt: string;
   data: TravelData;
 }
 
 export const APP_ID = 'travel-editor';
-export const SCHEMA_VERSION = 1;
+/** v2 adds the optional diary (`travel.stays`). Older v1 docs remain valid. */
+export const SCHEMA_VERSION = 2;
 
 /** Wrap a document in the portable envelope, stamping `updatedAt` (ISO). */
 export function wrapEnvelope(

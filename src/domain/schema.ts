@@ -44,6 +44,36 @@ export const countrySchema = z.object({
   cities: z.array(citySchema),
 });
 
+/**
+ * Money as an integer count of minor units (e.g. cents) plus an ISO-4217 currency,
+ * so costs never suffer floating-point drift. Optional throughout the diary.
+ */
+export const moneySchema = z.object({
+  amount: z
+    .number({ invalid_type_error: 'Amount must be a number.' })
+    .int('Amount must be whole minor units.')
+    .min(0, 'Amount cannot be negative.'),
+  currency: z
+    .string()
+    .trim()
+    .regex(/^[A-Z]{3}$/, 'Use a 3-letter ISO-4217 currency code.'),
+});
+
+/**
+ * A diary "stay" — somewhere the person stayed (a hotel, a place), optionally with
+ * dates and a cost. Additive and OPTIONAL: documents without `stays` stay valid, so
+ * the travel diary can grow with no breaking change and no backend migration.
+ */
+export const staySchema = z.object({
+  name: z.string().trim().min(1, 'Stay name is required.'),
+  country: z.string().trim().optional(),
+  city: z.string().trim().optional(),
+  from: timelineStringSchema.optional(),
+  to: timelineStringSchema.optional(),
+  cost: moneySchema.optional(),
+  note: z.string().trim().optional(),
+});
+
 export const travelDataSchema = z.object({
   person: z.object({
     birthplace: z.object({
@@ -52,6 +82,8 @@ export const travelDataSchema = z.object({
   }),
   travel: z.object({
     countries: z.array(countrySchema),
+    /** Optional diary of stays (places/hotels + cost). Absent in legacy documents. */
+    stays: z.array(staySchema).optional(),
   }),
 });
 
@@ -59,6 +91,8 @@ export type Year = z.infer<typeof yearSchema>;
 export type City = z.infer<typeof citySchema>;
 export type CountryStatus = z.infer<typeof countryStatusSchema>;
 export type Country = z.infer<typeof countrySchema>;
+export type Money = z.infer<typeof moneySchema>;
+export type Stay = z.infer<typeof staySchema>;
 export type TravelData = z.infer<typeof travelDataSchema>;
 
 /** Strict validation result, used by the UI to show all errors at once. */

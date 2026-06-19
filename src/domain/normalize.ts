@@ -1,4 +1,4 @@
-import type { City, Country, TravelData } from './schema';
+import type { City, Country, Money, Stay, TravelData } from './schema';
 import { isValidYear } from './timeline';
 
 /**
@@ -63,15 +63,49 @@ export function normalizeCountry(input: unknown): Country {
   };
 }
 
+function normalizeMoney(input: unknown): Money | undefined {
+  const obj = asObject(input);
+  const amount = Number(obj.amount);
+  const currency = asString(obj.currency).trim().toUpperCase();
+  if (!Number.isFinite(amount) || !/^[A-Z]{3}$/.test(currency)) return undefined;
+  return { amount: Math.max(0, Math.round(amount)), currency };
+}
+
+function normalizeStay(input: unknown): Stay {
+  const obj = asObject(input);
+  const stay: Stay = { name: asString(obj.name).trim() };
+  const country = asString(obj.country).trim();
+  if (country) stay.country = country;
+  const city = asString(obj.city).trim();
+  if (city) stay.city = city;
+  const from = asString(obj.from).trim();
+  if (from) stay.from = from;
+  const to = asString(obj.to).trim();
+  if (to) stay.to = to;
+  const note = asString(obj.note).trim();
+  if (note) stay.note = note;
+  const cost = normalizeMoney(obj.cost);
+  if (cost) stay.cost = cost;
+  return stay;
+}
+
 export function normalizeTravelData(input: unknown): TravelData {
   const obj = asObject(input);
   const person = asObject(obj.person);
   const birthplace = asObject(person.birthplace);
   const travel = asObject(obj.travel);
-  return {
+  const result: TravelData = {
     person: { birthplace: { country: asString(birthplace.country).trim() } },
     travel: { countries: asArray(travel.countries).map(normalizeCountry) },
   };
+  // Diary stays are additive + OPTIONAL: only attach when present (and named), so
+  // legacy documents and their exports stay slim. This is the v1→v2 upgrade step —
+  // future schema growth adds more such coercions here, never throwing.
+  const stays = asArray(travel.stays)
+    .map(normalizeStay)
+    .filter((s) => s.name);
+  if (stays.length) result.travel.stays = stays;
+  return result;
 }
 
 /** A fresh, empty country ready for editing. */
