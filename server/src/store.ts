@@ -291,11 +291,100 @@ export function listFollows(db: DB, followerId: string): FollowView[] {
     .all(followerId) as unknown as FollowView[];
 }
 
-/** How many people follow this user (for mutual-follow detection later). */
+/** How many people follow this user (for mutual-follow detection). */
 export function followersCount(db: DB, userId: string): number {
   return (
     db.prepare('SELECT COUNT(*) AS n FROM follows WHERE target_id = ?').get(userId) as {
       n: number;
     }
   ).n;
+}
+
+/** Count of statused countries in a stored envelope (for feed summaries). */
+function countryCount(envelope: string): number {
+  try {
+    const data = (JSON.parse(envelope) as { data?: { travel?: { countries?: unknown[] } } }).data;
+    return data?.travel?.countries?.length ?? 0;
+  } catch {
+    return 0;
+  }
+}
+
+export interface DiscoverProfile {
+  handle: string | null;
+  display_name: string;
+  accent_color: string;
+}
+
+/** Search discoverable (handled) profiles by handle or display name. */
+export function searchProfiles(db: DB, q: string, limit = 20): DiscoverProfile[] {
+  const like = `%${q.trim().toLowerCase()}%`;
+  return db
+    .prepare(
+      `SELECT handle, display_name, accent_color FROM profiles
+        WHERE handle IS NOT NULL AND (lower(handle) LIKE ? OR lower(display_name) LIKE ?)
+        ORDER BY handle LIMIT ?`,
+    )
+    .all(like, like, limit) as unknown as DiscoverProfile[];
+}
+
+export interface FeedEntry {
+  handle: string | null;
+  display_name: string;
+  accent_color: string;
+  share_slug: string | null;
+  updated_at: string;
+  country_count: number;
+}
+
+/** Recent shared-map updates from people the user follows (column-minimized). */
+export function listFeed(db: DB, followerId: string, limit = 30): FeedEntry[] {
+  const rows = db
+    .prepare(
+      `SELECT p.handle, p.display_name, p.accent_color, d.share_slug, d.updated_at, d.envelope
+         FROM follows f
+         JOIN documents d ON d.user_id = f.target_id AND d.visibility IN ('unlisted', 'public')
+         JOIN profiles p ON p.user_id = f.target_id
+        WHERE f.follower_id = ?
+        ORDER BY d.updated_at DESC LIMIT ?`,
+    )
+    .all(followerId, limit) as unknown as Array<{
+    handle: string | null;
+    display_name: string;
+    accent_color: string;
+    share_slug: string | null;
+    updated_at: string;
+    envelope: string;
+  }>;
+  return rows.map((r) => ({
+    handle: r.handle,
+    display_name: r.display_name,
+    accent_color: r.accent_color,
+    share_slug: r.share_slug,
+    updated_at: r.updated_at,
+    country_count: countryCount(r.envelope),
+  }));
+}
+
+export interface FriendView {
+  handle: string | null;
+  display_name: string;
+  accent_color: string;
+  share_slug: string | null;
+}
+
+/** Mutual friends: people the user follows who also follow the user back. */
+export function listMutualFriends(db: DB, userId: string): FriendView[] {
+  return db
+    .prepare(
+      `SELECT p.handle, p.display_name, p.accent_color,
+              CASE WHEN d.visibility IN ('unlisted', 'public') THEN d.share_slug ELSE NULL END AS share_slug
+         FROM follows f1
+         JOIN follows f2 ON f2.follower_id = f1.target_id AND f2.target_id = f1.follower_id
+         JOIN profiles p ON p.user_id = f1.target_id
+         LEFT JOIN documents d ON d.user_id = f1.target_id
+        WHERE f1.follower_id = ?
+        ORDER BY p.display_name`,
+    )
+    .all(userId) as unknown as FriendView[];
 }

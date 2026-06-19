@@ -21,11 +21,14 @@ import {
   getUserById,
   getUserByLogin,
   handleTaken,
+  listFeed,
   listFollows,
+  listMutualFriends,
   putDocument,
   removeFollow,
   resolveTargetId,
   rotateSlug,
+  searchProfiles,
   setVisibility,
   updateProfile,
   type DocRow,
@@ -348,6 +351,17 @@ export function createApp(db: DB) {
   app.get('/followers', requireAuth(db), (c) =>
     c.json({ count: followersCount(db, c.get('userId')) }),
   );
+
+  // --- Social: friends, feed, discovery --------------------------------------
+  app.get('/friends', requireAuth(db), (c) => c.json(listMutualFriends(db, c.get('userId'))));
+
+  app.get('/feed', requireAuth(db), (c) => c.json(listFeed(db, c.get('userId'))));
+
+  app.get('/discover/profiles', requireAuth(db), (c) => {
+    const q = c.req.query('q') ?? '';
+    if (q.trim().length < 1) return c.json([]);
+    return c.json(searchProfiles(db, q));
+  });
 
   return app;
 }

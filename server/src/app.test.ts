@@ -298,3 +298,58 @@ describe('Atlas Server — follows', () => {
     assert.equal(count.count, 1);
   });
 });
+
+describe('Atlas Server — friends, feed, discovery', () => {
+  async function withHandle(name: string): Promise<Record<string, string>> {
+    const auth = { Authorization: `Bearer ${await register(name)}` };
+    await app.request('/me/profile', putJson({ display_name: name, handle: name }, auth));
+    return auth;
+  }
+
+  it('discovers profiles by handle / display name', async () => {
+    await withHandle('alice');
+    const bob = await withHandle('bob');
+    const list = (await (
+      await app.request('/discover/profiles?q=ali', { headers: bob })
+    ).json()) as Array<{
+      handle: string;
+    }>;
+    assert.equal(list.length, 1);
+    assert.equal(list[0]!.handle, 'alice');
+  });
+
+  it('lists only mutual-follow friends', async () => {
+    const alice = await withHandle('alice');
+    const bob = await withHandle('bob');
+    await app.request('/follows', json({ handle: 'bob' }, alice));
+    await app.request('/follows', json({ handle: 'alice' }, bob));
+    const friends = (await (await app.request('/friends', { headers: alice })).json()) as Array<{
+      handle: string;
+    }>;
+    assert.equal(friends.length, 1);
+    assert.equal(friends[0]!.handle, 'bob');
+
+    // A one-directional follow is NOT a friendship.
+    const carol = await withHandle('carol');
+    await app.request('/follows', json({ handle: 'alice' }, carol));
+    const carolFriends = (await (
+      await app.request('/friends', { headers: carol })
+    ).json()) as unknown[];
+    assert.equal(carolFriends.length, 0);
+  });
+
+  it('feeds a followed user’s public map with a country count', async () => {
+    const alice = await withHandle('alice');
+    await app.request('/me/document', putJson({ data: doc() }, alice));
+    await app.request('/me/document/visibility', patchJson({ visibility: 'public' }, alice));
+    const bob = await withHandle('bob');
+    await app.request('/follows', json({ handle: 'alice' }, bob));
+    const feed = (await (await app.request('/feed', { headers: bob })).json()) as Array<{
+      handle: string;
+      country_count: number;
+    }>;
+    assert.equal(feed.length, 1);
+    assert.equal(feed[0]!.handle, 'alice');
+    assert.equal(feed[0]!.country_count, 1);
+  });
+});
