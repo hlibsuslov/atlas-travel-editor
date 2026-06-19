@@ -2,11 +2,18 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { makeDefaultData } from '@/domain/normalize';
 import { ConflictError } from '../types';
 
-const { mockLoad, mockSave } = vi.hoisted(() => ({ mockLoad: vi.fn(), mockSave: vi.fn() }));
+const { mockLoad, mockSave, mockSetVis, mockGetPublic } = vi.hoisted(() => ({
+  mockLoad: vi.fn(),
+  mockSave: vi.fn(),
+  mockSetVis: vi.fn(),
+  mockGetPublic: vi.fn(),
+}));
 
 vi.mock('@/lib/atlas/client', () => ({
   atlasLoadDoc: mockLoad,
   atlasSaveDoc: mockSave,
+  atlasSetVisibility: mockSetVis,
+  atlasGetPublic: mockGetPublic,
   getAtlasUrl: () => 'http://atlas.test',
   getToken: () => 'token-123',
 }));
@@ -61,5 +68,40 @@ describe('SelfHostStore', () => {
     mockSave.mockResolvedValue({ conflict: false, doc: docResponse('X', 1) });
     await new SelfHostStore().save(makeDefaultData());
     expect(mockSave).toHaveBeenCalledWith(expect.anything(), null);
+  });
+
+  it('setSharing(true) publishes and maps the response to DocMeta', async () => {
+    mockSetVis.mockResolvedValue({
+      ...docResponse(),
+      is_public: true,
+      share_slug: 'abc',
+      version: 4,
+    });
+    const meta = await new SelfHostStore().setSharing(true);
+    expect(mockSetVis).toHaveBeenCalledWith('public');
+    expect(meta).toEqual({ version: 4, isPublic: true, shareSlug: 'abc' });
+  });
+
+  it('setSharing(false) unpublishes', async () => {
+    mockSetVis.mockResolvedValue({
+      ...docResponse(),
+      is_public: false,
+      share_slug: null,
+      version: 5,
+    });
+    await new SelfHostStore().setSharing(false);
+    expect(mockSetVis).toHaveBeenCalledWith('private');
+  });
+
+  it('readPublic() returns the public document data, or null', async () => {
+    mockGetPublic.mockResolvedValue({
+      data: docResponse('Italy').data,
+      profile: { display_name: 'P', accent_color: '#000', handle: 'p' },
+    });
+    const data = await new SelfHostStore().readPublic('slug');
+    expect(data?.person.birthplace.country).toBe('Italy');
+
+    mockGetPublic.mockResolvedValue(null);
+    expect(await new SelfHostStore().readPublic('missing')).toBeNull();
   });
 });

@@ -179,3 +179,61 @@ export async function atlasSaveDoc(
   if (!res.ok) throw new Error(await errorMessage(res));
   return { conflict: false, doc: (await res.json()) as AtlasDocResponse };
 }
+
+export type Visibility = 'private' | 'unlisted' | 'public';
+
+/** Set the document's visibility (mints/keeps the share slug). */
+export async function atlasSetVisibility(visibility: Visibility): Promise<AtlasDocResponse> {
+  const res = await req('/me/document/visibility', {
+    method: 'PATCH',
+    body: JSON.stringify({ visibility }),
+  });
+  if (!res.ok) throw new Error(await errorMessage(res));
+  return (await res.json()) as AtlasDocResponse;
+}
+
+/** Rotate the share slug, revoking the previous link. */
+export async function atlasRotateSlug(): Promise<AtlasDocResponse> {
+  const res = await req('/me/document/rotate-slug', { method: 'POST' });
+  if (!res.ok) throw new Error(await errorMessage(res));
+  return (await res.json()) as AtlasDocResponse;
+}
+
+export interface AtlasPublicView {
+  data: unknown;
+  profile: { display_name: string; accent_color: string; handle: string | null };
+}
+
+/** Read a publicly-shared map by its opaque slug, or null if not shared/found. */
+export async function atlasGetPublic(slug: string): Promise<AtlasPublicView | null> {
+  const res = await req(`/share/${encodeURIComponent(slug)}`);
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(await errorMessage(res));
+  return (await res.json()) as AtlasPublicView;
+}
+
+/** Read a publicly-discoverable map by its owner's handle, or null. */
+export async function atlasGetPublicByHandle(handle: string): Promise<AtlasPublicView | null> {
+  const res = await req(`/u/${encodeURIComponent(handle)}/map`);
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(await errorMessage(res));
+  return (await res.json()) as AtlasPublicView;
+}
+
+/** Create or update the signed-in user's profile (name, color, handle). */
+export async function atlasUpdateProfile(patch: {
+  display_name?: string;
+  accent_color?: string;
+  handle?: string | null;
+}): Promise<AtlasProfile> {
+  const res = await req('/me/profile', { method: 'PUT', body: JSON.stringify(patch) });
+  if (!res.ok) throw new Error(await errorMessage(res));
+  return (await res.json()) as AtlasProfile;
+}
+
+/** Whether a handle is free for the signed-in user to claim. */
+export async function atlasHandleAvailable(handle: string): Promise<boolean> {
+  const res = await req(`/handles/${encodeURIComponent(handle)}/available`);
+  if (!res.ok) return false;
+  return ((await res.json()) as { available: boolean }).available;
+}

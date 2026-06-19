@@ -3,22 +3,41 @@ import { useQuery } from '@tanstack/react-query';
 import { Link, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Globe } from 'lucide-react';
-import { fetchPublicRecord } from '@/features/editor/api';
+import {
+  atlasGetPublic,
+  atlasGetPublicByHandle,
+  getAtlasUrl,
+  type AtlasPublicView,
+} from '@/lib/atlas/client';
+import { normalizeTravelData } from '@/domain/normalize';
 import { computeStats } from '@/domain/stats';
 import { WorldMap } from '@/features/map/WorldMap';
 import { Legend } from '@/features/map/Legend';
 
+/**
+ * Public, read-only view of someone's shared map. Reachable by opaque slug
+ * (`/share/:slug`) or human handle (`/u/:handle`). Reads through the connected
+ * Atlas Server's column-minimized public endpoints — it only ever receives the map
+ * data plus the owner's public profile slice, never any private fields. When no
+ * server is connected (pure local-first), sharing is gracefully unavailable.
+ */
 export function SharePage() {
   const { t } = useTranslation();
-  const { slug = '' } = useParams();
+  const params = useParams();
+  const slug = params.slug ?? '';
+  const handle = params.handle ?? '';
+  const serverConfigured = !!getAtlasUrl();
 
-  const { data, isLoading, isError, isFetching, refetch } = useQuery({
-    queryKey: ['public-record', slug],
-    queryFn: () => fetchPublicRecord(slug),
-    enabled: !!slug,
+  const query = useQuery<AtlasPublicView | null>({
+    queryKey: handle ? ['public-handle', handle] : ['public-slug', slug],
+    queryFn: () => (handle ? atlasGetPublicByHandle(handle) : atlasGetPublic(slug)),
+    enabled: serverConfigured && (!!slug || !!handle),
   });
 
+  const view = query.data ?? null;
+  const data = useMemo(() => (view ? normalizeTravelData(view.data) : null), [view]);
   const stats = useMemo(() => (data ? computeStats(data) : null), [data]);
+  const title = view?.profile.display_name || view?.profile.handle || handle || t('share.title');
 
   return (
     <div className="page">
@@ -31,36 +50,49 @@ export function SharePage() {
         </span>
       </div>
 
-      {isLoading && <p className="empty-note">{t('common.loading')}</p>}
-      {/* A thrown query error means the load failed (network/RPC) — offer a retry.
-          A resolved-but-empty result means the slug is unknown or not public. */}
-      {isError && (
+      {!serverConfigured && (
+        <p className="empty-note">
+          {t(
+            'share.unavailable',
+            'Public sharing needs a connected Atlas Server. This is a local-first instance.',
+          )}
+        </p>
+      )}
+
+      {serverConfigured && query.isLoading && <p className="empty-note">{t('common.loading')}</p>}
+
+      {serverConfigured && query.isError && (
         <div className="notice-bar notice-bar-warn">
           <span>{t('share.loadError')}</span>
           <button
             type="button"
             className="btn btn-sm"
-            disabled={isFetching}
-            onClick={() => refetch()}
+            disabled={query.isFetching}
+            onClick={() => void query.refetch()}
           >
             {t('actions.retry')}
           </button>
         </div>
       )}
-      {!isLoading && !isError && !data && <p className="empty-note">{t('share.private')}</p>}
 
-      {data && stats && (
+      {serverConfigured && !query.isLoading && !query.isError && !view && (
+        <p className="empty-note">{t('share.private')}</p>
+      )}
+
+      {view && data && stats && (
         <>
           <div className="share-banner">
             <div>
               <div className="mono">
-                {slug} · {t('share.readOnly')}
+                {view.profile.handle ? `@${view.profile.handle}` : slug} · {t('share.readOnly')}
               </div>
-              <h1>{data.person.birthplace.country || t('share.title')}</h1>
+              <h1 style={{ borderLeft: `4px solid ${view.profile.accent_color}`, paddingLeft: 10 }}>
+                {title}
+              </h1>
               <div style={{ color: '#cfc8b6', marginTop: 4 }}>
                 {t('share.summary', {
                   country: data.person.birthplace.country || '—',
-                  count: data.travel.countries.length,
+                  count: stats.traveled,
                 })}
               </div>
             </div>
