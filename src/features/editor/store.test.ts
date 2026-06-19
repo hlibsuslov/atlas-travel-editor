@@ -233,4 +233,34 @@ describe('useEditorStore', () => {
       before,
     );
   });
+
+  it('adds, edits and removes diary stays (dropping the key when empty)', () => {
+    const store = useEditorStore.getState();
+    store.addStay({ name: 'Hotel Sacher', city: 'Vienna' });
+    expect(useEditorStore.getState().data.travel.stays).toHaveLength(1);
+
+    store.setStay(0, {
+      name: 'Hotel Sacher',
+      city: 'Vienna',
+      cost: { amount: 42000, currency: 'EUR' },
+    });
+    expect(useEditorStore.getState().data.travel.stays![0]!.cost).toEqual({
+      amount: 42000,
+      currency: 'EUR',
+    });
+
+    store.removeStay(0);
+    // The optional key is dropped entirely once the diary is empty (legacy-slim).
+    expect('stays' in useEditorStore.getState().data.travel).toBe(false);
+  });
+
+  it('a stay edit is a single undo step', () => {
+    const store = useEditorStore.getState();
+    store.addStay({ name: 'Place' });
+    const depth = useEditorStore.getState().past.length;
+    store.setStay(0, { name: 'Renamed' });
+    expect(useEditorStore.getState().past.length).toBe(depth + 1);
+    useEditorStore.getState().undo();
+    expect(useEditorStore.getState().data.travel.stays![0]!.name).toBe('Place');
+  });
 });

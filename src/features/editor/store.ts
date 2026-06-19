@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { current, type Draft } from 'immer';
 import { immer } from 'zustand/middleware/immer';
-import type { Country, CountryStatus, TravelData } from '@/domain/schema';
+import type { Country, CountryStatus, Stay, TravelData } from '@/domain/schema';
 import { makeDefaultData, makeEmptyCountry } from '@/domain/normalize';
 import { canonicalCountryName } from '@/domain/countries';
 
@@ -73,6 +73,11 @@ export interface EditorState {
   renameCity: (index: number, cityIndex: number, name: string) => void;
   addCityYear: (index: number, cityIndex: number, year: number) => void;
   removeCityYear: (index: number, cityIndex: number, yearIndex: number) => void;
+
+  // Diary stays (optional, additive — schema v2)
+  addStay: (stay: Stay) => void;
+  removeStay: (index: number) => void;
+  setStay: (index: number, stay: Stay) => void;
 }
 
 /** Cap the undo history so long sessions can't grow memory without bound. */
@@ -341,6 +346,26 @@ export const useEditorStore = create<EditorState>()(
         mutate((s) => {
           const city = s.data.travel.countries[index]?.cities[cityIndex];
           if (city) city.timeline.visited.splice(yearIndex, 1);
+        }),
+
+      addStay: (stay) =>
+        mutate((s) => {
+          (s.data.travel.stays ??= []).push(stay);
+        }),
+
+      removeStay: (index) =>
+        mutate((s) => {
+          const arr = s.data.travel.stays;
+          if (!arr) return;
+          arr.splice(index, 1);
+          // Keep legacy-slim: drop the key entirely once the diary is empty.
+          if (arr.length === 0) delete s.data.travel.stays;
+        }),
+
+      setStay: (index, stay) =>
+        mutate((s) => {
+          const arr = s.data.travel.stays;
+          if (arr && arr[index]) arr[index] = stay;
         }),
     };
   }),
