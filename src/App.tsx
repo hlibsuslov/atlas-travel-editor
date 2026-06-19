@@ -44,6 +44,7 @@ export function App() {
           <Suspense fallback={<PageFallback />}>
             <Routes>
               <Route path="/share/:slug" element={<SharePage />} />
+              <Route path="/u/:handle" element={<SharePage />} />
 
               <Route
                 element={
