@@ -10,17 +10,27 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg'],
+      includeAssets: [
+        'favicon.svg',
+        'maskable-icon.svg',
+        'maskable-512.png',
+        'apple-touch-icon.png',
+        'og-image.png',
+      ],
       manifest: {
-        name: 'Travel Editor',
-        short_name: 'Travel',
-        description: 'Edit, validate and share your travel map.',
-        theme_color: '#2563eb',
-        background_color: '#f7f7fb',
+        name: 'Atlas — Personal travel cartography',
+        short_name: 'Atlas',
+        description: 'Map every country you were born in, have lived in, or visited.',
+        // Brand tokens: paper ground, ink mark. Matches <meta name="theme-color">.
+        theme_color: '#f3efe6',
+        background_color: '#f3efe6',
         display: 'standalone',
         start_url: '/',
         icons: [
-          { src: '/favicon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any maskable' },
+          { src: '/favicon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
+          { src: '/maskable-icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'maskable' },
+          { src: '/maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' },
+          { src: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png', purpose: 'any' },
         ],
       },
       workbox: {

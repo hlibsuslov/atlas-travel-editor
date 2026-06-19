@@ -18,6 +18,9 @@ coverage
 .env.*
 !.env.example
 
+# Claude Code session artifacts (locks, scheduled tasks) — never commit
+.claude/
+
 # Editor / OS
 .vscode/*
 !.vscode/extensions.json
