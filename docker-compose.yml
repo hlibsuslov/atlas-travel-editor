@@ -1,0 +1,22 @@
+# Run a self-hosted Atlas Server in one command:
+#   docker compose up --build
+# Then point the Atlas web app at http://localhost:8787 (storage picker → Atlas
+# Server) to enable accounts, syncing, profiles and sharing. The web app itself
+# stays local-first and works with no server at all.
+services:
+  atlas-server:
+    build: ./server
+    image: atlas-server:local
+    ports:
+      - '8787:8787'
+    environment:
+      # Set a strong value in production; rotates nothing secret but documents intent.
+      ATLAS_ALLOW_SIGNUP: '1'
+      # Comma-separated allowed web-app origins for CORS (default '*' for local dev).
+      # ATLAS_CORS_ORIGINS: 'https://your-atlas.example.com'
+    volumes:
+      - atlas-data:/data
+    restart: unless-stopped
+
+volumes:
+  atlas-data:

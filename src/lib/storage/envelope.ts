@@ -9,13 +9,14 @@ import { normalizeTravelData } from '@/domain/normalize';
  */
 export interface PortableEnvelope {
   app: 'travel-editor';
-  schemaVersion: 1;
+  schemaVersion: number;
   updatedAt: string;
   data: TravelData;
 }
 
 export const APP_ID = 'travel-editor';
-export const SCHEMA_VERSION = 1;
+/** v2 adds the optional diary (`travel.stays`). Older v1 docs remain valid. */
+export const SCHEMA_VERSION = 2;
 
 /** Wrap a document in the portable envelope, stamping `updatedAt` (ISO). */
 export function wrapEnvelope(
@@ -26,12 +27,13 @@ export function wrapEnvelope(
 }
 
 function isEnvelope(value: unknown): value is { data: unknown; updatedAt?: unknown } {
-  return (
-    !!value &&
-    typeof value === 'object' &&
-    (value as Record<string, unknown>).app === APP_ID &&
-    'data' in (value as Record<string, unknown>)
-  );
+  if (!value || typeof value !== 'object') return false;
+  const v = value as Record<string, unknown>;
+  // Identify our envelope by app id AND a numeric schemaVersion (the migration
+  // anchor). Requiring a numeric version rejects look-alike objects that merely
+  // carry an `app`/`data` field, while still accepting any future version number
+  // forward-compatibly (unknown fields are dropped by `normalizeTravelData`).
+  return v.app === APP_ID && typeof v.schemaVersion === 'number' && 'data' in v;
 }
 
 /**

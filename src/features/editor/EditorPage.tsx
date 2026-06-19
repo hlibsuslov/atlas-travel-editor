@@ -14,6 +14,7 @@ import { FilterInput } from './components/FilterInput';
 import { JsonPreview } from './components/JsonPreview';
 import { ImportModal } from './components/ImportModal';
 import { ExportMenu } from './components/ExportMenu';
+import { StaysEditor } from './components/StaysEditor';
 
 export function EditorPage() {
   const { t } = useTranslation();
@@ -291,6 +292,8 @@ export function EditorPage() {
               <JsonPreview data={data} />
             </div>
           </div>
+
+          <StaysEditor />
         </div>
       </div>
 

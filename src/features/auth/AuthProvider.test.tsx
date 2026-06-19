@@ -2,83 +2,108 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-// Mock the Supabase client so auth can be tested with no live backend.
-const { mockSignUp, mockSignIn, mockGetSession, mockOnAuthStateChange } = vi.hoisted(() => ({
-  mockSignUp: vi.fn(),
-  mockSignIn: vi.fn(),
-  mockGetSession: vi.fn(),
-  mockOnAuthStateChange: vi.fn(),
+/**
+ * The AuthProvider has two modes, chosen by whether an Atlas Server is connected.
+ * Mutable env + atlas-client mocks let each test pick the mode: local-first (no
+ * server → synthetic session, no login wall) vs. server-connected (real accounts).
+ */
+const { mockEnv, atlas } = vi.hoisted(() => ({
+  mockEnv: {
+    localOnly: true,
+    demoAuth: false,
+    socialBackendConfigured: false,
+    selfHostUrl: undefined as string | undefined,
+    appUrl: 'http://localhost',
+    sentryDsn: undefined as string | undefined,
+  },
+  atlas: {
+    url: null as string | null,
+    token: null as string | null,
+    login: vi.fn(),
+    register: vi.fn(),
+    me: vi.fn(),
+    logout: vi.fn(),
+  },
 }));
 
-vi.mock('@/lib/supabase', () => ({
-  supabase: {
-    auth: {
-      signUp: mockSignUp,
-      signInWithPassword: mockSignIn,
-      getSession: mockGetSession,
-      onAuthStateChange: mockOnAuthStateChange,
-    },
-  },
+vi.mock('@/lib/env', () => ({ env: mockEnv, envError: null }));
+vi.mock('@/lib/atlas/client', () => ({
+  getAtlasUrl: () => atlas.url,
+  getToken: () => atlas.token,
+  atlasLogin: atlas.login,
+  atlasRegister: atlas.register,
+  atlasMe: atlas.me,
+  atlasLogout: atlas.logout,
 }));
 
 const { AuthProvider, useAuth } = await import('./AuthProvider');
 
-function SignUpProbe() {
-  const { signUpWithPassword } = useAuth();
+function Probe() {
+  const { user, signInWithPassword } = useAuth();
   return (
-    <button
-      onClick={async () => {
-        const res = await signUpWithPassword('new@user.io', 'sixchars');
-        const node = document.getElementById('result')!;
-        node.textContent = `${res.error ?? 'ok'}:${res.needsConfirmation}`;
-      }}
-    >
-      go
-    </button>
+    <div>
+      <span data-testid="uid">{user?.id ?? 'none'}</span>
+      <button
+        onClick={async () => {
+          const r = await signInWithPassword('a@b.co', 'supersecret');
+          document.getElementById('err')!.textContent = r.error ?? 'ok';
+        }}
+      >
+        signin
+      </button>
+      <div id="err" />
+    </div>
   );
 }
+
+const renderProbe = () =>
+  render(
+    <AuthProvider>
+      <Probe />
+    </AuthProvider>,
+  );
 
 beforeEach(() => {
   vi.clearAllMocks();
-  mockGetSession.mockResolvedValue({ data: { session: null } });
-  mockOnAuthStateChange.mockReturnValue({ data: { subscription: { unsubscribe: vi.fn() } } });
+  localStorage.clear();
+  mockEnv.localOnly = true;
+  mockEnv.demoAuth = false;
+  atlas.url = null;
+  atlas.token = null;
 });
 
-async function renderAndSignUp() {
-  render(
-    <AuthProvider>
-      <SignUpProbe />
-      <div id="result" />
-    </AuthProvider>,
-  );
-  await userEvent.click(screen.getByText('go'));
-}
-
-describe('AuthProvider.signUpWithPassword', () => {
-  it('flags needsConfirmation when Supabase returns no session (email confirmation on)', async () => {
-    mockSignUp.mockResolvedValue({ data: { user: { id: 'u1' }, session: null }, error: null });
-    await renderAndSignUp();
-    await waitFor(() => expect(document.getElementById('result')!.textContent).toBe('ok:true'));
-    expect(mockSignUp).toHaveBeenCalledWith(
-      expect.objectContaining({ email: 'new@user.io', password: 'sixchars' }),
-    );
+describe('AuthProvider — local-first (no server connected)', () => {
+  it('is signed in with a synthetic local session (no login wall)', async () => {
+    renderProbe();
+    await waitFor(() => expect(screen.getByTestId('uid').textContent).toBe('local-user'));
   });
 
-  it('does not require confirmation when a session is returned immediately', async () => {
-    mockSignUp.mockResolvedValue({
-      data: { user: { id: 'u1' }, session: { access_token: 't' } },
-      error: null,
-    });
-    await renderAndSignUp();
-    await waitFor(() => expect(document.getElementById('result')!.textContent).toBe('ok:false'));
+  it('sign-in reports no backend when not local and no server is connected', async () => {
+    mockEnv.localOnly = false;
+    renderProbe();
+    await waitFor(() => expect(screen.getByTestId('uid').textContent).toBe('none'));
+    await userEvent.click(screen.getByText('signin'));
+    await waitFor(() => expect(document.getElementById('err')!.textContent).toMatch(/No backend/));
+  });
+});
+
+describe('AuthProvider — server connected', () => {
+  it('hydrates the session from the server token on mount', async () => {
+    atlas.url = 'http://atlas.test';
+    atlas.token = 'tok';
+    atlas.me.mockResolvedValue({ user: { id: 'u1', email: 'a@b.co' }, profile: null });
+    renderProbe();
+    await waitFor(() => expect(screen.getByTestId('uid').textContent).toBe('u1'));
   });
 
-  it('surfaces the error message on failure', async () => {
-    mockSignUp.mockResolvedValue({
-      data: { user: null, session: null },
-      error: { message: 'taken' },
-    });
-    await renderAndSignUp();
-    await waitFor(() => expect(document.getElementById('result')!.textContent).toBe('taken:false'));
+  it('shows no session when connected but unauthenticated, and signs in via the server', async () => {
+    atlas.url = 'http://atlas.test';
+    atlas.token = null;
+    atlas.login.mockResolvedValue({ id: 'u2', email: 'a@b.co', username: 'a' });
+    renderProbe();
+    await waitFor(() => expect(screen.getByTestId('uid').textContent).toBe('none'));
+    await userEvent.click(screen.getByText('signin'));
+    await waitFor(() => expect(screen.getByTestId('uid').textContent).toBe('u2'));
+    expect(atlas.login).toHaveBeenCalledWith('a@b.co', 'supersecret');
   });
 });

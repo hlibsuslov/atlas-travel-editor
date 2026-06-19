@@ -48,12 +48,41 @@ describe('useEditorStore', () => {
     expect(() => useEditorStore.getState().removeCityYear(99, 99, 99)).not.toThrow();
   });
 
-  it('reset restores default data and marks dirty', () => {
+  it('reset restores default data; dirty reflects difference from the saved baseline', () => {
+    // Establish a non-default saved baseline, then reset back to default.
     useEditorStore.getState().setBirthplace('Spain');
-    useEditorStore.getState().reset();
+    useEditorStore.getState().markClean(); // baseline is now the Spain document
+    useEditorStore.getState().reset(); // back to default, which differs from baseline
     const s = useEditorStore.getState();
     expect(s.data).toEqual(makeDefaultData());
     expect(s.dirty).toBe(true);
+  });
+
+  it('editing back to the saved baseline clears dirty (no phantom unsaved state)', () => {
+    // Baseline (from beforeEach) is the default doc with birthplace "Ukraine".
+    useEditorStore.getState().setBirthplace('Poland');
+    expect(useEditorStore.getState().dirty).toBe(true);
+    useEditorStore.getState().setBirthplace('Ukraine'); // back to the saved value
+    expect(useEditorStore.getState().dirty).toBe(false);
+  });
+
+  it('undo back to the saved baseline clears dirty', () => {
+    useEditorStore.getState().setBirthplace('Poland');
+    expect(useEditorStore.getState().dirty).toBe(true);
+    useEditorStore.getState().undo();
+    const s = useEditorStore.getState();
+    expect(s.data.person.birthplace.country).toBe('Ukraine');
+    expect(s.dirty).toBe(false);
+  });
+
+  it('a duplicate addCityYear is a no-op and adds no undo entry', () => {
+    const store = useEditorStore.getState();
+    store.addCity(0, 'Vienna', 2022);
+    const historyBefore = useEditorStore.getState().past.length;
+    store.addCityYear(0, 0, 2022); // already present via addCity
+    const after = useEditorStore.getState();
+    expect(after.past.length).toBe(historyBefore); // no snapshot pushed
+    expect(after.data.travel.countries[0]!.cities[0]!.timeline.visited).toEqual([2022]);
   });
 
   it('undo reverts the last mutation and redo re-applies it', () => {
@@ -203,5 +232,35 @@ describe('useEditorStore', () => {
     expect(useEditorStore.getState().data.travel.countries[0]!.cities.map((c) => c.name)).toEqual(
       before,
     );
+  });
+
+  it('adds, edits and removes diary stays (dropping the key when empty)', () => {
+    const store = useEditorStore.getState();
+    store.addStay({ name: 'Hotel Sacher', city: 'Vienna' });
+    expect(useEditorStore.getState().data.travel.stays).toHaveLength(1);
+
+    store.setStay(0, {
+      name: 'Hotel Sacher',
+      city: 'Vienna',
+      cost: { amount: 42000, currency: 'EUR' },
+    });
+    expect(useEditorStore.getState().data.travel.stays![0]!.cost).toEqual({
+      amount: 42000,
+      currency: 'EUR',
+    });
+
+    store.removeStay(0);
+    // The optional key is dropped entirely once the diary is empty (legacy-slim).
+    expect('stays' in useEditorStore.getState().data.travel).toBe(false);
+  });
+
+  it('a stay edit is a single undo step', () => {
+    const store = useEditorStore.getState();
+    store.addStay({ name: 'Place' });
+    const depth = useEditorStore.getState().past.length;
+    store.setStay(0, { name: 'Renamed' });
+    expect(useEditorStore.getState().past.length).toBe(depth + 1);
+    useEditorStore.getState().undo();
+    expect(useEditorStore.getState().data.travel.stays![0]!.name).toBe('Place');
   });
 });
