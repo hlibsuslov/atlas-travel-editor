@@ -6,10 +6,12 @@ import type { DB } from './db';
 import { hashPassword, hashToken, newToken, verifyPassword } from './auth';
 import {
   VersionConflict,
+  addFollow,
   createSession,
   createUser,
   deleteSession,
   emailOrUsernameTaken,
+  followersCount,
   getDocument,
   getProfile,
   getProfileByHandle,
@@ -19,11 +21,15 @@ import {
   getUserById,
   getUserByLogin,
   handleTaken,
+  listFollows,
   putDocument,
+  removeFollow,
+  resolveTargetId,
   rotateSlug,
   setVisibility,
   updateProfile,
   type DocRow,
+  type FollowView,
   type ProfileRow,
   type PublicView,
 } from './store';
@@ -60,6 +66,28 @@ const profileBody = z.object({
   handle: z.union([z.string(), z.null()]).optional(),
 });
 const visibilityBody = z.object({ visibility: z.enum(['private', 'unlisted', 'public']) });
+const followBody = z.object({
+  handle: z.string().optional(),
+  slug: z.string().optional(),
+  label: z.string().max(60).optional(),
+});
+
+/** A follow edge for the follower's own list — never exposes the target's user id. */
+function followView(v: FollowView): {
+  handle: string | null;
+  display_name: string;
+  accent_color: string;
+  share_slug: string | null;
+  label: string | null;
+} {
+  return {
+    handle: v.handle,
+    display_name: v.display_name,
+    accent_color: v.accent_color,
+    share_slug: v.share_slug,
+    label: v.label,
+  };
+}
 
 /** The public, column-minimized profile slice — never ids/email/internal columns. */
 function profileSlice(p: ProfileRow): {
@@ -290,6 +318,36 @@ export function createApp(db: DB) {
     const view = getPublicByHandle(db, c.req.param('handle'));
     return view ? c.json(publicView(view)) : c.json({ error: 'Not found' }, 404);
   });
+
+  // --- Follows (directed social graph) ---------------------------------------
+  app.get('/follows', requireAuth(db), (c) =>
+    c.json(listFollows(db, c.get('userId')).map(followView)),
+  );
+
+  app.post('/follows', requireAuth(db), async (c) => {
+    const parsed = followBody.safeParse(await c.req.json().catch(() => null));
+    if (!parsed.success) return c.json({ error: 'Invalid body' }, 400);
+    const targetId = resolveTargetId(db, parsed.data);
+    if (!targetId) return c.json({ error: 'Not found' }, 404);
+    if (targetId === c.get('userId')) return c.json({ error: "You can't follow yourself." }, 400);
+    try {
+      addFollow(db, c.get('userId'), targetId, parsed.data.label?.trim() || null);
+    } catch {
+      return c.json({ error: 'Already following.' }, 409);
+    }
+    const view = listFollows(db, c.get('userId')).find((v) => v.target_id === targetId);
+    return c.json(view ? followView(view) : { ok: true }, 201);
+  });
+
+  app.delete('/follows/:handle', requireAuth(db), (c) => {
+    const targetId = getProfileByHandle(db, c.req.param('handle'))?.user_id;
+    if (targetId) removeFollow(db, c.get('userId'), targetId);
+    return c.body(null, 204);
+  });
+
+  app.get('/followers', requireAuth(db), (c) =>
+    c.json({ count: followersCount(db, c.get('userId')) }),
+  );
 
   return app;
 }

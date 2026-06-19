@@ -231,3 +231,70 @@ describe('Atlas Server — sharing & public reads', () => {
     assert.equal(free.available, true);
   });
 });
+
+describe('Atlas Server — follows', () => {
+  async function user(name: string, handle?: string): Promise<Record<string, string>> {
+    const auth = { Authorization: `Bearer ${await register(name)}` };
+    if (handle) await app.request('/me/profile', putJson({ handle }, auth));
+    return auth;
+  }
+
+  it('follows by handle and lists the target profile', async () => {
+    await user('alice', 'alice');
+    const bob = await user('bob');
+    assert.equal((await app.request('/follows', json({ handle: 'alice' }, bob))).status, 201);
+    const list = (await (await app.request('/follows', { headers: bob })).json()) as Array<{
+      handle: string;
+    }>;
+    assert.equal(list.length, 1);
+    assert.equal(list[0]!.handle, 'alice');
+  });
+
+  it('follows by share slug and exposes the target live slug', async () => {
+    const alice = await user('alice', 'alice');
+    await app.request('/me/document', putJson({ data: doc() }, alice));
+    const slug = (
+      (await (
+        await app.request('/me/document/visibility', patchJson({ visibility: 'unlisted' }, alice))
+      ).json()) as { share_slug: string }
+    ).share_slug;
+    const bob = await user('bob');
+    assert.equal((await app.request('/follows', json({ slug }, bob))).status, 201);
+    const list = (await (await app.request('/follows', { headers: bob })).json()) as Array<{
+      handle: string;
+      share_slug: string;
+    }>;
+    assert.equal(list[0]!.handle, 'alice');
+    assert.equal(list[0]!.share_slug, slug);
+  });
+
+  it('rejects a duplicate follow and a self-follow', async () => {
+    await user('alice', 'alice');
+    const bob = await user('bob', 'bob');
+    await app.request('/follows', json({ handle: 'alice' }, bob));
+    assert.equal((await app.request('/follows', json({ handle: 'alice' }, bob))).status, 409);
+    assert.equal((await app.request('/follows', json({ handle: 'bob' }, bob))).status, 400);
+  });
+
+  it('unfollows by handle', async () => {
+    await user('alice', 'alice');
+    const bob = await user('bob');
+    await app.request('/follows', json({ handle: 'alice' }, bob));
+    assert.equal(
+      (await app.request('/follows/alice', { method: 'DELETE', headers: bob })).status,
+      204,
+    );
+    const list = (await (await app.request('/follows', { headers: bob })).json()) as unknown[];
+    assert.equal(list.length, 0);
+  });
+
+  it('counts followers', async () => {
+    const alice = await user('alice', 'alice');
+    const bob = await user('bob');
+    await app.request('/follows', json({ handle: 'alice' }, bob));
+    const count = (await (await app.request('/followers', { headers: alice })).json()) as {
+      count: number;
+    };
+    assert.equal(count.count, 1);
+  });
+});
