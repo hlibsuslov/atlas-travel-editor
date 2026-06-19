@@ -4,6 +4,29 @@
 > [`STRATEGY.md`](./STRATEGY.md) (kept for its subsystem analysis, but its
 > "keep Supabase as default" conclusion no longer holds). Decision date: 2026-06-19.
 
+## Status — all six sprints shipped (2026-06-19)
+
+The full plan below is **implemented** on branch
+`feat/storage-seam-correctness-and-portable-io` (client + `server/`), CI-green at
+every step:
+
+- **Sprint 1** — Supabase removed; local-first by default (IndexedDB), no login wall. ✓
+- **Sprint 2** — **Atlas Server** (Hono + `node:sqlite`, zero native deps, Docker) +
+  `SelfHostStore`; connect a server, register/sign-in, sync with optimistic
+  concurrency. ✓
+- **Sprint 3** — publish (private/unlisted/public + rotatable slug); read-only view by
+  `/share/:slug` and `/u/:handle`; handles + column-minimized public reads (leak-tested). ✓
+- **Sprint 4** — directed follow graph (by handle or pasted link); Friends page with
+  real names/colors/mini-maps. ✓
+- **Sprint 5** — discovery search, activity feed, and mutual-follow friends. ✓
+- **Sprint 6** — diary foundation (schema v2: optional `Money` + `travel.stays`,
+  v1→v2 normalize ladder, zero backend migration) + an in-app stays editor. ✓
+
+**Deferred (documented, not yet built):** the explicit friend-request handshake +
+`audience:'friends'` visibility tier (needs a consent table + an authed friends-only
+read path); a CI locale-key-parity linter; map matching by ISO code. Mutual-follow
+already provides a "friends" set today.
+
 ## 1. What we are building
 
 Atlas is a **serious, open-source, local-first travel social network**. A person
