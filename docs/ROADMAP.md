@@ -127,12 +127,12 @@ Status legend: ☐ todo · ◐ in progress · ☑ done.
   installability audit (F5) on most platforms. _Accept:_ add 192×192 and 512×512 PNG icons
   plus a dedicated maskable icon, reference them in the `VitePWA` manifest, and verify the
   generated `manifest.webmanifest` passes the installability checks.
-- ☐ **F10 (S)** Validate ALL `VITE_` runtime flags in `src/lib/env.ts`. _Note:_ the Zod
-  schema only checks `VITE_SUPABASE_*` and `VITE_APP_URL`; `VITE_SENTRY_DSN` and the
-  `VITE_DEMO_AUTH`/`VITE_DEMO_LOGIN`/`VITE_DEMO_PASSWORD` flags are read ad-hoc elsewhere
-  (`observability.ts`, `auth/demo.ts`) and bypass the fail-loud startup check. _Accept:_
-  add them to `envSchema` (optional, with sane defaults), export typed values from `env`,
-  and have the demo/observability modules consume `env` instead of raw `import.meta.env`.
+- ☑ **F10 (S)** Validate ALL `VITE_` runtime flags in `src/lib/env.ts`. _Done:_ the Zod
+  `envSchema` now validates every supported flag — `VITE_APP_URL`, `VITE_SELFHOST_URL`,
+  `VITE_LOCAL_ONLY`, `VITE_DEMO_AUTH`/`VITE_DEMO_LOGIN`/`VITE_DEMO_PASSWORD`, and
+  `VITE_SENTRY_DSN` — all optional with sane defaults, and the typed `env` object is the
+  single consumer (modules no longer read raw `import.meta.env`). All flags are optional,
+  so a clean clone is always valid and boots straight into the editor.
 
 ## Epic G — Accessibility
 

@@ -1,6 +1,13 @@
 # ADR 0003: Public sharing via a SECURITY DEFINER function
 
-- **Status:** Accepted
+> **Status: Superseded (2026-06)** — see [`docs/PRODUCT_PLAN.md`](../PRODUCT_PLAN.md).
+> Supabase is gone, so there is no Postgres `SECURITY DEFINER` function. Public
+> read-only sharing is now served by the **Atlas Server** via slug (`/share/:slug`)
+> and handle (`/u/:handle`) reads that return column-minimized DTOs and a generic
+> 404 for missing/private/revoked. The column-minimization principle below carried
+> over; the original text is kept for history.
+
+- **Status:** Accepted (superseded)
 - **Date:** 2026-06-05
 - **Context owners:** Security Engineer
 

@@ -1,6 +1,14 @@
 # ADR 0005: Normalize the travel document into a relational schema
 
-- **Status:** Accepted
+> **Status: Superseded (2026-06)** — see [`docs/PRODUCT_PLAN.md`](../PRODUCT_PLAN.md).
+> Supabase/Postgres is gone, and with it the relational
+> `travel_documents → countries → cities → years` tree and its SECURITY DEFINER
+> assemble/disassemble functions. The Atlas Server instead stores the document as
+> **one opaque `PortableEnvelope` blob** (in `node:sqlite`) plus a few indexed
+> metadata columns, so diary growth needs zero backend migration. The original
+> text is kept for history.
+
+- **Status:** Accepted (superseded)
 - **Date:** 2026-06-13
 - **Context owners:** Principal Engineer
 

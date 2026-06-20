@@ -1,6 +1,13 @@
 # ADR 0001: Stack and overall architecture
 
-- **Status:** Accepted
+> **Status: Superseded (2026-06)** — see [`docs/PRODUCT_PLAN.md`](../PRODUCT_PLAN.md)
+> for the current direction. The Supabase backend (Postgres + Auth + RLS) was
+> replaced by a **local-first-by-default** app (IndexedDB) with an **optional,
+> self-hostable Atlas Server** behind a pluggable storage seam. The React/TS/Vite,
+> Zod, Zustand, and TanStack Query choices below still hold; the original text is
+> kept for history.
+
+- **Status:** Accepted (superseded)
 - **Date:** 2026-06-05
 - **Context owners:** Architecture / Tech Lead
 

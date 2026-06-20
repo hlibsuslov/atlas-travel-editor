@@ -3,7 +3,7 @@
 This project follows the [Contributor Covenant](https://www.contributor-covenant.org/version/2/1/code_of_conduct/),
 version 2.1, as its code of conduct.
 
-We want Travel Editor to be a friendly and welcoming place for everyone who
+We want Atlas to be a friendly and welcoming place for everyone who
 contributes or uses it, regardless of experience level or background.
 
 ## In short

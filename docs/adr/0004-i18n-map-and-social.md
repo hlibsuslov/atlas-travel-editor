@@ -26,9 +26,12 @@ and lightweight social features (viewing friends' maps).
   `canonical()` + alias layer; status is ranked (birthplace > lived > visited >
   capital). The map is code-split so the ~210 KB atlas never touches the editor's
   initial load.
-- **Friends:** modeled as a private list of followed public share slugs
-  (`friend_links`), reusing the existing public-sharing function. No new public
-  data surface and no username/profile system required yet.
+- **Friends:** modeled as a private **directed follow graph**. A signed-in user
+  follows someone **by handle** (or by pasting their `/share/<slug>` link), and the
+  edge is private to the follower. This is served by the optional Atlas Server;
+  with no server connected, all social UI is hidden. (Originally this was a private
+  list of followed share slugs (`friend_links`); follow-by-handle replaced it — see
+  [`docs/PRODUCT_PLAN.md`](../PRODUCT_PLAN.md).)
 - **PWA & observability:** `vite-plugin-pwa` (offline + installable) and an
   optional Sentry hook that is a no-op unless `VITE_SENTRY_DSN` is set.
 
@@ -46,5 +49,6 @@ and lightweight social features (viewing friends' maps).
   exact (and enable localized country names on the map).
 - Plural forms use simple count interpolation rather than full ICU/i18next
   pluralization — acceptable for current strings, revisit for counters.
-- Friends are identified by share code; a username/profile system would be a
-  friendlier next step.
+- Friends are now identified by **handle** (a username/profile system), served by
+  the Atlas Server; mutual follows form the "friends" set. An explicit
+  friend-request handshake and a `friends`-only visibility tier remain future work.
