@@ -3,8 +3,8 @@
 @tailwind utilities;
 
 /* ============================================================================
-   Personal Atlas — design system for the Travel Editor.
-   Ported from the approved prototype (Travel Editor/app/styles.css).
+   Personal Atlas — design system for Atlas.
+   Ported from the approved prototype (Atlas/app/styles.css).
    ========================================================================== */
 
 :root {
@@ -60,6 +60,26 @@ body {
   color: var(--ink);
   background: var(--paper);
   -webkit-font-smoothing: antialiased;
+}
+
+/* Skip link: hidden off-screen until keyboard-focused, then pinned top-left. */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 1000;
+  padding: 10px 16px;
+  border-radius: var(--radius);
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-family: var(--font-ui);
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: var(--shadow);
+}
+.skip-link:focus {
+  left: 8px;
+  top: 8px;
 }
 
 .atlas-app {
@@ -1222,6 +1242,91 @@ textarea.input {
   border-radius: var(--radius);
   font-size: 13px;
 }
+/* First-run welcome banner: a friendly, dismissible onboarding strip. */
+.welcome-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  margin-bottom: var(--gap);
+  background: color-mix(in srgb, var(--accent) 7%, var(--panel));
+  border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--line));
+  border-radius: var(--radius);
+}
+.welcome-icon {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--accent);
+}
+.welcome-body {
+  flex: 1;
+  min-width: 0;
+}
+.welcome-body strong {
+  display: block;
+  font-size: 14px;
+}
+.welcome-body p {
+  margin: 2px 0 10px;
+  font-size: 13px;
+  color: var(--ink-faint);
+}
+.welcome-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.welcome-dismiss {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  color: var(--ink-faint);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+.welcome-dismiss:hover {
+  color: var(--ink);
+  background: var(--panel-2);
+}
+
+/* Editor empty state: shown when there are genuinely no countries (no filter). */
+.editor-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 24px 16px;
+  text-align: center;
+  color: var(--ink-faint);
+}
+.editor-empty-title {
+  margin: 0;
+  font-size: 15px;
+  color: var(--ink);
+}
+.editor-empty .empty-note {
+  max-width: 42ch;
+}
+.editor-empty-add {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: stretch;
+  width: 100%;
+  max-width: 280px;
+  text-align: left;
+}
+.editor-empty-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
 /* Offline / warning variant of the notice bar. */
 .notice-bar-warn {
   background: color-mix(in srgb, var(--c-danger) 8%, var(--panel));

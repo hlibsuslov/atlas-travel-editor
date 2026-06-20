@@ -1,53 +1,33 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Check,
-  ChevronDown,
-  Cloud,
-  Copy,
-  Download,
-  HardDrive,
-  Mail,
-  Send,
-  Share2,
-} from 'lucide-react';
+import { Check, ChevronDown, Copy, Download, HardDrive } from 'lucide-react';
 import { toast } from 'sonner';
 import type { TravelData } from '@/domain/schema';
 import { downloadText } from '@/lib/download';
 import { wrapEnvelope } from '@/lib/storage/envelope';
 import { useStorage } from '@/features/storage/StorageProvider';
 import { AtlasConnect } from '@/features/storage/AtlasConnect';
+import { getStoreById } from '@/lib/storage/registry';
 import type { StoreId } from '@/lib/storage/types';
 
 /**
- * Save / export menu. Local actions (download, copy) work today; cloud
- * destinations are scaffolded behind a single `connect()` path so wiring a real
- * provider later is one function — the registry below is the extension point for
- * "a hundred convenient places to save".
+ * Save / export menu. Local actions (download, copy) work today; the registry-
+ * driven "Storage destination" list lets the user switch the backend the editor
+ * loads/saves to. Picking a store that needs a connection grant (e.g. the local
+ * file's `showSaveFilePicker`) runs its `connect()` here — inside the user
+ * gesture — so the grant actually sticks.
  */
-interface CloudTarget {
-  id: string;
-  label: string;
-}
 
-// Extensible registry of cloud destinations (scaffold — see connect()).
-const CLOUD_TARGETS: CloudTarget[] = [
-  { id: 'google-drive', label: 'Google Drive' },
-  { id: 'dropbox', label: 'Dropbox' },
-  { id: 'onedrive', label: 'OneDrive' },
-  { id: 'icloud', label: 'iCloud Drive' },
-  { id: 'box', label: 'Box' },
-  { id: 'github-gist', label: 'GitHub Gist' },
-  { id: 'notion', label: 'Notion' },
-  { id: 'webdav', label: 'WebDAV' },
-  { id: 's3', label: 'Amazon S3' },
-  { id: 'telegram', label: 'Telegram' },
-];
+/** Was a click on a real picker the user cancelled? Treat as a no-op, not an error. */
+function isAbortError(err: unknown): boolean {
+  return err instanceof DOMException && err.name === 'AbortError';
+}
 
 export function ExportMenu({ data }: { data: TravelData }) {
   const { t } = useTranslation();
   const { stores, activeId, setActive } = useStorage();
   const [open, setOpen] = useState(false);
+  const [busyId, setBusyId] = useState<StoreId | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -85,33 +65,63 @@ export function ExportMenu({ data }: { data: TravelData }) {
     setOpen(false);
   };
 
-  const connect = (target: CloudTarget) => {
-    // Scaffold: a real integration would open the provider's OAuth/picker here.
-    toast(t('export.soon', { target: target.label }));
-    setOpen(false);
-  };
-
-  // Switch the active storage backend (where the editor loads/saves). Ready
-  // stores activate immediately; not-yet-implemented ones show a "coming soon".
-  const chooseStore = (id: StoreId, label: string, ready: boolean) => {
+  // Switch the active storage backend (where the editor loads/saves). Ready stores
+  // activate immediately; not-yet-implemented ones show a "coming soon" toast.
+  // Stores that expose connect() (e.g. the local file picker) MUST run it inside
+  // this click handler so the user gesture grants the FileSystemFileHandle; if the
+  // user cancels the picker we revert to the previous active store.
+  const chooseStore = async (id: StoreId, label: string, ready: boolean) => {
     if (!ready) {
       toast(t('export.soon', { target: label }));
       return;
     }
-    if (id !== activeId) {
-      setActive(id);
-      toast.success(t('storage.switched', 'Now saving to {{target}}', { target: label }));
+    if (id === activeId) {
+      setOpen(false);
+      return;
     }
-    setOpen(false);
+
+    const previousId = activeId;
+    setBusyId(id);
+    setActive(id);
+    try {
+      const store = getStoreById(id);
+      if (store?.connect) await store.connect();
+      toast.success(t('storage.switched', 'Now saving to {{target}}', { target: label }));
+      setOpen(false);
+    } catch (err) {
+      // User cancelled the picker — silently revert, no error.
+      setActive(previousId);
+      if (!isAbortError(err)) {
+        toast.error(t('storage.connectFailed', 'Could not connect to {{target}}', { target: label }));
+      }
+    } finally {
+      setBusyId(null);
+    }
   };
 
-  const iconFor = (id: string) => {
-    if (id === 'google-drive' || id === 'icloud' || id === 'dropbox' || id === 'onedrive')
-      return <HardDrive size={15} />;
-    if (id === 'telegram') return <Send size={15} />;
-    if (id === 'github-gist') return <Share2 size={15} />;
-    return <Cloud size={15} />;
+  // Re-grant the local file handle (e.g. after a reload dropped the permission).
+  const reconnect = async () => {
+    const store = getStoreById('localfile');
+    if (!store?.connect) return;
+    setBusyId('localfile');
+    try {
+      await store.connect();
+      toast.success(t('storage.connected', 'Connected'));
+      setOpen(false);
+    } catch (err) {
+      if (!isAbortError(err)) {
+        toast.error(
+          t('storage.connectFailed', 'Could not connect to {{target}}', {
+            target: t('export.local'),
+          }),
+        );
+      }
+    } finally {
+      setBusyId(null);
+    }
   };
+
+  const localfileActive = activeId === 'localfile';
 
   return (
     <div className="export-menu" ref={rootRef}>
@@ -141,14 +151,25 @@ export function ExportMenu({ data }: { data: TravelData }) {
                 className="export-item"
                 role="menuitemradio"
                 aria-checked={store.id === activeId}
-                disabled={store.id === activeId}
-                onClick={() => chooseStore(store.id, store.label, store.ready)}
+                disabled={store.id === activeId || busyId !== null}
+                onClick={() => void chooseStore(store.id, store.label, store.ready)}
               >
                 <HardDrive size={15} /> {store.label}
                 {store.id === activeId && <Check size={15} />}
                 {!store.ready && <span className="export-soon">{t('export.soonBadge')}</span>}
               </button>
             ))}
+          {localfileActive && (
+            <button
+              type="button"
+              className="export-item export-item--sub"
+              role="menuitem"
+              disabled={busyId !== null}
+              onClick={() => void reconnect()}
+            >
+              {t('storage.reconnect', 'Reconnect file')}
+            </button>
+          )}
           <AtlasConnect />
 
           <div className="export-group-label">{t('export.local')}</div>
@@ -158,29 +179,6 @@ export function ExportMenu({ data }: { data: TravelData }) {
           <button type="button" className="export-item" role="menuitem" onClick={copy}>
             <Copy size={15} /> {t('export.copy')}
           </button>
-          <button
-            type="button"
-            className="export-item"
-            role="menuitem"
-            onClick={() => connect({ id: 'email', label: 'Email' })}
-          >
-            <Mail size={15} /> {t('export.email')}
-          </button>
-
-          <div className="export-group-label">{t('export.connect')}</div>
-          {CLOUD_TARGETS.map((target) => (
-            <button
-              key={target.id}
-              type="button"
-              className="export-item"
-              role="menuitem"
-              onClick={() => connect(target)}
-            >
-              {iconFor(target.id)} {target.label}
-              <span className="export-soon">{t('export.soonBadge')}</span>
-            </button>
-          ))}
-          <div className="export-foot">{t('export.more')}</div>
         </div>
       )}
     </div>
