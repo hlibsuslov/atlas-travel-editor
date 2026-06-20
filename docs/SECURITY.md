@@ -1,84 +1,135 @@
 # Security Model
 
-## Authentication
+Atlas is **local-first by default**, and its security posture follows from that:
+in the default mode there is no account, no server, and no network — so there is
+almost nothing to attack. Accounts and sharing only exist when you opt into the
+optional, self-hostable **Atlas Server**, which has a small, auditable model of
+its own. This document covers both.
 
-Authentication is handled by Supabase Auth (email magic-link and Google OAuth).
-The browser holds a short-lived JWT (auto-refreshed) and an anon API key. The
-JWT identifies the user to Postgres as `auth.uid()`.
+## Local-first default: nothing leaves the device
 
-## Authorization — Row Level Security
+A clean clone runs entirely in the browser. The travel document lives in
+**IndexedDB**; there is no account, no login wall, no `.env`, and no network call
+for normal use. Data only ever leaves the device when **you** choose to export a
+JSON file, save to a local file, or connect a server. With no server connected,
+all sharing/social UI is hidden because no sharing-capable backend is advertised.
 
-All authorization is enforced in the database, not the client. The client uses
-the **public anon key**; this is safe because every table has RLS enabled and
-the anon role can do nothing that policies don't explicitly allow.
+Because there is no shared backend in this mode, classic web-app concerns
+(authn/authz, multi-tenant isolation, RLS) simply do not apply — the only data on
+hand is your own, on your own device.
 
-`travel_records` policies (see `supabase/migrations/0001_init.sql`):
+## The optional Atlas Server
 
-| Action | Policy        | Rule                              |
-| ------ | ------------- | --------------------------------- |
-| SELECT | `owner_select`| `auth.uid() = user_id`            |
-| INSERT | `owner_insert`| `with check auth.uid() = user_id` |
-| UPDATE | `owner_update`| `using` + `with check` on owner   |
-| DELETE | `owner_delete`| `auth.uid() = user_id`            |
+When you stand up an Atlas Server (see [`SELF_HOSTING.md`](./SELF_HOSTING.md)) and
+point the app at it, the server becomes the trust boundary for accounts and
+sharing. It is deliberately small (Hono + `node:sqlite`, zero native deps) so the
+whole surface is easy to read end to end.
 
-There is **no** public SELECT policy. A user can never read or write another
-user's row regardless of what the client sends.
+### Authentication — passwords and opaque session tokens
 
-The `friend_links` table (the per-user follow list) has a single owner-scoped
-`for all` policy (`auth.uid() = user_id`), so a user's follow list is private to
-them. Following someone stores only that person's **public** share slug; the
-friend's map is then read through the same `get_shared_travel` function, so
-following never exposes anything the friend didn't choose to publish.
+- **Passwords** are hashed with Node's built-in **scrypt** (no native
+  dependency). Each password gets a fresh random 16-byte salt; the stored value is
+  `scrypt$<salt>$<derived-key>`, and verification uses a constant-time compare
+  (`timingSafeEqual`).
+- **Session tokens** are random 32-byte strings. The plaintext token is shown to
+  the client exactly once and sent back as a `Bearer` credential; the database
+  stores **only its SHA-256 hash**. A database leak therefore never yields a
+  usable token. Sessions carry a **30-day TTL** and are checked (and lazily
+  purged) on every authenticated request; logout deletes the session row.
 
-## Public sharing without data leakage
+### Authorization — server is the trust boundary
 
-Public, read-only sharing is exposed through a single `SECURITY DEFINER`
-function:
+There is no row-level security to lean on, so every data-access query is **scoped
+by the authenticated `userId` in its WHERE clause**, enforced in the data-access
+layer (`server/src/store.ts`). A request can only read or write its own document,
+profile, and follow list.
 
-```sql
-get_shared_travel(p_slug text) returns jsonb
-```
+### Public sharing without data leakage
 
-It returns **only** the `data` payload for rows where `is_public = true`. Because
-it selects one column under a constrained predicate, ownership metadata
-(`user_id`, timestamps, version) is never exposed — which a broad public SELECT
-policy on the table would have leaked. Execute is granted to `anon` and
-`authenticated`; the function pins `search_path = public` to prevent search-path
-hijacking.
+Public reads (`GET /share/:slug`, `GET /u/:handle`, and the profile variants) are
+**unauthenticated** and go through narrow projections that select only what is
+meant to be public:
 
-Share slugs are minted server-side from `gen_random_bytes(12)` (≈96 bits of
-entropy), so they are unguessable.
+- a **column-minimized public DTO** — the bare `TravelData` (extracted from the
+  envelope) plus a public profile slice (`{ display_name, accent_color, handle }`)
+  — never email, internal user id, password hash, session token, or version
+  internals.
+- a single **generic 404** for everything not publicly visible: a missing slug, a
+  `private` document, and a revoked/rotated slug are **indistinguishable**, so
+  existence cannot be probed.
 
-## Defense in depth
+Share slugs are minted server-side from `randomBytes(9)` (URL-safe base64), so
+they are unguessable, and they can be **rotated** to instantly revoke an old link.
+A document is public-by-link (`unlisted`) or fully `public` (also discoverable by
+handle); `private` exposes nothing.
+
+### Following never widens exposure
+
+Following is a **directed edge keyed on the target's handle**, private to the
+follower. The feed and friends views reuse the same column-minimized projections
+and only ever surface a target's already-public/unlisted map. Following someone
+exposes nothing they did not choose to publish.
+
+### Optimistic concurrency
+
+`PUT /me/document` takes `If-Match: <version>`; a stale version returns `409` with
+the current remote document. This prevents a lagging client from silently
+clobbering a newer server copy and gives the editor the data it needs to offer
+keep/take/merge.
+
+### Configurable CORS and signup gating
+
+- **CORS** origins are configurable via `ATLAS_CORS_ORIGINS` (comma-separated);
+  the common single-origin self-host (server also serves the SPA) needs no CORS at
+  all. Only `Authorization`, `Content-Type`, and `If-Match` request headers are
+  allowed.
+- **Signup gating**: set `ATLAS_ALLOW_SIGNUP=0` to close registration after you
+  have created the first account(s). `/auth/register` then returns `403`, and
+  `/healthz` advertises `registrationOpen: false` so the UI can hide the sign-up
+  form.
+
+## Defense in depth (client)
 
 - **Validation at every boundary**: the client validates with the shared Zod
-  schema before saving; `saveMyRecord` refuses to write invalid data; the
-  database enforces types and constraints. Untrusted input (imports, cached
-  data, server responses) is run through lenient normalization that never
-  throws.
-- **No secrets in the client**: only the anon key and public URLs ship to the
-  browser. The `service_role` key is never referenced. `.env` is gitignored;
-  `.env.example` documents the contract.
-- **HTTP hardening** (via `vercel.json`): a strict Content-Security-Policy
-  (`default-src 'self'`, scripts self-only, connections limited to Supabase),
-  HSTS with preload, `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`
-  / `frame-ancestors 'none'`, a tight `Referrer-Policy`, and a restrictive
-  `Permissions-Policy`.
-- **Per-user offline cache**: `localStorage` keys are namespaced by user id so
-  switching accounts on a shared device cannot surface another user's cached
-  data.
-- **Static analysis**: CodeQL runs on every push/PR and weekly; the CI gate
-  blocks merges on type, lint, or test failures.
+  schema before saving (the storage registry refuses to persist invalid data);
+  the Atlas Server normalizes and validates again with the **same vendored
+  schema**. Untrusted input (imports, caches, server responses) is run through
+  lenient normalization that never throws.
+- **No secrets in the client**: the default build ships no credentials at all.
+  The only optional `VITE_` values are public URLs/flags (see `src/lib/env.ts`);
+  no API tokens or service secrets are embedded anywhere in the bundle. `.env` is
+  gitignored.
+- **HTTP hardening** (via [`vercel.json`](../vercel.json) for a Vercel-hosted
+  build): a strict Content-Security-Policy with `default-src 'self'` and
+  `script-src 'self'`, HSTS with preload, `X-Content-Type-Options: nosniff`,
+  `X-Frame-Options: DENY` / `frame-ancestors 'none'`, a tight `Referrer-Policy`,
+  and a restrictive `Permissions-Policy`. The `connect-src` directive is:
+
+  ```
+  connect-src 'self' https: wss:;
+  ```
+
+  It is intentionally `https:`/`wss:`-wide (not pinned to one host) so a hosted
+  Atlas build can reach whatever **user-configured** Atlas Server origin its
+  owner connects to. If you deploy somewhere other than Vercel, re-express these
+  headers for your host. (The Vite dev server does not apply `vercel.json`
+  headers, so local development is unaffected.)
 
 ## Reporting a vulnerability
 
 Please report suspected vulnerabilities privately to the maintainers rather than
-opening a public issue. Include reproduction steps and impact assessment.
+opening a public issue. Include reproduction steps and an impact assessment.
 
 ## Known limitations / future work
 
-- Rate limiting relies on Supabase defaults; add per-IP/per-user limits before
-  high-volume public exposure.
-- No audit log of edits yet; the `version` column is the foundation for one.
-- Magic-link and OAuth redirect URLs must be locked to the production origin in
-  the Supabase dashboard to prevent open-redirect-style abuse.
+- **Rate limiting** is not built into the Atlas Server; put it behind a reverse
+  proxy (Caddy/Traefik/nginx) that adds per-IP limits before exposing it
+  publicly.
+- **Transport security is your reverse proxy's job.** The Atlas Server speaks
+  plain HTTP; a PWA served over HTTPS cannot call an `http://` backend (mixed
+  content), so terminate TLS in front of it (see [`SELF_HOSTING.md`](./SELF_HOSTING.md)).
+- **No edit audit log yet**; the per-document `version` column is the foundation
+  for one.
+- **Bring-your-own-cloud backends** (GitHub, WebDAV, Google Drive, Dropbox) are
+  stubbed and not enabled in the default build; their OAuth/credential handling
+  will be documented as each ships.

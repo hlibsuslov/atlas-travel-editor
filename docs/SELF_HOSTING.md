@@ -1,178 +1,170 @@
 # Self-hosting & run modes
 
-Travel Editor runs in three modes. Pick the one that matches how much
-infrastructure you want to own:
+Atlas runs in three modes. Pick the one that matches how much infrastructure you
+want to own. The **default needs nothing at all** — no account, no server, no
+`.env`.
 
 | Mode | Account? | Data lives in | Sharing / friends | Best for |
 | ---- | -------- | ------------- | ----------------- | -------- |
-| **(a) Local-only / no backend** | no | your device + JSON files you export | no | trying it out, private/offline use |
-| **(b) Hosted Supabase** | yes | a Supabase project you create | yes | multi-user, multi-device, public share links |
-| **(c) Fully self-hosted Supabase** | yes | a Supabase stack you run | yes | owning the whole stack, air-gapped/on-prem |
+| **(a) Local-only / no backend** | no | your device (IndexedDB) + JSON you export | no | the default — private/offline use, trying it out |
+| **(b) Single-container Atlas Server** | yes | a SQLite DB in your container | yes | a personal/group instance on one box |
+| **(c) Split client + server (hosted)** | yes | your Atlas Server | yes | a public deployment, separate static host + API |
 
-All three use the same build — the difference is configuration in `.env` and
-where the document is stored.
-
-> The pluggable storage layer (`src/lib/storage/`) is being introduced
-> incrementally. Local-only mode and the Supabase path are available today;
-> bring-your-own-cloud providers (Google Drive, Dropbox, WebDAV, GitHub) are
-> landing behind the same seam — see [`docs/STRATEGY.md`](STRATEGY.md) §4 for the
-> roadmap. Don't enable a provider that isn't listed as available below.
+All three use the **same build**; the only difference is whether (and how) you
+connect an Atlas Server.
 
 ---
 
-## (a) Local-only / no backend
+## (a) Local-only / no backend (the default)
 
-No Supabase project, no account, no network. Your travel document is kept on the
-device, and you move it between machines by exporting and importing a JSON file.
+Nothing to set up. No server, no account, no network, no `.env`.
 
 ```bash
-git clone <your-fork-url> atlas-travel-editor
+git clone https://github.com/hlibsuslov/atlas-travel-editor
 cd atlas-travel-editor
 npm install
-cp .env.example .env
-```
-
-Then enable a no-backend mode in `.env` — either one works:
-
-```dotenv
-# Option 1 — pure local-first, no login screen.
-VITE_LOCAL_ONLY=1
-
-# Option 2 — demo auth: a minimal login screen, credentials 1 / 1.
-VITE_DEMO_AUTH=1
-VITE_DEMO_LOGIN=1
-VITE_DEMO_PASSWORD=1
-```
-
-```bash
 npm run dev          # http://localhost:5173
 ```
 
-You can now edit the document, see the live JSON preview, colour the map, and
-**Export** / **Import** a JSON file to back up or move your data. Account-only
-features (public sharing, friends, public profile) are hidden in this mode —
-they genuinely need a server.
+Your travel document is stored in the browser (IndexedDB) and works fully
+offline. You can edit the document, see the live JSON preview, colour the map, and
+**Export** / **Import** a JSON file to back up or move your data between machines.
+You can also point the storage picker at a single local **JSON file** (via the
+File System Access API) if you prefer a file you can put in your own Dropbox/Drive
+folder.
 
-`VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` are **not required** in this mode;
-the env gate is relaxed when `VITE_LOCAL_ONLY=1` or `VITE_DEMO_AUTH=1` is set.
+Account-only features (public sharing, friends, public profile) are hidden in
+this mode — they genuinely need a server. To get them, connect an Atlas Server
+(mode (b) or (c)).
 
 ---
 
-## (b) Hosted Supabase (managed)
+## (b) Single-container Atlas Server
 
-The original multi-user path: each signed-in user owns one travel document in a
-Supabase project, protected by Row Level Security, and can mint a public
-read-only share link.
-
-1. Create a project at [supabase.com](https://supabase.com) and copy its **URL**
-   and **anon** key (Project Settings → API). The anon key is public by design —
-   access is enforced by RLS, never by hiding the key. Never put the
-   `service_role` key in this app.
-
-2. Fill in `.env`:
-
-   ```dotenv
-   VITE_SUPABASE_URL=https://your-project-ref.supabase.co
-   VITE_SUPABASE_ANON_KEY=your-anon-public-key
-   VITE_APP_URL=http://localhost:5173
-   ```
-
-3. Apply the schema with the [Supabase CLI](https://supabase.com/docs/guides/cli):
-
-   ```bash
-   supabase link --project-ref your-project-ref
-   supabase db push
-   ```
-
-4. Configure auth (login screen supports email + password, magic link, and
-   Google OAuth). In **Authentication → URL Configuration**, set the **Site URL**
-   and add `http://localhost:5173` (and your deployed origin) to **Redirect
-   URLs** so confirmation/magic links and OAuth return to the app. For Google,
-   enable the Google provider with its client credentials.
-
-5. Run it:
-
-   ```bash
-   npm run dev
-   ```
-
-After any schema change, regenerate the typed client:
+The optional **Atlas Server** is a small OSS backend (Hono + the built-in
+`node:sqlite`, **zero native dependencies**) that adds accounts, publishing,
+follows, friends, a feed, and discovery. Stand it up with one command:
 
 ```bash
-supabase gen types typescript --linked > src/lib/database.types.ts
+docker compose up --build      # http://localhost:8787
 ```
+
+That boots the server with a SQLite database (a WAL file under `data/` by
+default; override with `ATLAS_DB`). Then connect the web app to it — either way
+works:
+
+- **At runtime**: open the web app's **storage picker**, choose the Atlas Server
+  backend, and paste the server URL (`http://localhost:8787`). Register an
+  account, sign in, and your map syncs with optimistic concurrency.
+- **At build time**: set `VITE_SELFHOST_URL=http://localhost:8787` before
+  building the SPA so it defaults to that server.
+
+Useful server environment variables:
+
+| Var | Purpose |
+| --- | ------- |
+| `ATLAS_DB` | SQLite file path (default `data/atlas.db`; `:memory:` for tests) |
+| `ATLAS_ALLOW_SIGNUP` | set to `0` to close registration after bootstrapping |
+| `ATLAS_CORS_ORIGINS` | comma-separated allowed origins (omit for single-origin) |
+
+For a quick local trial over plain HTTP (the dev server at `http://localhost:5173`
+talking to `http://localhost:8787`) there is no mixed-content problem because both
+are `http://`. That changes the moment either side is served over HTTPS — see mode
+(c).
 
 ---
 
-## (c) Fully self-hosted Supabase
+## (c) Split client + server, hosted for real
 
-Run the entire Supabase stack (Postgres + Auth + the API gateway) yourself —
-locally via the CLI, or on your own server. This keeps every byte on
-infrastructure you control.
+Host the static SPA on any static host (Vercel, GitHub Pages, Netlify, a
+container) and run the Atlas Server separately. Two things matter here.
 
-1. Install the [Supabase CLI](https://supabase.com/docs/guides/cli) and Docker.
+### HTTPS is required — put the server behind TLS
 
-2. Start the stack and apply the migrations from a fresh database:
+A PWA served over **`https://`** **cannot** call an **`http://`** backend: the
+browser blocks it as **mixed content**. The Atlas Server speaks plain HTTP, so in
+a hosted split deployment you must put it **behind a TLS-terminating reverse
+proxy** — Caddy, Traefik, or nginx — and connect the app to the `https://`
+origin.
 
-   ```bash
-   supabase start          # boots Postgres, Auth, Studio, etc. in Docker
-   supabase db reset       # applies everything in supabase/migrations
-   ```
+A minimal Caddy example (automatic HTTPS):
 
-   `supabase start` prints a local **API URL** and **anon key**. Put those in
-   `.env`:
-
-   ```dotenv
-   VITE_SUPABASE_URL=http://127.0.0.1:54321
-   VITE_SUPABASE_ANON_KEY=<anon key printed by `supabase start`>
-   VITE_APP_URL=http://localhost:5173
-   ```
-
-3. Run the app against your local stack:
-
-   ```bash
-   npm run dev
-   ```
-
-For a server deployment, run the same stack on your host (or use Supabase's
-self-host docker-compose) and point `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY`
-at that origin instead.
-
-### Widen the CSP for a non-default origin
-
-The deployed Content-Security-Policy in [`vercel.json`](../vercel.json) hardcodes
-`connect-src` to the managed Supabase domains:
-
-```
-connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.sentry.io;
+```caddyfile
+atlas.example.com {
+    reverse_proxy localhost:8787
+}
 ```
 
-A **self-hosted Supabase** (e.g. `http://127.0.0.1:54321` or
-`https://supabase.example.com`) or any **bring-your-own-cloud** origin is *not*
-covered by `*.supabase.co`, so the browser will block its requests. Add your
-origin (both `https://` and, if you use realtime, `wss://`) to the `connect-src`
-directive in `vercel.json` before deploying — for example:
+Then either point the storage picker at `https://atlas.example.com`, or build the
+SPA with `VITE_SELFHOST_URL=https://atlas.example.com`.
+
+Set `ATLAS_CORS_ORIGINS` to your SPA's origin if the SPA and the API are on
+different origins:
+
+```bash
+ATLAS_CORS_ORIGINS=https://atlas-app.example.com
+```
+
+(If the Atlas Server also serves the SPA from the same origin, you don't need CORS
+at all.)
+
+### First-account bootstrap when signup is closed
+
+Registration is open by default. For a public deployment you typically want to
+create your account(s) first and then **close signup**:
+
+1. Deploy with signup open, register your account at the app's sign-up screen.
+2. Set `ATLAS_ALLOW_SIGNUP=0` and restart. `/auth/register` now returns `403`,
+   and `/healthz` reports `registrationOpen: false` so the UI hides the sign-up
+   form. Existing accounts keep working.
+
+### CSP for a hosted build
+
+The Content-Security-Policy in [`vercel.json`](../vercel.json) ships a
+deliberately host-agnostic `connect-src` so a hosted Atlas can reach whatever
+Atlas Server its owner connects to:
+
+```
+connect-src 'self' https: wss:;
+```
+
+This already covers any `https://`/`wss://` Atlas Server origin — no per-host edit
+needed. If you want to **tighten** it to your one server, replace `https: wss:`
+with your explicit origin(s):
 
 ```diff
-- connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.sentry.io;
-+ connect-src 'self' https://supabase.example.com wss://supabase.example.com https://*.sentry.io;
+- connect-src 'self' https: wss:;
++ connect-src 'self' https://atlas.example.com wss://atlas.example.com;
 ```
 
 > The Vite dev server (`npm run dev`) does not apply `vercel.json` headers, so
-> local development works without this edit; it only matters for a hosted build.
-> If you deploy somewhere other than Vercel, the headers in `vercel.json` are not
-> served at all — re-express the CSP for your host (see
-> [`docs/SECURITY.md`](SECURITY.md)).
+> local development works without any CSP edit; it only matters for a hosted
+> build. If you deploy somewhere other than Vercel, the `vercel.json` headers are
+> not served at all — re-express the CSP (and the other security headers) for your
+> host. See [`docs/SECURITY.md`](SECURITY.md).
 
 ---
 
 ## Which mode am I in?
 
-- No Supabase env and `VITE_LOCAL_ONLY=1` (or `VITE_DEMO_AUTH=1`) → **local-only**.
-- Supabase env set, pointing at `*.supabase.co` → **hosted Supabase**.
-- Supabase env set, pointing at your own origin → **self-hosted Supabase**
-  (remember the CSP widening above for a hosted build).
+- No server connected (the default) → **local-only**. Sharing/social UI is hidden.
+- Storage picker (or `VITE_SELFHOST_URL`) pointed at an Atlas Server on the same
+  box → **single-container**.
+- SPA and Atlas Server on different hosts, server behind TLS → **split / hosted**.
 
-See [`docs/STRATEGY.md`](STRATEGY.md) for the full architecture and the
-bring-your-own-cloud roadmap, and [`docs/SECURITY.md`](SECURITY.md) for the
-security model.
+---
+
+## Advanced / coming soon: bring-your-own-cloud
+
+The storage seam reserves backends for **GitHub, WebDAV, Google Drive, and
+Dropbox**, but they are **stubbed and not enabled in the default build**
+(`ready: false`) — the picker lists them as "coming soon". They are not yet usable.
+
+When they land, the OAuth providers (Google Drive, Dropbox) will need a
+**self-registered OAuth public client id** that you supply via a `VITE_`
+environment variable at build time — a public client id, **not** a committed
+secret. Nothing is shipped in the default build, so there is no credential to
+configure today.
+
+See [`docs/ARCHITECTURE.md`](ARCHITECTURE.md) for the storage seam and Atlas
+Server design, and [`docs/SECURITY.md`](SECURITY.md) for the security model.

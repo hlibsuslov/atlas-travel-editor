@@ -1,58 +1,38 @@
-# Travel Editor
+# Atlas
 
-[![CI](https://github.com/OWNER/atlas-travel-editor/actions/workflows/ci.yml/badge.svg)](https://github.com/OWNER/atlas-travel-editor/actions/workflows/ci.yml)
-[![CodeQL](https://github.com/OWNER/atlas-travel-editor/actions/workflows/codeql.yml/badge.svg)](https://github.com/OWNER/atlas-travel-editor/actions/workflows/codeql.yml)
+[![CI](https://github.com/hlibsuslov/atlas-travel-editor/actions/workflows/ci.yml/badge.svg)](https://github.com/hlibsuslov/atlas-travel-editor/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/hlibsuslov/atlas-travel-editor/actions/workflows/codeql.yml/badge.svg)](https://github.com/hlibsuslov/atlas-travel-editor/actions/workflows/codeql.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-<!-- TODO: replace OWNER above with the GitHub org/user once the repo slug is final. -->
+**Atlas** is an open-source, **local-first** personal travel-map editor. Record the
+country you were born in, the places you've lived and visited, and your city/year
+timelines into one self-contained `TravelData` document — edited through a typed
+React UI with a live, validated JSON preview and an interactive world map.
 
-Edit, validate, and share a personal travel map. You record a birthplace,
-visited/lived countries, cities and year timelines into one self-contained
-`TravelData` JSON document, edited through a typed React UI with a live,
-validated JSON preview, an interactive world map — and, when you connect a
-backend, a public read-only share link.
+Your data lives in **your browser** (IndexedDB). Atlas works fully **offline**,
+needs **no account**, **no login wall**, and **no `.env` file**. Sharing and social
+features are entirely optional and only appear when you connect your own
+self-hosted [Atlas Server](#optional-atlas-server--accounts--sharing--social).
 
-It runs **with no backend at all** (your data on your device, exported as a JSON
-file), or against **hosted Supabase** for multi-user accounts and sharing.
+## Try it in 60 seconds
 
-<!-- TODO: add a hero screenshot at docs/assets/hero.png (image lands later). -->
-<!-- ![Travel Editor — editor and world map](docs/assets/hero.png) -->
-
-## Try it in 60 seconds — no backend needed
-
-No account, no Supabase, no network. Clone, point `.env` at local-first mode,
-and you are editing your map.
+No backend, no account, no configuration:
 
 ```bash
-git clone <your-fork-url> atlas-travel-editor
+git clone https://github.com/hlibsuslov/atlas-travel-editor.git
 cd atlas-travel-editor
-cp .env.example .env        # then enable a no-backend mode (below)
 npm install
 npm run dev                 # http://localhost:5173
 ```
 
-Enable one of these in `.env` — either works:
+That's it. The app boots straight into the editor and stores everything locally in
+your browser via IndexedDB. Edit your document, watch the live JSON preview, colour
+the map, and use **Export** / **Import** to back up your data to a JSON file or move
+it between machines.
 
-```dotenv
-# Pure local-first, no login screen:
-VITE_LOCAL_ONLY=1
-
-# …or demo auth — a minimal login screen, credentials 1 / 1:
-VITE_DEMO_AUTH=1
-```
-
-Now edit your document, watch the live JSON preview, colour the map, and use
-**Export** / **Import** to save your data to a JSON file or move it between
-machines. `VITE_SUPABASE_*` are not required in this mode. Account-only
-features (public sharing, friends, public profile) are simply hidden — they need
-a server.
-
-<!-- TODO: add a demo GIF at docs/assets/demo.gif (recording lands later). -->
-<!-- ![Editing and exporting a travel map](docs/assets/demo.gif) -->
-
-For accounts, multi-device sync, and sharing, set up Supabase — see
-[Storage options](#storage-options) and [`docs/SELF_HOSTING.md`](docs/SELF_HOSTING.md).
+Account-only features (public sharing, friends, public profile) are simply hidden
+until you point Atlas at an Atlas Server — see below.
 
 ## Features
 
@@ -60,68 +40,100 @@ For accounts, multi-device sync, and sharing, set up Supabase — see
 - **Interactive world map** — countries coloured by status (birthplace / lived /
   visited / capital-only), built on react-simple-maps; load your own data or view
   a friend's.
-- **Friends** — follow people by their public share code and browse their maps.
-- **Internationalization** — 8 languages (en, ru, uk, es, de, fr, it, pt) via
+- **Local-first & offline** — installable PWA backed by IndexedDB and a service
+  worker. No account, no network required. Back up and move data via JSON
+  Export/Import.
+- **Travel diary** — keep stays (places/hotels with dates and cost) alongside the
+  map.
+- **Friends** (optional, needs an Atlas Server) — follow people by **handle** or a
+  share link and browse their public maps.
+- **Internationalization** — 8 languages (de, en, es, fr, it, pt, ru, uk) via
   i18next with browser-language detection; adding a locale is one JSON file.
 - **Light / dark / system theme** — shared CSS tokens, no per-component styling.
-- **Local-first & offline** — installable PWA that works offline via a service
-  worker, and can run with no backend at all (data on your device, exported as a
-  JSON file). See [Storage options](#storage-options).
 - **Toasts** for non-blocking feedback; **Sentry** hook for error monitoring.
 
 > This is the production rebuild of the original single-file `index.html` MVP.
 > See [`docs/adr/0001-stack-and-architecture.md`](docs/adr/0001-stack-and-architecture.md)
-> for why the architecture looks the way it does.
+> for why the architecture looks the way it does, and
+> [`docs/PRODUCT_PLAN.md`](docs/PRODUCT_PLAN.md) for the north star.
 
 ## Stack
 
-| Concern        | Choice                                                          |
-| -------------- | -------------------------------------------------------------- |
-| Frontend       | React 18 + TypeScript (strict) + Vite                          |
-| State          | Zustand (editor) + TanStack Query (server cache)              |
-| Validation     | Zod — one schema shared by UI, API client, and tests          |
-| Storage / Auth | Local-first (device / file) **or** Supabase (Postgres + Auth + RLS) |
-| Hosting / CI   | Vercel + GitHub Actions (typecheck · lint · test · build)     |
+| Concern      | Choice                                                          |
+| ------------ | -------------------------------------------------------------- |
+| Frontend     | React 18 + TypeScript (strict) + Vite                          |
+| State        | Zustand (editor) + TanStack Query (data cache)                |
+| Validation   | Zod — one schema shared by UI, storage, and tests             |
+| Storage      | Pluggable `DocumentStore` seam — IndexedDB by default          |
+| Server (opt) | Node + Hono + built-in `node:sqlite` (zero native deps)        |
+| Hosting / CI | Static PWA on any host + GitHub Actions (typecheck · lint · test · build) |
 
 ## Storage options
 
-The whole document is one self-contained `TravelData` JSON blob, so where it
-lives is pluggable. Three modes share the same build; you pick one in `.env`:
+The whole document is one self-contained `TravelData` JSON blob, so where it lives
+is pluggable. Every backend sits behind a single `DocumentStore` contract with
+normalize-on-load and validate-on-save enforced centrally
+(see [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)).
 
-| Mode | Account? | Data lives in | Sharing / friends | Status |
-| ---- | -------- | ------------- | ----------------- | ------ |
-| **Local-first** (`VITE_LOCAL_ONLY=1` or `VITE_DEMO_AUTH=1`) | no | your device + JSON files you export/import | no | available |
-| **Hosted Supabase** (`VITE_SUPABASE_*`) | yes | a Supabase project | yes (public links, friends) | available |
-| **Bring-your-own-cloud** (Drive / Dropbox / WebDAV / GitHub) | varies | your own cloud / repo | no | coming online incrementally |
+| Mode | Account? | Data lives in | Sharing / social | Status |
+| ---- | -------- | ------------- | ---------------- | ------ |
+| **Local-first (IndexedDB)** | no | your browser | no | **default, ready** |
+| **Single local file** | no | one JSON file on disk (File System Access API) | no | ready |
+| **Atlas Server (self-hosted)** | yes | your own server (SQLite) | yes — public maps, follows, feed | ready (optional) |
+| GitHub / WebDAV / Google Drive / Dropbox | varies | your own cloud / repo | no | coming soon (not yet enabled) |
 
-- **Local-first** — no account, no network; back up and move data via JSON
-  Export/Import. This is the "Try it in 60 seconds" path above.
-- **Hosted Supabase** — the existing multi-user/sharing path: each user owns one
-  document protected by Row Level Security and can mint a public read-only link.
-- **Bring-your-own-cloud** — store the single JSON blob in a cloud you control.
-  These providers are landing behind a common storage seam (see
-  [`docs/STRATEGY.md`](docs/STRATEGY.md) §4); only enable a provider once it is
-  listed as available here.
+- **Local-first (IndexedDB)** — the default. No account, no network. This is the
+  "Try it in 60 seconds" path above.
+- **Single local file** — point Atlas at one JSON file on disk; reads and writes go
+  straight to that file (with a download/upload fallback on browsers without the
+  File System Access API).
+- **Atlas Server** — the optional, self-hostable backend for accounts, public
+  read-only sharing, and social features. See below.
+- **Bring-your-own-cloud (coming soon)** — store the single JSON blob in a cloud
+  you control. These adapters are registered but **not yet enabled**.
 
-Full copy-paste setup for every mode — including fully self-hosted Supabase — is
-in [`docs/SELF_HOSTING.md`](docs/SELF_HOSTING.md).
+## Optional Atlas Server — accounts + sharing + social
 
-### Required environment
+Atlas Server is a small, self-hostable backend (Node + Hono + the built-in
+`node:sqlite`, **zero native dependencies**). It is entirely optional: with no
+server connected, every social/sharing surface stays hidden and Atlas is pure
+local-first.
 
-See [`.env.example`](.env.example). Only `VITE_`-prefixed values reach the
-browser. In **local-first** mode no Supabase variables are needed. For the
-**hosted Supabase** mode, the **anon** key is public by design — access is
-enforced by Row Level Security, never by hiding the key. The `service_role` key
-must never appear in this app.
+When you do run it, you get:
 
-| Variable                 | Required                | Purpose                            |
-| ------------------------ | ----------------------- | ---------------------------------- |
-| `VITE_LOCAL_ONLY`        | local-first             | Run with no backend, no login      |
-| `VITE_DEMO_AUTH`         | local-first (alt.)      | Demo login screen (1 / 1), no backend |
-| `VITE_SUPABASE_URL`      | hosted Supabase         | Supabase project URL               |
-| `VITE_SUPABASE_ANON_KEY` | hosted Supabase         | Public, RLS-scoped anon key        |
-| `VITE_APP_URL`           | no                      | Base URL used to build share links |
-| `VITE_SENTRY_DSN`        | no                      | Enables Sentry monitoring if set   |
+- **Accounts** — email + password (scrypt password hashing; bearer tokens stored
+  only as a SHA-256 hash with a 30-day TTL).
+- **Public sharing** — publish a read-only map by slug (`/share/:slug`) or at your
+  handle (`/u/:handle`). DTOs are column-minimized and never leak email or internal
+  ids; missing/private/revoked maps all return a generic 404.
+- **Friends** — directed follows by **handle** or share link, mutual friends, an
+  activity feed, and profile discovery.
+
+### Run with Docker
+
+```bash
+docker compose up --build   # http://localhost:8787
+```
+
+Then open the web app's storage picker and point it at your server, or set
+`VITE_SELFHOST_URL=http://localhost:8787` before building. See
+[`docs/SELF_HOSTING.md`](docs/SELF_HOSTING.md) for the full walkthrough.
+
+## Environment
+
+Atlas needs **no configuration** to run. Every variable below is **optional** and
+only `VITE_`-prefixed values reach the browser (embedded at build time). See
+[`.env.example`](.env.example).
+
+| Variable               | Required | Purpose                                                     |
+| ---------------------- | -------- | ----------------------------------------------------------- |
+| `VITE_APP_URL`         | no       | Base URL used to build share links (defaults to the origin) |
+| `VITE_SELFHOST_URL`    | no       | Atlas Server instance URL — enables sharing/social          |
+| `VITE_LOCAL_ONLY`      | no       | Force pure local-first even if a server URL is set          |
+| `VITE_DEMO_AUTH`       | no       | Enable an explorable demo login screen (dev only)           |
+| `VITE_DEMO_LOGIN`      | no       | Demo login username (default `1`)                           |
+| `VITE_DEMO_PASSWORD`   | no       | Demo login password (default `1`)                           |
+| `VITE_SENTRY_DSN`      | no       | Enables Sentry error/performance monitoring if set          |
 
 ## Scripts
 
@@ -137,97 +149,62 @@ must never appear in this app.
 | `npm run test:coverage` | Tests with V8 coverage                           |
 | `npm run ci`            | The full gate: typecheck → lint → test → build   |
 
-## Hosted Supabase setup
-
-> This is the **hosted Supabase** mode. To run with no backend instead, see
-> [Try it in 60 seconds](#try-it-in-60-seconds--no-backend-needed); for the full
-> walkthrough of all three modes (including fully self-hosted Supabase), see
-> [`docs/SELF_HOSTING.md`](docs/SELF_HOSTING.md).
-
-Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in `.env` from your
-project's API settings, then run `npm install && npm run dev`.
-
-### Database
-
-The schema lives in [`supabase/migrations`](supabase/migrations). Apply it with
-the Supabase CLI:
-
-```bash
-supabase db push          # against a linked project
-# or, for local dev:
-supabase start && supabase db reset
-```
-
-### Auth setup
-
-The login screen supports **email + password** (sign in and sign up), passwordless
-**magic link**, and **Google OAuth** — all wired in `AuthProvider`. For these to
-work end-to-end:
-
-1. In **Supabase → Authentication → Providers**, keep **Email** enabled (it is by
-   default). The **Confirm email** toggle decides whether new sign-ups must click
-   a link before they can sign in — the app handles both cases (it shows a
-   "check your inbox" message when confirmation is required).
-2. In **Supabase → Authentication → URL Configuration**, set the **Site URL** and
-   add the deployed origin (and `http://localhost:5173` for dev) to **Redirect
-   URLs**, so confirmation/magic links and OAuth return to the app.
-3. Google OAuth additionally needs the Google provider enabled with its client
-   credentials.
-
-After changing the schema, regenerate types:
-
-```bash
-supabase gen types typescript --linked > src/lib/database.types.ts
-```
+The optional server has its own gate: `npm --prefix server run ci`
+(check:domain → typecheck → `node:test`).
 
 ## Deployment
 
-Hosted on Vercel as a static SPA (`vercel.json` configures SPA rewrites,
-long-term asset caching, and security headers including a strict CSP). Set the
-required environment variables in the Vercel project, point Supabase Auth's
-redirect URLs at the deployed origin, and push to `main`.
+Atlas is a **static PWA** — build it and host `dist/` anywhere.
 
-The CSP `connect-src` in `vercel.json` is hardcoded to the managed Supabase and
-Sentry domains. If you deploy against a **self-hosted Supabase** or a
-**bring-your-own-cloud** origin, you must widen `connect-src` to allow it — see
-[`docs/SELF_HOSTING.md`](docs/SELF_HOSTING.md#widen-the-csp-for-a-non-default-origin).
+- **Vercel** — `vercel.json` configures SPA rewrites, long-term asset caching, and
+  security headers (CSP/HSTS/etc.). The CSP `connect-src` is `'self' https: wss:`
+  so a hosted Atlas can reach a user-configured Atlas Server.
+- **GitHub Pages** — build and publish `dist/` (a workflow pointer lands alongside
+  this release).
+- **Netlify / any static host / a container** — serve `dist/` with SPA fallback.
+
+The optional **Atlas Server** deploys separately via Docker
+(`docker compose up --build`); see [`docs/SELF_HOSTING.md`](docs/SELF_HOSTING.md).
 
 ## Project layout
 
 ```
 src/
   domain/      Zod schemas, validators, normalization — the source of truth
-  i18n/        i18next config + locale JSON (en, ru, uk, es, de, fr, it, pt)
-  lib/         env validation, Supabase client, query client, observability, utils
+  i18n/        i18next config + locale JSON (de, en, es, fr, it, pt, ru, uk)
+  lib/
+    storage/   the DocumentStore seam + backend registry (indexeddb, localfile, selfhost, …)
+    env.ts     optional env validation
   features/
-    auth/      AuthProvider, login
-    editor/    store (Zustand), data hooks, API layer, components
+    editor/    store (Zustand), data hooks, components
     map/       world map, country-name matching, legend
-    friends/   follow by share code, browse friends' maps
+    diary/     stays (places/hotels) with dates and cost
+    friends/   follow by handle / share link, browse friends' maps
     settings/  theme + language switchers
     sharing/   public read-only share page (with map)
   components/  cross-feature UI (AppShell nav, ErrorBoundary)
-supabase/migrations/   SQL: tables, RLS, triggers, sharing function, friends
-docs/                  architecture, security, ADRs
+server/        optional Atlas Server (Node + Hono + node:sqlite)
+docs/          product plan, architecture, security, ADRs
 ```
 
 ## Contributing
 
-PRs are welcome — start with [`CONTRIBUTING.md`](CONTRIBUTING.md), and be kind
-per our [`Code of Conduct`](CODE_OF_CONDUCT.md). To report a vulnerability, see
-the [`Security Policy`](.github/SECURITY.md).
+PRs are welcome — start with [`CONTRIBUTING.md`](CONTRIBUTING.md), and be kind per
+our [`Code of Conduct`](CODE_OF_CONDUCT.md). To report a vulnerability, see the
+[`Security Policy`](.github/SECURITY.md).
 
 ## Documentation
 
-- [Run modes & self-hosting](docs/SELF_HOSTING.md) — local-only, hosted Supabase, fully self-hosted
-- [Architecture & strategy](docs/STRATEGY.md)
+- [Docs index](docs/README.md) — start here
+- [Product plan](docs/PRODUCT_PLAN.md) — the north star
 - [Architecture overview](docs/ARCHITECTURE.md)
-- [Brand & assets](docs/brand/BRAND.md) — logo, palette, type, favicon, social card
+- [Self-hosting & run modes](docs/SELF_HOSTING.md)
 - [Security model](docs/SECURITY.md)
+- [Brand & assets](docs/brand/BRAND.md)
+- [ADRs](docs/adr)
 - [Contributing](CONTRIBUTING.md)
 - [Code of Conduct](CODE_OF_CONDUCT.md)
 - [Security policy](.github/SECURITY.md)
-- [ADRs](docs/adr)
 
 ## License
 

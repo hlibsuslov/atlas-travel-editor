@@ -9,14 +9,24 @@ and this project aims to follow [Semantic Versioning](https://semver.org/spec/v2
 
 ### Added
 
+- **Rebrand to Atlas** — the project is now **Atlas**, an open-source, local-first
+  personal travel-map editor (formerly "Travel Editor").
+- **Local-first by default** — a clean clone runs with `npm install && npm run dev`
+  and stores everything in the browser (IndexedDB), fully offline, with no account,
+  no login wall, and no `.env` file required.
 - **Pluggable storage layer** (`DocumentStore`) — the travel document can be saved
   to multiple backends behind one interface, with normalize-on-load and
-  validate-on-save enforced centrally for every provider.
-- **Local-first mode** — run with no backend at all: an account-less IndexedDB
-  store, and a "save to a real file on disk" store (File System Access API, with a
-  download/upload fallback on browsers without it).
-- **No-backend quickstart** — `VITE_LOCAL_ONLY=1` (or demo auth) boots straight
-  into the editor with no Supabase configuration and no login wall.
+  validate-on-save enforced centrally for every provider. Ready backends:
+  `indexeddb` (default), `localfile` (single JSON file via the File System Access
+  API), and `selfhost` (the optional Atlas Server).
+- **Optional self-hostable Atlas Server** (`server/`) — Node + Hono + the built-in
+  `node:sqlite` (zero native deps): accounts (email + password; scrypt hashing;
+  bearer tokens stored only as a SHA-256 hash, 30-day TTL), public read-only maps by
+  slug and at `/u/:handle`, directed follows, mutual friends, an activity feed, and
+  profile discovery. Stand it up with `docker compose up --build`. With no server
+  connected, all social/sharing UI stays hidden and the app is pure local-first.
+- **Travel diary** — keep stays (places/hotels with dates and cost) alongside the
+  map, on an additive schema bump.
 - **Bring-your-own-cloud scaffolding** — Google Drive, Dropbox, WebDAV and GitHub
   adapters are registered as "coming soon" and will be enabled incrementally.
 - **Portable export envelope** — `{ app, schemaVersion, updatedAt, data }` for
@@ -36,16 +46,19 @@ and this project aims to follow [Semantic Versioning](https://semver.org/spec/v2
 
 ### Changed
 
-- Friends, profile and sharing degrade gracefully when no cloud backend is active.
+- Friends, profile and sharing degrade gracefully when no Atlas Server is connected.
 - Sign-out now purges the signed-in user's local cache.
 
 ### Removed
 
+- **Supabase removed entirely** from the app — no `VITE_SUPABASE_*` config, no
+  hosted Postgres/RLS/anon-key path. `src/` has zero Supabase references. Accounts
+  and sharing now come from the optional, self-hostable Atlas Server instead.
 - Dead `TagList` and `Switch` components.
 
 ## [1.0.0]
 
 Initial production rebuild of the original single-file MVP: typed React editor over
-the travel document, interactive world map, friends/sharing via Supabase, 8-language
-i18n, light/dark theming, offline-first PWA, and full CI
+the travel document, interactive world map, friends/sharing, 8-language i18n,
+light/dark theming, offline-first PWA, and full CI
 (typecheck · lint · test · build).
