@@ -20,6 +20,9 @@ export function AppShell() {
 
   return (
     <>
+      <a className="skip-link" href="#main">
+        {t('a11y.skipToContent')}
+      </a>
       <header className="topbar">
         <div className="brand">
           <BrandMark size={40} className="brand-mark" />
@@ -56,7 +59,9 @@ export function AppShell() {
         </div>
       </header>
 
-      <Outlet />
+      <main id="main">
+        <Outlet />
+      </main>
     </>
   );
 }

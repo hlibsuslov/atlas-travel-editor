@@ -1,13 +1,34 @@
 {
   "app": {
-    "name": "Travel Editor",
-    "tagline": "Edite, valide e compartilhe o seu mapa de viagens"
+    "name": "Atlas",
+    "tagline": "Cartografia pessoal de viagens"
+  },
+  "a11y": {
+    "skipToContent": "Ir para o conteúdo"
   },
   "nav": {
     "editor": "Editor",
     "map": "Mapa",
+    "stats": "Estatísticas",
     "friends": "Amigos",
-    "signOut": "Sair"
+    "signOut": "Entrar"
+  },
+  "dash": {
+    "kicker": "Lendo o mapa",
+    "title": "Uma vida em países",
+    "lede": "Padrões do seu histórico de viagens — distância, ritmo e os lugares que trouxeram você de volta.",
+    "ofWorld": "do mundo",
+    "acrossContinents": "em {{n}} continentes",
+    "yearsTravelling": "Anos viajando",
+    "homes": "Lares",
+    "calledHome": "países chamados de lar",
+    "byContinent": "Por continente",
+    "total": "total",
+    "travelRhythm": "Ritmo de viagem",
+    "tripsPerYear": "viagens registradas por ano",
+    "statusMix": "Distribuição de status",
+    "topDest": "Destinos mais revisitados",
+    "byVisits": "por visitas"
   },
   "confirm": {
     "confirm": "Confirmar",
@@ -23,7 +44,13 @@
     "system": "Sistema"
   },
   "auth": {
-    "subtitle": "Entre para salvar e compartilhar o seu mapa de viagens.",
+    "subtitle": "Salve e compartilhe o seu mapa de viagens pessoal.",
+    "login": "Login",
+    "password": "Senha",
+    "signIn": "Entrar",
+    "orMagic": "ou link mágico",
+    "artTitle": "Cada lugar onde você esteve, desenhado em um só mapa.",
+    "demoHint": "Demo — use {{login}} / {{password}} ou apenas pressione Entrar",
     "email": "E-mail",
     "sendLink": "Enviar link mágico",
     "sending": "Enviando…",
@@ -72,18 +99,31 @@
   },
   "editor": {
     "title": "Editor",
-    "hint": "Edite pela interface — o JSON é atualizado à direita",
+    "kicker": "O documento · uma única fonte de verdade",
+    "bornIn": "Nascido em",
+    "lede": "Edite o seu histórico de viagens pelo formulário — o JSON validado é atualizado em tempo real à direita.",
     "person": "Perfil",
+    "personSub": "Onde a história começa",
+    "entries": "registros",
+    "previewTitle": "Pré-visualização do JSON",
+    "liveAt": "Seu mapa está público em",
     "birthplace": "País de nascimento",
     "required": "obrigatório",
     "countries": "Países",
     "birthplacePlaceholder": "ex.: Ucrânia",
+    "filter": "Filtrar países…",
+    "noMatches": "Nenhum país corresponde ao seu filtro.",
     "offlineNote": "Você está offline — as alterações são salvas localmente e sincronizadas depois.",
     "fixToSave": "Corrija isto para salvar: {{message}}",
     "editYear": "Editar ano",
     "editEntry": "Editar registro",
     "actualized": "{{country}} {{year}} registrado",
-    "actualizeYear": "Registrar uma visita este ano ({{year}})"
+    "actualizeYear": "Registrar uma visita este ano ({{year}})",
+    "emptyTitle": "Ainda sem países",
+    "emptyBody": "Adicione o primeiro país que você visitou, carregue um exemplo para explorar ou importe os seus dados de viagem existentes.",
+    "emptyAddFirst": "Adicione o seu primeiro país",
+    "emptyLoadSample": "Carregar exemplo",
+    "emptyImport": "Importar dados"
   },
   "stats": {
     "countries": "Países",
@@ -92,10 +132,14 @@
   },
   "country": {
     "namePlaceholder": "Nome do país",
+    "selectPlaceholder": "Selecione um país…",
+    "searchPlaceholder": "Pesquisar países…",
+    "noMatches": "Nenhum país encontrado",
     "cities": "{{count}} cidades",
     "visited": "Visitado",
     "lived": "Morou",
     "birthplace": "Local de nascimento",
+    "capital": "Capital",
     "visitedCapital": "Capital visitada",
     "timelineVisited": "Linha do tempo — Visitas",
     "timelineLived": "Linha do tempo — Residência",
@@ -104,11 +148,28 @@
     "thisCountry": "este país"
   },
   "city": {
+    "title": "Cidades",
     "namePlaceholder": "Nome da cidade",
     "noCities": "Ainda sem cidades",
     "noYears": "Ainda sem anos",
     "addYearPlaceholder": "Adicionar ano (ex.: 2025)",
     "yearDefault": "Ano (padrão {{year}})"
+  },
+  "timeline": {
+    "year": "Ano",
+    "from": "De",
+    "to": "Até"
+  },
+  "export": {
+    "title": "Exportar",
+    "local": "Neste dispositivo",
+    "download": "Baixar JSON",
+    "copy": "Copiar JSON",
+    "email": "Enviar uma cópia por e-mail",
+    "connect": "Salvar na nuvem",
+    "soonBadge": "em breve",
+    "soon": "A integração com {{target}} chegará em breve.",
+    "more": "Mais destinos podem ser adicionados em exportTargets."
   },
   "json": {
     "title": "Pré-visualização do JSON",
@@ -117,8 +178,11 @@
   },
   "import": {
     "title": "Importar JSON",
-    "placeholder": "Cole o seu JSON aqui...",
-    "failed": "Falha na importação: {{message}}",
+    "placeholder": "…ou cole o seu JSON aqui",
+    "dropTitle": "Solte um arquivo .json",
+    "dropHint": "ou clique para procurar",
+    "summary": "{{countries}} países · {{cities}} cidades",
+    "failed": "JSON inválido: {{message}}",
     "tabJson": "JSON",
     "tabList": "Colar lista",
     "applyAs": "Aplicar como",
@@ -131,16 +195,29 @@
   },
   "storage": {
     "destination": "Destino de armazenamento",
-    "switched": "Agora salvando em {{target}}"
+    "switched": "Agora salvando em {{target}}",
+    "connectFailed": "Não foi possível conectar a {{target}}",
+    "connected": "Conectado",
+    "reconnect": "Reconectar arquivo"
   },
   "validation": {
     "invalidTimeline": "Formato inválido. Use {{formats}}.",
     "cityYearRange": "O ano de visita à cidade deve estar entre {{min}} e {{max}}."
   },
   "map": {
-    "title": "Mapa-múndi",
+    "kicker": "Projeção Equal Earth · clique para editar",
+    "title": "O mundo, marcado",
     "subtitle": "Países que você visitou, onde morou ou nasceu.",
-    "loadOwn": "Carregar meus dados",
+    "lede": "Cada país onde você nasceu, morou ou por onde passou — colorido por status.",
+    "onMap": "no mapa",
+    "loadOwn": "Meus dados",
+    "exportImage": "Exportar imagem",
+    "format": {
+      "story": "Story",
+      "post": "Post",
+      "wide": "Panorâmico"
+    },
+    "clickHint": "Clique em um país para alternar o status · role para dar zoom · arraste para mover · clique duas vezes para aproximar",
     "matched": "{{matched}} de {{total}} países correspondidos no mapa",
     "unmatchedHint": "Alguns nomes não corresponderam ao mapa. Use os nomes oficiais em inglês para melhores resultados.",
     "regionAria": "{{name}}: {{status}}",
@@ -168,20 +245,29 @@
     }
   },
   "friends": {
+    "kicker": "Outros cartógrafos",
     "title": "Amigos",
-    "subtitle": "Siga pessoas e explore os mapas de viagens delas.",
-    "addPlaceholder": "Código de compartilhamento do amigo",
+    "subtitle": "Siga pessoas pelo código de compartilhamento e explore os mapas que elas desenharam.",
+    "addPlaceholder": "CÓDIGO-DE-COMPARTILHAMENTO",
     "add": "Seguir",
     "empty": "Você ainda não segue ninguém.",
     "viewMap": "Ver mapa",
+    "countriesLabel": "Países",
+    "homeBase": "Base de origem",
     "countriesCount": "{{count}} países",
-    "remove": "Deixar de seguir"
+    "remove": "Deixar de seguir",
+    "connectTitle": "Conectar um Atlas Server",
+    "connectBody": "O Atlas funciona totalmente local-first — o seu mapa vive neste navegador. Conectar um Atlas Server opcional e auto-hospedável desbloqueia seguir pessoas, um @handle público e um feed com as atualizações dos amigos."
   },
   "share": {
     "title": "Mapa de viagens compartilhado",
     "openEditor": "Abrir editor",
+    "publicView": "Visualização pública",
+    "readOnly": "somente leitura",
+    "continents": "Continentes",
+    "dragHint": "Arraste para mover · role para dar zoom",
     "private": "Este mapa é privado ou não existe.",
-    "summary": "Nascimento: {{country}} · {{count}} países",
+    "summary": "Nascimento: {{country}} · {{count}} países marcados",
     "loadError": "Não foi possível carregar este mapa. Verifique sua conexão e tente novamente."
   },
   "toast": {
@@ -193,7 +279,11 @@
     "imported": "Dados importados.",
     "reset": "Redefinido para o exemplo padrão.",
     "resetConfirm": "Redefinir para o exemplo padrão? O trabalho atual será apagado.",
-    "loadedOwn": "Seus dados foram carregados no mapa."
+    "loadedOwn": "Seus dados foram carregados no mapa.",
+    "imageExported": "Imagem do mapa salva.",
+    "imageFailed": "Não foi possível exportar a imagem do mapa.",
+    "sampleLoaded": "Exemplo carregado — explore à vontade.",
+    "startedBlank": "Um documento em branco foi iniciado."
   },
   "profile": {
     "title": "Seu perfil público",
@@ -203,5 +293,12 @@
     "color": "Cor do avatar",
     "save": "Salvar perfil",
     "saved": "Perfil salvo"
+  },
+  "onboarding": {
+    "welcomeTitle": "Bem-vindo ao Atlas",
+    "welcomeBody": "Você está vendo um documento de exemplo — explore-o à vontade ou comece do zero.",
+    "loadSample": "Carregar um exemplo mais completo",
+    "startBlank": "Começar em branco",
+    "dismiss": "Dispensar"
   }
 }

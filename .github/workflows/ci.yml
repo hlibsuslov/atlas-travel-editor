@@ -35,6 +35,12 @@ jobs:
       - name: Format check
         run: npm run format:check
 
+      - name: Docs guard (no Supabase-required references)
+        run: npm run check:docs
+
+      - name: Locale completeness guard (every locale covers en keys)
+        run: npm run check:locales
+
       - name: Test (with coverage)
         run: npm run test:coverage
 
