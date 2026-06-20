@@ -18,5 +18,15 @@ services:
       - atlas-data:/data
     restart: unless-stopped
 
+  # The local-first web app at http://localhost:8080 — no backend required.
+  # Everything is stored in the browser (IndexedDB). Connect it to the optional
+  # atlas-server above via the in-app storage picker to enable social/sharing.
+  web:
+    build: .
+    image: atlas-web:local
+    ports:
+      - '8080:80'
+    restart: unless-stopped
+
 volumes:
   atlas-data:

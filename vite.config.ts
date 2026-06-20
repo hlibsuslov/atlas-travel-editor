@@ -6,6 +6,9 @@ import { fileURLToPath, URL } from 'node:url';
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  // GitHub Pages serves the app under /atlas-travel-editor/; Vercel, Docker and
+  // any root-domain/self-host deploy stay at '/'.
+  base: process.env.GITHUB_PAGES ? '/atlas-travel-editor/' : '/',
   plugins: [
     react(),
     VitePWA({
