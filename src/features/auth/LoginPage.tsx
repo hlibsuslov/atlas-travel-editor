@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ArrowRight, Globe, Share2, UserPlus } from 'lucide-react';
+import { ArrowRight, UserPlus } from 'lucide-react';
 import { useAuth } from './AuthProvider';
 import { BrandMark } from '@/components/brand/BrandMark';
 import { LanguageSwitcher } from '@/features/settings/LanguageSwitcher';
@@ -14,12 +14,10 @@ const MIN_PASSWORD = 6;
 
 export function LoginPage() {
   const { t } = useTranslation();
-  const { signInWithPassword, signUpWithPassword, signInWithOtp, signInWithGoogle, demo } =
-    useAuth();
+  const { signInWithPassword, signUpWithPassword, demo } = useAuth();
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [magicEmail, setMagicEmail] = useState('');
   const [message, setMessage] = useState('');
   const [error, setError] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -61,18 +59,6 @@ export function LoginPage() {
       setBusy(false);
       if (res.error) fail(res.error);
     }
-  };
-
-  const onMagic = async () => {
-    if (!magicEmail.trim()) return;
-    const res = await signInWithOtp(magicEmail.trim());
-    setError(!!res.error);
-    setMessage(res.error ?? t('auth.linkSent', { email: magicEmail.trim() }));
-  };
-
-  const onGoogle = async () => {
-    const res = await signInWithGoogle();
-    if (res.error) fail(res.error);
   };
 
   const toggleMode = () => {
@@ -163,25 +149,6 @@ export function LoginPage() {
               </button>
             </p>
           )}
-
-          <div className="divider">{t('auth.orMagic')}</div>
-
-          <div className="field" style={{ marginBottom: 10 }}>
-            <input
-              className="input"
-              type="email"
-              autoComplete="email"
-              value={magicEmail}
-              onChange={(e) => setMagicEmail(e.target.value)}
-              placeholder="you@email.com"
-            />
-          </div>
-          <button className="btn btn-block" onClick={onMagic} style={{ marginBottom: 10 }}>
-            <Share2 size={15} /> {t('auth.sendLink')}
-          </button>
-          <button className="btn btn-block" onClick={onGoogle}>
-            <Globe size={15} /> {t('auth.google')}
-          </button>
 
           {message && (
             <p

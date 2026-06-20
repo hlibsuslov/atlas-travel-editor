@@ -15,6 +15,7 @@ import {
 } from './api';
 import { atlasGetPublic, atlasGetPublicByHandle, getAtlasUrl } from '@/lib/atlas/client';
 import { ProfileEditor } from '@/features/profile/ProfileEditor';
+import { AtlasConnect } from '@/features/storage/AtlasConnect';
 import { normalizeTravelData } from '@/domain/normalize';
 import { computeStats, primaryStatus } from '@/domain/stats';
 import { MiniMap } from '@/features/map/WorldMap';
@@ -87,12 +88,20 @@ export function FriendsPage() {
       {connected && <Feed />}
 
       {!connected && (
-        <p className="empty-note">
-          {t(
-            'friends.serverNeeded',
-            'Following people needs a connected Atlas Server. This is a local-first instance.',
-          )}
-        </p>
+        <div className="panel">
+          <div className="panel-head">
+            <h2>{t('friends.connectTitle', 'Connect an Atlas Server')}</h2>
+          </div>
+          <div className="panel-body">
+            <p className="empty-note" style={{ marginTop: 0 }}>
+              {t(
+                'friends.connectBody',
+                'Atlas runs fully local-first — your map lives in this browser. Connecting an optional, self-hostable Atlas Server unlocks following people, a public @handle, and a feed of friends’ updates.',
+              )}
+            </p>
+            <AtlasConnect />
+          </div>
+        </div>
       )}
 
       {connected && friends.isLoading && <p className="empty-note">{t('common.loading')}</p>}

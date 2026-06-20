@@ -1,20 +1,25 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { AlertTriangle, Check, Globe, Redo2, Share2, Undo2, WifiOff } from 'lucide-react';
+import { AlertTriangle, Check, Globe, Redo2, Share2, Sparkles, Undo2, WifiOff, X } from 'lucide-react';
 import { useEditorStore } from '@/features/editor/store';
 import { useTravelData } from '@/features/editor/hooks/useTravelData';
 import { useAutosave } from '@/features/editor/hooks/useAutosave';
 import { validateTravelData } from '@/domain/schema';
 import { computeStats } from '@/domain/stats';
+import { makeEmptyData, makeSampleData } from '@/domain/sampleData';
 import { env } from '@/lib/env';
 import { CountryList } from './components/CountryList';
 import { CountrySelect } from './components/CountrySelect';
+import { EditorEmptyState } from './components/EditorEmptyState';
 import { FilterInput } from './components/FilterInput';
 import { JsonPreview } from './components/JsonPreview';
 import { ImportModal } from './components/ImportModal';
 import { ExportMenu } from './components/ExportMenu';
 import { StaysEditor } from './components/StaysEditor';
+
+/** localStorage flag: the welcome banner has been dismissed/acted on. */
+const ONBOARDED_KEY = 'atlas:onboarded';
 
 export function EditorPage() {
   const { t } = useTranslation();
@@ -31,6 +36,27 @@ export function EditorPage() {
   const { record, save, share, isOffline } = useTravelData();
   const [importOpen, setImportOpen] = useState(false);
   const [filter, setFilter] = useState('');
+  // Show the first-run welcome banner until the user dismisses or acts on it.
+  const [onboarded, setOnboarded] = useState(
+    () => localStorage.getItem(ONBOARDED_KEY) === '1',
+  );
+
+  const dismissWelcome = () => {
+    localStorage.setItem(ONBOARDED_KEY, '1');
+    setOnboarded(true);
+  };
+
+  const loadSample = () => {
+    setData(makeSampleData());
+    dismissWelcome();
+    toast.success(t('toast.sampleLoaded', 'Sample loaded — explore away.'));
+  };
+
+  const startBlank = () => {
+    setData(makeEmptyData());
+    dismissWelcome();
+    toast.success(t('toast.startedBlank', 'Started a blank document.'));
+  };
 
   const validation = useMemo(() => validateTravelData(data), [data]);
   const stats = useMemo(() => computeStats(data), [data]);
@@ -198,6 +224,38 @@ export function EditorPage() {
         </div>
       </div>
 
+      {!onboarded && (
+        <div className="welcome-banner" role="region" aria-label={t('onboarding.welcomeTitle', 'Welcome to Atlas')}>
+          <Sparkles size={18} className="welcome-icon" aria-hidden="true" />
+          <div className="welcome-body">
+            <strong>{t('onboarding.welcomeTitle', 'Welcome to Atlas')}</strong>
+            <p>
+              {t(
+                'onboarding.welcomeBody',
+                'You are looking at an example document — explore it freely, or start fresh.',
+              )}
+            </p>
+            <div className="welcome-actions">
+              <button className="btn btn-sm" type="button" onClick={loadSample}>
+                {t('onboarding.loadSample', 'Load a richer sample')}
+              </button>
+              <button className="btn btn-sm btn-ghost" type="button" onClick={startBlank}>
+                {t('onboarding.startBlank', 'Start blank')}
+              </button>
+            </div>
+          </div>
+          <button
+            className="welcome-dismiss"
+            type="button"
+            aria-label={t('onboarding.dismiss', 'Dismiss')}
+            title={t('onboarding.dismiss', 'Dismiss')}
+            onClick={dismissWelcome}
+          >
+            <X size={16} />
+          </button>
+        </div>
+      )}
+
       {isOffline && (
         <div className="notice-bar notice-bar-warn">
           <WifiOff size={15} />
@@ -266,7 +324,15 @@ export function EditorPage() {
                 />
               </div>
               {visibleCountries.length === 0 ? (
-                <p className="empty-note">{t('editor.noMatches')}</p>
+                filter.trim() !== '' ? (
+                  <p className="empty-note">{t('editor.noMatches')}</p>
+                ) : (
+                  <EditorEmptyState
+                    onAddCountry={(name) => ensureCountry(name)}
+                    onLoadSample={loadSample}
+                    onImport={() => setImportOpen(true)}
+                  />
+                )
               ) : (
                 <CountryList
                   countries={visibleCountries}
