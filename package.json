@@ -1,10 +1,31 @@
 {
-  "name": "traveleditor",
+  "name": "atlas",
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Travel JSON Editor — multi-tenant SaaS for editing and sharing personal travel maps.",
+  "description": "Atlas — open-source, local-first personal travel-map editor with an optional self-hostable sharing backend",
   "license": "MIT",
+  "author": "hlibsuslov",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hlibsuslov/atlas-travel-editor.git"
+  },
+  "homepage": "https://github.com/hlibsuslov/atlas-travel-editor#readme",
+  "bugs": {
+    "url": "https://github.com/hlibsuslov/atlas-travel-editor/issues"
+  },
+  "keywords": [
+    "local-first",
+    "travel",
+    "map",
+    "cartography",
+    "pwa",
+    "offline",
+    "indexeddb",
+    "self-hosted",
+    "react",
+    "typescript"
+  ],
   "engines": {
     "node": ">=20"
   },
@@ -20,7 +41,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "ci": "npm run typecheck && npm run lint && npm run test && npm run build"
+    "check:docs": "node scripts/check-no-supabase-docs.mjs",
+    "check:locales": "node scripts/check-locales.mjs",
+    "ci": "npm run typecheck && npm run lint && npm run check:docs && npm run check:locales && npm run test && npm run build"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

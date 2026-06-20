@@ -3,6 +3,9 @@
     "name": "Atlas",
     "tagline": "Personal travel cartography"
   },
+  "a11y": {
+    "skipToContent": "Skip to content"
+  },
   "nav": {
     "editor": "Editor",
     "map": "Map",
@@ -115,7 +118,12 @@
     "editYear": "Edit year",
     "editEntry": "Edit entry",
     "actualized": "Recorded {{country}} {{year}}",
-    "actualizeYear": "Record a visit this year ({{year}})"
+    "actualizeYear": "Record a visit this year ({{year}})",
+    "emptyTitle": "No countries yet",
+    "emptyBody": "Add the first country you have visited, load a sample to explore, or import your existing travel data.",
+    "emptyAddFirst": "Add your first country",
+    "emptyLoadSample": "Load sample",
+    "emptyImport": "Import data"
   },
   "stats": {
     "countries": "Countries",
@@ -187,7 +195,10 @@
   },
   "storage": {
     "destination": "Storage destination",
-    "switched": "Now saving to {{target}}"
+    "switched": "Now saving to {{target}}",
+    "connectFailed": "Could not connect to {{target}}",
+    "connected": "Connected",
+    "reconnect": "Reconnect file"
   },
   "validation": {
     "invalidTimeline": "Invalid format. Use {{formats}}.",
@@ -244,7 +255,9 @@
     "countriesLabel": "Countries",
     "homeBase": "Home base",
     "countriesCount": "{{count}} countries",
-    "remove": "Unfollow"
+    "remove": "Unfollow",
+    "connectTitle": "Connect an Atlas Server",
+    "connectBody": "Atlas runs fully local-first — your map lives in this browser. Connecting an optional, self-hostable Atlas Server unlocks following people, a public @handle, and a feed of friends’ updates."
   },
   "share": {
     "title": "Shared travel map",
@@ -268,7 +281,9 @@
     "resetConfirm": "Reset to the default example? This clears current work.",
     "loadedOwn": "Loaded your data onto the map.",
     "imageExported": "Map image saved.",
-    "imageFailed": "Could not export the map image."
+    "imageFailed": "Could not export the map image.",
+    "sampleLoaded": "Sample loaded — explore away.",
+    "startedBlank": "Started a blank document."
   },
   "profile": {
     "title": "Your public profile",
@@ -278,5 +293,12 @@
     "color": "Avatar color",
     "save": "Save profile",
     "saved": "Profile saved"
+  },
+  "onboarding": {
+    "welcomeTitle": "Welcome to Atlas",
+    "welcomeBody": "You are looking at an example document — explore it freely, or start fresh.",
+    "loadSample": "Load a richer sample",
+    "startBlank": "Start blank",
+    "dismiss": "Dismiss"
   }
 }
