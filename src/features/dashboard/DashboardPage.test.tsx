@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { act, render, screen, within } from '@testing-library/react';
-import type { Country, TravelData } from '@/domain/schema';
+import type { Country, Stay, TravelData } from '@/domain/schema';
 import { useEditorStore } from '@/features/editor/store';
 import { DashboardPage } from './DashboardPage';
 
@@ -15,10 +15,10 @@ function visited(name: string): Country {
   };
 }
 
-function loadData(countries: Country[]): void {
+function loadData(countries: Country[], stays?: Stay[]): void {
   const data: TravelData = {
     person: { birthplace: { country: '' } },
-    travel: { countries },
+    travel: { countries, ...(stays ? { stays } : {}) },
   };
   // markClean so the dashboard reads exactly this document. Wrapped in act() so
   // the Zustand subscription update is flushed inside React's commit phase.
@@ -73,5 +73,36 @@ describe('<DashboardPage> "% of the world"', () => {
     const byContinent = screen.getByRole('heading', { name: /by continent/i }).closest('.panel')!;
     const frac = within(byContinent as HTMLElement).getByText(/2\s*\/\s*43/);
     expect(frac).toBeInTheDocument();
+  });
+});
+
+describe('<DashboardPage> "Travel spend"', () => {
+  it('shows the spend section, per-currency total and a top stay when stays exist', () => {
+    loadData(
+      [visited('France')],
+      [
+        {
+          name: 'Hotel Lumière',
+          country: 'France',
+          from: '2024-05-01',
+          to: '2024-05-04',
+          // 1240.00 EUR stored as integer minor units (cents).
+          cost: { amount: 124000, currency: 'EUR' },
+        },
+      ],
+    );
+    render(<DashboardPage />);
+
+    const spend = screen.getByRole('heading', { name: /travel spend/i }).closest('.panel')!;
+    // Honest per-currency money string is formatted via Intl (no float storage).
+    expect(within(spend as HTMLElement).getAllByText(/1,240\.00/).length).toBeGreaterThan(0);
+    // The stay surfaces in the top-stays mini-list.
+    expect(within(spend as HTMLElement).getByText('Hotel Lumière')).toBeInTheDocument();
+  });
+
+  it('hides the spend section entirely when there are no stays', () => {
+    loadData([visited('France')]);
+    render(<DashboardPage />);
+    expect(screen.queryByRole('heading', { name: /travel spend/i })).not.toBeInTheDocument();
   });
 });

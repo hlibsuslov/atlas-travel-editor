@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { AlertTriangle, Check, Globe, Redo2, Share2, Sparkles, Undo2, WifiOff, X } from 'lucide-react';
+import { AlertTriangle, Globe, Redo2, Share2, Sparkles, Undo2, WifiOff, X } from 'lucide-react';
 import { useEditorStore } from '@/features/editor/store';
 import { useTravelData } from '@/features/editor/hooks/useTravelData';
 import { validateTravelData } from '@/domain/schema';
@@ -114,13 +114,6 @@ export function EditorPage() {
   // triggers explicit `save`/`share` below — it must NOT arm a second autosave,
   // or the document would be written twice on every settle.
 
-  const onSave = () =>
-    save.mutate(data, {
-      onSuccess: () => toast.success(t('toast.saved')),
-      onError: (e) =>
-        toast.error(t('toast.saveFailed', { message: e instanceof Error ? e.message : '' })),
-    });
-
   // Document-level undo/redo via keyboard, but only when the user isn't editing
   // a text field (so native text undo keeps working inside inputs).
   useEffect(() => {
@@ -169,7 +162,7 @@ export function EditorPage() {
           <p className="page-lede">{t('editor.lede')}</p>
         </div>
         <div className="toolbar">
-          <SaveStatus state={saveState} />
+          <SaveStatus state={saveState} actionable />
           <div className="btn-group">
             <button
               className="btn btn-sm btn-ghost"
@@ -213,13 +206,6 @@ export function EditorPage() {
               </span>
             </button>
           )}
-          <button
-            className="btn btn-sm btn-primary"
-            disabled={save.isPending || !validation.ok}
-            onClick={onSave}
-          >
-            <Check size={14} /> {save.isPending ? t('actions.saving') : t('actions.save')}
-          </button>
         </div>
       </div>
 

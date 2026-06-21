@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useEditorStore } from '@/features/editor/store';
-import { computeStats, primaryStatus, type PrimaryStatus } from '@/domain/stats';
+import { computeStats, primaryStatus, type BudgetStats, type PrimaryStatus } from '@/domain/stats';
 import { STATUS_COLORS } from '@/features/map/countryMatch';
 import { continentForName, CONTINENTS } from '@/domain/continents';
 import { UN_MEMBER_COUNT } from '@/domain/sovereignty';
@@ -128,8 +128,195 @@ function useContinentLabel() {
   return (key: string) => t(`continent.${key.toLowerCase()}`, key);
 }
 
-export function DashboardPage() {
+/**
+ * Format an integer minor-unit amount + ISO code with Intl. Intl supplies the
+ * currency's own fraction digits (JPY → 0, USD → 2), so we divide minor units by
+ * the matching power of ten ONLY for display — storage stays in integer minor
+ * units. Mirrors StaysEditor.formatMoney so the two surfaces read identically;
+ * an unknown / non-ISO code degrades to "major-units CODE" instead of crashing.
+ */
+function formatMoney(amount: number, currency: string, locale: string): string {
+  try {
+    const fmt = new Intl.NumberFormat(locale, { style: 'currency', currency });
+    const digits = fmt.resolvedOptions().maximumFractionDigits ?? 2;
+    return fmt.format(amount / 10 ** digits);
+  } catch {
+    return `${(amount / 100).toFixed(2)} ${currency}`;
+  }
+}
+
+/** How many spend-by-country bars to show before we stop (keeps the panel calm). */
+const SPEND_COUNTRY_LIMIT = 6;
+
+/**
+ * "Travel spend" panel driven entirely by the pure `stats.budget` block.
+ * Multi-currency is grouped by code and NEVER summed across currencies — there
+ * is no live FX in a local-first app, so a single "total" would be dishonest.
+ * Only rendered when there is at least one stay (the caller guards stayCount).
+ */
+function BudgetSection({ budget, locale }: { budget: BudgetStats; locale: string }) {
   const { t } = useTranslation();
+
+  // Headline totals: one money string per currency, biggest first, joined with
+  // a middot. Sorting by amount keeps the dominant currency leading the line.
+  const headline = Object.entries(budget.spendByCurrency)
+    .sort((a, b) => b[1] - a[1])
+    .map(([currency, amount]) => formatMoney(amount, currency, locale))
+    .join(' · ');
+
+  // Spend-by-country bars are scaled against the single largest per-country,
+  // per-currency figure so the longest bar is full-width and the rest relative.
+  const countries = budget.spendByCountry.slice(0, SPEND_COUNTRY_LIMIT);
+  const peak = countries.reduce((max, c) => {
+    for (const amount of Object.values(c.byCurrency)) max = Math.max(max, amount);
+    return max;
+  }, 1);
+
+  const avgEntries = Object.entries(budget.avgNightlyByCurrency).sort((a, b) => b[1] - a[1]);
+  const hasSpend = headline.length > 0;
+
+  return (
+    <div className="panel dash-budget" style={{ marginTop: 'var(--gap)' }}>
+      <div className="panel-head">
+        <h2>{t('report.budget.title', 'Travel spend')}</h2>
+        <span className="kicker">
+          {t('report.budget.stays', '{{count}} stays', { count: budget.stayCount })}
+        </span>
+      </div>
+      <div className="panel-body">
+        {hasSpend ? (
+          <>
+            {/* Honest headline: each currency stands alone, never converted. */}
+            <div className="dash-budget-headline">
+              <div className="kicker">{t('report.budget.total', 'Total spend')}</div>
+              <div className="dash-budget-total" aria-label={headline}>
+                {headline}
+              </div>
+              {budget.currencyCount > 1 && (
+                <p className="dash-budget-note">
+                  {t(
+                    'report.budget.multiCurrency',
+                    'Shown per currency — never converted (offline, no live rates).',
+                  )}
+                </p>
+              )}
+            </div>
+
+            <div className="dash-budget-grid">
+              {/* Spend by country, with circular flags + per-currency totals. */}
+              {countries.length > 0 && (
+                <div className="dash-budget-block">
+                  <div className="kicker dash-budget-block-head">
+                    {t('report.budget.byCountry', 'Spend by country')}
+                  </div>
+                  <div className="bars">
+                    {countries.map((c) => {
+                      // A country that mixes currencies shows each on its own row,
+                      // biggest first — we never add EUR to USD behind the scenes.
+                      const lines = Object.entries(c.byCurrency).sort((a, b) => b[1] - a[1]);
+                      return (
+                        <div className="dash-budget-country" key={c.country}>
+                          <div className="dash-budget-country-head">
+                            <Flag name={c.country} size={22} />
+                            <span className="dash-budget-country-name" title={c.country}>
+                              {c.country}
+                            </span>
+                          </div>
+                          {lines.map(([currency, amount]) => (
+                            <div className="bar-row dash-budget-bar" key={currency}>
+                              <span className="bar-label">{currency}</span>
+                              <div className="bar-track">
+                                <div
+                                  className="bar-fill"
+                                  style={{
+                                    width: `${Math.max(4, (amount / peak) * 100)}%`,
+                                    background: STATUS_COLORS.visited,
+                                  }}
+                                />
+                              </div>
+                              <span className="bar-val dash-budget-money">
+                                {formatMoney(amount, currency, locale)}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              <div className="dash-budget-block">
+                {/* Nights + average nightly cost, per currency (never blended). */}
+                <div className="kicker dash-budget-block-head">
+                  {t('report.budget.nightly', 'Per night')}
+                </div>
+                <div className="dash-budget-nights">
+                  <Milestone
+                    value={budget.nights}
+                    label={t('report.budget.nights', 'Total nights')}
+                  />
+                </div>
+                {avgEntries.length > 0 ? (
+                  <div className="dash-budget-avg">
+                    {avgEntries.map(([currency, amount]) => (
+                      <div className="dash-budget-avg-row" key={currency}>
+                        <span className="dash-budget-avg-val mono">
+                          {formatMoney(amount, currency, locale)}
+                        </span>
+                        <span className="dash-budget-avg-label">
+                          {t('report.budget.perNight', '/ night')}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="empty-note">
+                    {t('report.budget.noNights', 'Add dates to a stay to see nightly cost.')}
+                  </p>
+                )}
+
+                {/* Top stays mini-list — most expensive first, each in its code. */}
+                {budget.topStays.length > 0 && (
+                  <>
+                    <div className="kicker dash-budget-block-head dash-budget-top-head">
+                      {t('report.budget.topStays', 'Top stays')}
+                    </div>
+                    <ol className="dash-budget-top">
+                      {budget.topStays.map((stay, i) => (
+                        <li className="dash-budget-top-row" key={`${stay.name}-${i}`}>
+                          {stay.country ? (
+                            <Flag name={stay.country} size={20} />
+                          ) : (
+                            <span className="dash-budget-top-nogeo" aria-hidden="true" />
+                          )}
+                          <span className="dash-budget-top-name" title={stay.name}>
+                            {stay.name}
+                          </span>
+                          <span className="dash-budget-top-cost mono">
+                            {formatMoney(stay.amount, stay.currency, locale)}
+                          </span>
+                        </li>
+                      ))}
+                    </ol>
+                  </>
+                )}
+              </div>
+            </div>
+          </>
+        ) : (
+          // Stays exist but none carry a cost yet — nudge, don't shout.
+          <p className="empty-note">
+            {t('report.budget.empty', 'No costs logged yet — add a cost to a stay to see spend.')}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export function DashboardPage() {
+  const { t, i18n } = useTranslation();
   const continentLabel = useContinentLabel();
   const data = useEditorStore((s) => s.data);
   const stats = useMemo(() => computeStats(data), [data]);
@@ -550,6 +737,11 @@ export function DashboardPage() {
           )}
         </div>
       </div>
+
+      {/* Travel spend: only when a diary exists; otherwise nothing is shown. */}
+      {stats.budget.stayCount > 0 && (
+        <BudgetSection budget={stats.budget} locale={i18n.language} />
+      )}
     </div>
   );
 }

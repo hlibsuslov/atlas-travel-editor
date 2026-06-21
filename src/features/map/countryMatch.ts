@@ -37,9 +37,7 @@ const ALIASES: Record<string, string> = {
   'great britain': 'united kingdom',
   england: 'united kingdom',
   britain: 'united kingdom',
-  'south korea': 'south korea',
   'republic of korea': 'south korea',
-  'north korea': 'north korea',
   'czech republic': 'czechia',
   uae: 'united arab emirates',
   'russian federation': 'russia',
@@ -53,14 +51,6 @@ const ALIASES: Record<string, string> = {
   'democratic republic of the congo': 'dem rep congo',
   'dr congo': 'dem rep congo',
   'republic of the congo': 'congo',
-  vietnam: 'vietnam',
-  laos: 'laos',
-  syria: 'syria',
-  tanzania: 'tanzania',
-  bolivia: 'bolivia',
-  venezuela: 'venezuela',
-  iran: 'iran',
-  moldova: 'moldova',
 };
 
 /** Canonical comparison key for a country name. */

@@ -2,22 +2,20 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { ChevronDown, Image as ImageIcon, Layers, MapPin, Pencil, Save } from 'lucide-react';
+import { ChevronDown, Image as ImageIcon, Layers, MapPin, Pencil } from 'lucide-react';
 import { useEditorStore } from '@/features/editor/store';
-import { useTravelData } from '@/features/editor/hooks/useTravelData';
-import { useSaveStatus } from '@/lib/persistence/useDataSync';
-import { SaveStatus } from '@/components/ui/SaveStatus';
 import { Flag } from '@/components/ui/Flag';
 import { computeStats } from '@/domain/stats';
 import { WorldMap, type StatusChoice } from './WorldMap';
 import { Legend } from './Legend';
 import { MapEmptyState } from './MapEmptyState';
-import { BRUSHES, brushSwatch, type Brush } from './brush';
+import { BRUSHES, brushSwatch, resolveBrushClick, type Brush } from './brush';
 import {
   buildStatusMap,
   computeCoverage,
   STATUS_COLORS,
   unmatchedCountryNames,
+  type MapStatus,
 } from './countryMatch';
 import { EXPORT_FORMATS, exportMapPng } from './mapExport';
 import { ImportModal } from '@/features/editor/components/ImportModal';
@@ -35,9 +33,6 @@ export function MapPage() {
   const navigate = useNavigate();
   const data = useEditorStore((s) => s.data);
   const setData = useEditorStore((s) => s.setData);
-  const dirty = useEditorStore((s) => s.dirty);
-  const { save } = useTravelData();
-  const { state: saveState } = useSaveStatus();
   const [importOpen, setImportOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   // The active status brush and whether precise (popover-on-click) mode is on.
@@ -61,20 +56,9 @@ export function MapPage() {
     return () => document.removeEventListener('mousedown', onDoc);
   }, [exportOpen]);
 
-  // Click cycles none → visited → lived → none. Birthplace is owned by the
-  // Person field and is never set on an arbitrary country from the map.
-  const onCountryClick = (geographyName: string) => {
-    const store = useEditorStore.getState();
-    const idx = store.ensureCountry(geographyName);
-    const c = store.data.travel.countries[idx];
-    const current = c?.status.lived ? 'lived' : c?.status.visited ? 'visited' : 'none';
-    const next = current === 'none' ? 'visited' : current === 'visited' ? 'lived' : 'none';
-    store.setPrimaryStatus(idx, next);
-  };
-
-  // Popover / brush: set one of the four statuses (or clear) directly. "capital"
-  // is a separate flag from the primary status, so each choice sets both the
-  // dominant status and the capital-visit flag explicitly.
+  // Apply an explicit status (or clear) to a country — the single apply path for
+  // both the popover/brush and the cycle click. "capital" is a separate flag from
+  // the primary status, so each choice sets both explicitly.
   const onSetStatus = (geographyName: string, choice: StatusChoice) => {
     const store = useEditorStore.getState();
     const idx = store.ensureCountry(geographyName);
@@ -87,18 +71,28 @@ export function MapPage() {
     }
   };
 
+  // Plain click in cycle mode: derive the country's current status and let the
+  // shared brush resolver decide the next one (single source of truth — same
+  // logic the brush toolbar uses, covered by brush.test.ts).
+  const onCountryClick = (geographyName: string) => {
+    const store = useEditorStore.getState();
+    const idx = store.ensureCountry(geographyName);
+    const c = store.data.travel.countries[idx];
+    const current: MapStatus = c?.status.lived
+      ? 'lived'
+      : c?.status.visited
+        ? 'visited'
+        : c?.capitalVisit.visited
+          ? 'capital'
+          : 'none';
+    onSetStatus(geographyName, resolveBrushClick('cycle', current));
+  };
+
   // Send the user to the editor with this country materialised, so an unmatched
   // name is easy to find and fix.
   const focusInEditor = (name: string) => {
     useEditorStore.getState().ensureCountry(name);
     navigate('/');
-  };
-
-  // Explicit "Save now" — autosave already persists in the background, but this
-  // gives the user a deliberate way to flush and confirms with the live status.
-  const onSaveNow = () => {
-    if (!dirty || save.isPending) return;
-    save.mutate(useEditorStore.getState().data);
   };
 
   const exportImage = async (formatId: string) => {
@@ -215,7 +209,6 @@ export function MapPage() {
       <div className="panel">
         <div className="panel-head">
           <Legend counts={stats.byStatus} />
-          <SaveStatus />
         </div>
 
         {/* Status-brush toolbar: pick the active paint; one click then applies it. */}
@@ -270,17 +263,6 @@ export function MapPage() {
               })}
             >
               <Pencil size={13} /> {t('map.precise', { defaultValue: 'Precise edit' })}
-            </button>
-            <button
-              type="button"
-              className="btn btn-sm"
-              disabled={!dirty || save.isPending}
-              onClick={onSaveNow}
-            >
-              <Save size={14} />{' '}
-              {saveState === 'saving'
-                ? t('map.saving', { defaultValue: 'Saving…' })
-                : t('map.save', { defaultValue: 'Save' })}
             </button>
           </div>
         </div>

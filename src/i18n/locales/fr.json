@@ -196,6 +196,46 @@
     "from": "De",
     "to": "À"
   },
+  "diary": {
+    "title": "Journal",
+    "sub": "Lieux et séjours, avec coût",
+    "empty": "Aucun séjour pour l'instant — enregistrez un hôtel ou un lieu où vous avez séjourné.",
+    "namePlaceholder": "Nom de l'hôtel / du lieu",
+    "add": "Ajouter un séjour",
+    "country": "Pays",
+    "city": "Ville",
+    "from": "De",
+    "to": "À",
+    "cost": "Coût",
+    "currency": "Devise",
+    "currencyPlaceholder": "Devise",
+    "currencySearch": "Rechercher un code…",
+    "currencyEmpty": "Aucune correspondance — saisissez-le à droite",
+    "currencyManual": "Code de devise",
+    "currencyManualPlaceholder": "ISO",
+    "note": "Note (facultatif)",
+    "nights": "{{count}} nuits",
+    "total": "Total",
+    "sortBy": "Trier par",
+    "sortDate": "Date",
+    "sortCost": "Coût",
+    "sortName": "Nom"
+  },
+  "report": {
+    "budget": {
+      "title": "Dépenses de voyage",
+      "stays": "{{count}} séjours",
+      "total": "Dépenses totales",
+      "multiCurrency": "Affiché par devise — jamais converti (hors ligne, sans taux en direct).",
+      "byCountry": "Dépenses par pays",
+      "nightly": "Par nuit",
+      "nights": "Nuits au total",
+      "perNight": "/ nuit",
+      "noNights": "Ajoutez des dates à un séjour pour voir le coût par nuit.",
+      "topStays": "Séjours les plus chers",
+      "empty": "Aucun coût enregistré pour l'instant — ajoutez un coût à un séjour pour voir les dépenses."
+    }
+  },
   "export": {
     "title": "Exporter",
     "local": "Sur cet appareil",

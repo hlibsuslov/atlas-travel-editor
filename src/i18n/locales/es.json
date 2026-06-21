@@ -196,6 +196,46 @@
     "from": "Desde",
     "to": "Hasta"
   },
+  "diary": {
+    "title": "Diario",
+    "sub": "Lugares y estancias, con coste",
+    "empty": "Aún no hay estancias: registra un hotel o lugar donde te alojaste.",
+    "namePlaceholder": "Nombre del hotel / lugar",
+    "add": "Añadir estancia",
+    "country": "País",
+    "city": "Ciudad",
+    "from": "Desde",
+    "to": "Hasta",
+    "cost": "Coste",
+    "currency": "Moneda",
+    "currencyPlaceholder": "Moneda",
+    "currencySearch": "Buscar un código…",
+    "currencyEmpty": "Sin coincidencias: escríbelo a la derecha",
+    "currencyManual": "Código de moneda",
+    "currencyManualPlaceholder": "ISO",
+    "note": "Nota (opcional)",
+    "nights": "{{count}} noches",
+    "total": "Total",
+    "sortBy": "Ordenar por",
+    "sortDate": "Fecha",
+    "sortCost": "Coste",
+    "sortName": "Nombre"
+  },
+  "report": {
+    "budget": {
+      "title": "Gasto en viajes",
+      "stays": "{{count}} estancias",
+      "total": "Gasto total",
+      "multiCurrency": "Mostrado por moneda, nunca convertido (sin conexión, sin tipos en vivo).",
+      "byCountry": "Gasto por país",
+      "nightly": "Por noche",
+      "nights": "Noches totales",
+      "perNight": "/ noche",
+      "noNights": "Añade fechas a una estancia para ver el coste por noche.",
+      "topStays": "Estancias más caras",
+      "empty": "Aún no hay costes registrados: añade un coste a una estancia para ver el gasto."
+    }
+  },
   "export": {
     "title": "Exportar",
     "local": "En este dispositivo",

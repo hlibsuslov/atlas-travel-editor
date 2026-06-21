@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { computeStats } from './stats';
-import type { Country, TravelData } from './schema';
+import type { Country, Stay, TravelData } from './schema';
 
 /** Build a minimal country with sensible empty defaults. */
 function country(partial: Partial<Country> & { name: string }): Country {
@@ -17,6 +17,14 @@ function data(countries: Country[]): TravelData {
   return {
     person: { birthplace: { country: '' } },
     travel: { countries },
+  };
+}
+
+/** Build TravelData with a diary of stays (no countries needed for budget tests). */
+function dataWithStays(stays: Stay[]): TravelData {
+  return {
+    person: { birthplace: { country: '' } },
+    travel: { countries: [], stays },
   };
 }
 
@@ -186,6 +194,180 @@ describe('computeStats — city dimensions', () => {
     expect(stats.cities).toBe(3);
     expect(stats.distinctCities).toBe(2);
     expect(stats.countriesWithCities).toBe(1);
+  });
+});
+
+describe('computeStats — budget aggregation', () => {
+  it('is all-empty when there is no diary at all', () => {
+    const stats = computeStats(data([country({ name: 'France', status: visited })]));
+    expect(stats.budget).toEqual({
+      spendByCurrency: {},
+      spendByCountry: [],
+      nights: 0,
+      avgNightlyByCurrency: {},
+      topStays: [],
+      stayCount: 0,
+      currencyCount: 0,
+    });
+  });
+
+  it('is all-empty for an empty stays array (never NaN/Infinity)', () => {
+    const stats = computeStats(dataWithStays([]));
+    expect(stats.budget.spendByCurrency).toEqual({});
+    expect(stats.budget.avgNightlyByCurrency).toEqual({});
+    expect(stats.budget.nights).toBe(0);
+    expect(stats.budget.stayCount).toBe(0);
+    expect(stats.budget.currencyCount).toBe(0);
+  });
+
+  it('sums a single currency across stays', () => {
+    const stats = computeStats(
+      dataWithStays([
+        { name: 'Hotel A', country: 'France', cost: { amount: 12000, currency: 'EUR' } },
+        { name: 'Hotel B', country: 'France', cost: { amount: 8000, currency: 'EUR' } },
+      ]),
+    );
+    expect(stats.budget.spendByCurrency).toEqual({ EUR: 20000 });
+    expect(stats.budget.currencyCount).toBe(1);
+    expect(stats.budget.stayCount).toBe(2);
+  });
+
+  it('keeps mixed currencies grouped and never sums across them', () => {
+    const stats = computeStats(
+      dataWithStays([
+        { name: 'Hotel EUR', country: 'France', cost: { amount: 10000, currency: 'EUR' } },
+        { name: 'Hotel USD', country: 'USA', cost: { amount: 25000, currency: 'USD' } },
+        { name: 'Hotel EUR2', country: 'France', cost: { amount: 5000, currency: 'EUR' } },
+      ]),
+    );
+    expect(stats.budget.spendByCurrency).toEqual({ EUR: 15000, USD: 25000 });
+    expect(stats.budget.currencyCount).toBe(2);
+  });
+
+  it('groups per-country spend by currency, sorted desc by largest currency total', () => {
+    const stats = computeStats(
+      dataWithStays([
+        { name: 'Cheap', country: 'Portugal', cost: { amount: 3000, currency: 'EUR' } },
+        { name: 'Pricey', country: 'Japan', cost: { amount: 90000, currency: 'JPY' } },
+        { name: 'Mid', country: 'France', cost: { amount: 20000, currency: 'EUR' } },
+      ]),
+    );
+    expect(stats.budget.spendByCountry).toEqual([
+      { country: 'Japan', byCurrency: { JPY: 90000 } },
+      { country: 'France', byCurrency: { EUR: 20000 } },
+      { country: 'Portugal', byCurrency: { EUR: 3000 } },
+    ]);
+  });
+
+  it('merges multiple currencies within one country', () => {
+    const stats = computeStats(
+      dataWithStays([
+        { name: 'Local', country: 'Switzerland', cost: { amount: 40000, currency: 'CHF' } },
+        { name: 'Card', country: 'Switzerland', cost: { amount: 12000, currency: 'EUR' } },
+        { name: 'Local2', country: 'Switzerland', cost: { amount: 10000, currency: 'CHF' } },
+      ]),
+    );
+    expect(stats.budget.spendByCountry).toEqual([
+      { country: 'Switzerland', byCurrency: { CHF: 50000, EUR: 12000 } },
+    ]);
+  });
+
+  it('counts a stay with a cost but no country: in spendByCurrency, NOT in spendByCountry', () => {
+    const stats = computeStats(
+      dataWithStays([
+        { name: 'Nameless place', cost: { amount: 7000, currency: 'USD' } },
+        { name: 'Known', country: 'USA', cost: { amount: 3000, currency: 'USD' } },
+      ]),
+    );
+    expect(stats.budget.spendByCurrency).toEqual({ USD: 10000 });
+    expect(stats.budget.spendByCountry).toEqual([
+      { country: 'USA', byCurrency: { USD: 3000 } },
+    ]);
+    expect(stats.budget.stayCount).toBe(2);
+  });
+
+  it('counts costless stays toward stayCount but not toward spend', () => {
+    const stats = computeStats(
+      dataWithStays([
+        { name: 'Free crash pad', country: 'France' },
+        { name: 'Paid', country: 'France', cost: { amount: 5000, currency: 'EUR' } },
+      ]),
+    );
+    expect(stats.budget.stayCount).toBe(2);
+    expect(stats.budget.spendByCurrency).toEqual({ EUR: 5000 });
+    expect(stats.budget.spendByCountry).toEqual([
+      { country: 'France', byCurrency: { EUR: 5000 } },
+    ]);
+  });
+
+  it('sums nights only when both endpoints are concrete dates (inclusive-exclusive)', () => {
+    const stats = computeStats(
+      dataWithStays([
+        // 4 nights: Jun 1 -> Jun 5.
+        { name: 'A', from: '2024-06-01', to: '2024-06-05', cost: { amount: 40000, currency: 'EUR' } },
+        // 1 night across a month boundary normalises YYYY-MM -> 1st: Jul 1 -> Jul 2.
+        { name: 'B', from: '2024-07-01', to: '2024-07-02', cost: { amount: 10000, currency: 'EUR' } },
+      ]),
+    );
+    expect(stats.budget.nights).toBe(5);
+    // avg = round(50000 / 5) = 10000
+    expect(stats.budget.avgNightlyByCurrency).toEqual({ EUR: 10000 });
+  });
+
+  it('rounds average nightly to the nearest minor unit', () => {
+    const stats = computeStats(
+      dataWithStays([
+        // 3 nights, 10000 total -> 10000/3 = 3333.33 -> 3333
+        { name: 'A', from: '2024-01-01', to: '2024-01-04', cost: { amount: 10000, currency: 'EUR' } },
+      ]),
+    );
+    expect(stats.budget.nights).toBe(3);
+    expect(stats.budget.avgNightlyByCurrency).toEqual({ EUR: 3333 });
+  });
+
+  it('produces no average and zero nights when dates are missing (no divide by zero)', () => {
+    const stats = computeStats(
+      dataWithStays([
+        { name: 'No dates', country: 'Italy', cost: { amount: 8000, currency: 'EUR' } },
+      ]),
+    );
+    expect(stats.budget.nights).toBe(0);
+    expect(stats.budget.spendByCurrency).toEqual({ EUR: 8000 });
+    expect(stats.budget.avgNightlyByCurrency).toEqual({});
+  });
+
+  it('ignores junk / reversed / year-range / partial-pair dates for nights', () => {
+    const stats = computeStats(
+      dataWithStays([
+        { name: 'OnlyFrom', from: '2024-06-01', cost: { amount: 1000, currency: 'EUR' } },
+        { name: 'Reversed', from: '2024-06-10', to: '2024-06-01', cost: { amount: 1000, currency: 'EUR' } },
+        { name: 'SameDay', from: '2024-06-01', to: '2024-06-01', cost: { amount: 1000, currency: 'EUR' } },
+        { name: 'YearRange', from: '2018-2020', to: '2018-2020', cost: { amount: 1000, currency: 'EUR' } },
+      ]),
+    );
+    expect(stats.budget.nights).toBe(0);
+    expect(stats.budget.avgNightlyByCurrency).toEqual({});
+    expect(stats.budget.spendByCurrency).toEqual({ EUR: 4000 });
+  });
+
+  it('surfaces the 5 most expensive stays, sorted desc, each with its own currency', () => {
+    const stats = computeStats(
+      dataWithStays([
+        { name: 'S1', country: 'A', cost: { amount: 100, currency: 'EUR' } },
+        { name: 'S2', country: 'B', cost: { amount: 600, currency: 'USD' } },
+        { name: 'S3', cost: { amount: 300, currency: 'EUR' } },
+        { name: 'S4', country: 'C', cost: { amount: 500, currency: 'GBP' } },
+        { name: 'S5', country: 'D', cost: { amount: 200, currency: 'EUR' } },
+        { name: 'S6', country: 'E', cost: { amount: 400, currency: 'EUR' } },
+      ]),
+    );
+    expect(stats.budget.topStays).toEqual([
+      { name: 'S2', country: 'B', amount: 600, currency: 'USD' },
+      { name: 'S4', country: 'C', amount: 500, currency: 'GBP' },
+      { name: 'S6', country: 'E', amount: 400, currency: 'EUR' },
+      { name: 'S3', amount: 300, currency: 'EUR' }, // no country -> no country key
+      { name: 'S5', country: 'D', amount: 200, currency: 'EUR' },
+    ]);
   });
 });
 

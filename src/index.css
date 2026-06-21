@@ -408,6 +408,30 @@ body {
   background: #f8e6e1;
   color: #b4452f;
 }
+/* Interactive variant: the save/sync pill doubles as a "Save now" button when
+   there are unsaved/offline edits, so we don't need a separate Save button. */
+button.pill {
+  border: none;
+  font: inherit;
+  cursor: pointer;
+}
+.pill-action {
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition:
+    filter 0.15s,
+    transform 0.06s ease;
+}
+.pill-action:hover {
+  filter: brightness(0.97);
+}
+.pill-action:active {
+  transform: translateY(1px);
+}
+.pill-action:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
 .chip {
   display: inline-flex;
   align-items: center;
@@ -1928,10 +1952,20 @@ textarea.input {
 :lang(uk) .divider,
 :lang(ru) .atlas-coord,
 :lang(uk) .atlas-coord,
+:lang(ru) .brush-bar-label,
+:lang(uk) .brush-bar-label,
 :lang(ru) .atlas-tip-iso,
 :lang(uk) .atlas-tip-iso {
   letter-spacing: 0.02em;
   text-transform: none;
+}
+
+/* Map control labels/hints: relax Cyrillic tracking but keep mixed case. */
+:lang(ru) .brush-text,
+:lang(uk) .brush-text,
+:lang(ru) .map-hint,
+:lang(uk) .map-hint {
+  letter-spacing: normal;
 }
 
 /* Tracked text that stays mixed-case (not uppercased) just needs the spacing

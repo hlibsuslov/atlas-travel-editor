@@ -7,6 +7,12 @@ interface SaveStatusProps {
    * persistence status, so any page can drop in `<SaveStatus/>` and it just works.
    */
   state?: SaveState;
+  /**
+   * When true, the pill becomes a "Save now" button while there are unsaved /
+   * offline edits — so the app needs no separate Save button. When synced/saving
+   * it stays a passive status pill.
+   */
+  actionable?: boolean;
   className?: string;
 }
 
@@ -24,11 +30,29 @@ const PILL: Record<SaveState, { variant: string; key: string; fallback: string }
  * "Saved" / "Saving…" / "Unsaved" / "Offline" with a single `<SaveStatus/>` and no
  * wiring. Styled with the shared `.pill` classes so it matches everywhere.
  */
-export function SaveStatus({ state, className }: SaveStatusProps) {
+export function SaveStatus({ state, actionable, className }: SaveStatusProps) {
   const { t } = useTranslation();
   const auto = useSaveStatus();
   const effective = state ?? auto.state;
   const { variant, key, fallback } = PILL[effective];
+  const label = t(key, fallback);
+
+  // When there are edits to flush, render the pill AS the "Save now" control.
+  // Synced/saving states stay passive so the button can't fire a redundant save.
+  if (actionable && (effective === 'unsaved' || effective === 'offline')) {
+    return (
+      <button
+        type="button"
+        className={`pill ${variant} pill-action${className ? ` ${className}` : ''}`}
+        onClick={auto.saveNow}
+        title={t('actions.saveNow', 'Save now')}
+        aria-label={`${label} — ${t('actions.saveNow', 'Save now')}`}
+      >
+        <span className="dot" aria-hidden="true" />
+        {label}
+      </button>
+    );
+  }
 
   return (
     <span
@@ -37,7 +61,7 @@ export function SaveStatus({ state, className }: SaveStatusProps) {
       aria-live="polite"
     >
       <span className="dot" aria-hidden="true" />
-      {t(key, fallback)}
+      {label}
     </span>
   );
 }

@@ -16,7 +16,7 @@ const NAV = [
 
 export function AppShell() {
   const { t } = useTranslation();
-  const { user, signOut } = useAuth();
+  const { user, signOut, localOnly } = useAuth();
 
   const avatar = (user?.email ?? 'me').slice(0, 2).toUpperCase();
 
@@ -55,14 +55,23 @@ export function AppShell() {
         </nav>
 
         <div className="topbar-right">
-          {/* Live save/sync state, visible from every page (map, stats, …). */}
-          <SaveStatus className="hide-sm" />
+          {/* Live save/sync state, visible from every page. Doubles as a "Save
+              now" button while there are unsaved/offline edits, so no page needs
+              its own Save button. */}
+          <SaveStatus actionable />
           <LanguageSwitcher />
-          <button className="btn btn-sm btn-ghost" onClick={() => void signOut()}>
-            <LogOut size={14} />
-            <span className="nav-text">{t('nav.signOut')}</span>
-          </button>
-          <div className="avatar">{avatar}</div>
+          {/* In local-only mode there is no account/session — a "Sign out" button
+              and avatar would contradict the no-login-wall model, so we only show
+              them once a sharing server is actually connected. */}
+          {!localOnly && (
+            <>
+              <button className="btn btn-sm btn-ghost" onClick={() => void signOut()}>
+                <LogOut size={14} />
+                <span className="nav-text">{t('nav.signOut')}</span>
+              </button>
+              <div className="avatar">{avatar}</div>
+            </>
+          )}
         </div>
       </header>
 

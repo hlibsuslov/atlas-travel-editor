@@ -447,11 +447,16 @@ export function WorldMap({
           aria-label={t('map.zoomReset', { defaultValue: 'Reset view' })}
           className="atlas-zoom-reset mono"
         >
-          RESET
+          {t('map.reset', { defaultValue: 'RESET' })}
         </button>
       </div>
 
-      <div className="atlas-coord mono">EQUAL EARTH · {Math.round(position.zoom * 100)}%</div>
+      <div className="atlas-coord mono">
+        {t('map.projectionLabel', {
+          defaultValue: 'EQUAL EARTH · {{pct}}%',
+          pct: Math.round(position.zoom * 100),
+        })}
+      </div>
     </div>
   );
 }

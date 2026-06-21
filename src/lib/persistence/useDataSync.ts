@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useEditorStore } from '@/features/editor/store';
 import { useTravelData } from '@/features/editor/hooks/useTravelData';
 import { useAutosave } from '@/features/editor/hooks/useAutosave';
@@ -17,6 +17,12 @@ export interface DataSyncStatus {
   state: SaveState;
   /** True while the document fails validation (autosave is blocked until fixed). */
   invalid: boolean;
+  /**
+   * Flush the current document to the active store immediately. No-op when a save
+   * is already in flight or the document is invalid. Lets the status indicator
+   * double as a "Save now" control, so no separate Save button is needed.
+   */
+  saveNow: () => void;
 }
 
 /**
@@ -42,7 +48,16 @@ export function useSaveStatus(): DataSyncStatus {
         ? 'unsaved'
         : 'synced';
 
-  return { state, invalid };
+  // Read the latest document straight from the store at click time so a stale
+  // closure can never persist an out-of-date snapshot.
+  const saveNow = useCallback(() => {
+    if (save.isPending) return;
+    const current = useEditorStore.getState().data;
+    if (!validateTravelData(current).ok) return;
+    save.mutate(current);
+  }, [save]);
+
+  return { state, invalid, saveNow };
 }
 
 /**
