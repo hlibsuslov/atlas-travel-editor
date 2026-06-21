@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CheckCircle2, FileJson, ListPlus, UploadCloud, X } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, FileJson, ListPlus, UploadCloud, X } from 'lucide-react';
 import { type Country, type TravelData } from '@/domain/schema';
 import { useFocusTrap } from '@/lib/useFocusTrap';
 import { useImportPreview } from '@/features/editor/hooks/useImportPreview';
@@ -100,24 +100,25 @@ export function ImportModal({ open, onClose, onImport }: ImportModalProps) {
         </div>
 
         <div className="panel-body import-body">
-          <div className="btn-group" role="tablist" aria-label={t('import.title')}>
+          {/* Mode switch as a segmented control matching the app's controls. */}
+          <div className="import-modes" role="tablist" aria-label={t('import.title')}>
             <button
               type="button"
               role="tab"
               aria-selected={mode === 'json'}
-              className={`btn btn-sm ${mode === 'json' ? 'btn-primary' : 'btn-ghost'}`}
+              className={`import-mode${mode === 'json' ? ' is-active' : ''}`}
               onClick={() => setMode('json')}
             >
-              <FileJson size={13} /> {t('import.tabJson', 'JSON')}
+              <FileJson size={14} aria-hidden="true" /> {t('import.tabJson', 'JSON')}
             </button>
             <button
               type="button"
               role="tab"
               aria-selected={mode === 'list'}
-              className={`btn btn-sm ${mode === 'list' ? 'btn-primary' : 'btn-ghost'}`}
+              className={`import-mode${mode === 'list' ? ' is-active' : ''}`}
               onClick={() => setMode('list')}
             >
-              <ListPlus size={13} /> {t('import.tabList', 'Paste list')}
+              <ListPlus size={14} aria-hidden="true" /> {t('import.tabList', 'Paste list')}
             </button>
           </div>
 
@@ -134,11 +135,9 @@ export function ImportModal({ open, onClose, onImport }: ImportModalProps) {
                 onDrop={onDrop}
                 onClick={() => fileRef.current?.click()}
               >
-                <UploadCloud size={26} />
-                <div>
-                  <strong>{t('import.dropTitle')}</strong>
-                  <div className="helper">{t('import.dropHint')}</div>
-                </div>
+                <UploadCloud size={30} aria-hidden="true" />
+                <span className="import-drop-title">{t('import.dropTitle')}</span>
+                <span className="import-drop-hint">{t('import.dropHint')}</span>
                 <input
                   ref={fileRef}
                   type="file"
@@ -153,30 +152,41 @@ export function ImportModal({ open, onClose, onImport }: ImportModalProps) {
 
               <div className="import-or kicker">{t('auth.or')}</div>
 
-              <textarea
-                className="input mono"
-                placeholder={t('import.placeholder')}
-                value={raw}
-                onChange={(e) => setRaw(e.target.value)}
-                aria-label={t('import.title')}
-              />
+              <div className="import-field">
+                <label className="import-field-label" htmlFor="import-json-text">
+                  {t('import.pasteLabel', 'Paste JSON')}
+                </label>
+                <textarea
+                  id="import-json-text"
+                  className="input mono"
+                  placeholder={t('import.placeholder')}
+                  value={raw}
+                  onChange={(e) => setRaw(e.target.value)}
+                  aria-label={t('import.pasteLabel', 'Paste JSON')}
+                />
+              </div>
 
               <div className="import-preview" aria-live="polite">
+                {preview.state === 'empty' && (
+                  <span className="helper">{t('import.awaiting', 'Drop or paste a file to preview it.')}</span>
+                )}
                 {preview.state === 'parse' && (
                   <span className="pill pill-bad">
-                    <span className="dot" /> {t('import.failed', { message: preview.message })}
+                    <AlertTriangle size={12} /> {t('import.failed', { message: preview.message })}
                   </span>
                 )}
                 {preview.state === 'warn' && (
                   <>
                     <span className="pill pill-warn">
-                      <FileJson size={12} />{' '}
+                      <AlertTriangle size={12} />{' '}
                       {t('import.summary', {
                         countries: preview.countries,
                         cities: preview.cities,
                       })}
                     </span>
-                    {preview.firstError && <span className="helper">{preview.firstError}</span>}
+                    <span className="helper">
+                      {preview.firstError ?? t('import.warnHint', 'Imports, but some fields need fixing before it can save.')}
+                    </span>
                   </>
                 )}
                 {preview.state === 'ok' && (
@@ -190,30 +200,34 @@ export function ImportModal({ open, onClose, onImport }: ImportModalProps) {
                 )}
               </div>
 
-              <div className="import-preview">
-                <span className="helper">{t('import.applyAs', 'Apply as')}</span>
-                <div
-                  className="btn-group"
-                  role="group"
-                  aria-label={t('import.applyAs', 'Apply as')}
+              {/* Replace vs merge as explanatory cards, so the consequence is honest. */}
+              <div
+                className="import-apply"
+                role="group"
+                aria-label={t('import.applyAs', 'Apply as')}
+              >
+                <button
+                  type="button"
+                  aria-pressed={jsonMode === 'replace'}
+                  className="import-apply-opt"
+                  onClick={() => setJsonMode('replace')}
                 >
-                  <button
-                    type="button"
-                    aria-pressed={jsonMode === 'replace'}
-                    className={`btn btn-sm ${jsonMode === 'replace' ? 'btn-primary' : 'btn-ghost'}`}
-                    onClick={() => setJsonMode('replace')}
-                  >
-                    {t('import.replace', 'Replace')}
-                  </button>
-                  <button
-                    type="button"
-                    aria-pressed={jsonMode === 'merge'}
-                    className={`btn btn-sm ${jsonMode === 'merge' ? 'btn-primary' : 'btn-ghost'}`}
-                    onClick={() => setJsonMode('merge')}
-                  >
-                    {t('import.merge', 'Merge')}
-                  </button>
-                </div>
+                  <strong>{t('import.replace', 'Replace')}</strong>
+                  <span className="import-apply-desc">
+                    {t('import.replaceDesc', 'Discard the current document and use the imported one.')}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={jsonMode === 'merge'}
+                  className="import-apply-opt"
+                  onClick={() => setJsonMode('merge')}
+                >
+                  <strong>{t('import.merge', 'Merge')}</strong>
+                  <span className="import-apply-desc">
+                    {t('import.mergeDesc', 'Add the imported countries to your current document.')}
+                  </span>
+                </button>
               </div>
 
               <div className="import-actions">
@@ -232,40 +246,52 @@ export function ImportModal({ open, onClose, onImport }: ImportModalProps) {
             </>
           ) : (
             <>
-              <textarea
-                className="input mono"
-                placeholder={t(
-                  'import.listPlaceholder',
-                  'One country per line, e.g.\nSpain: Madrid 2019, Barcelona 2021\nFrance\nJapan: Tokyo 2023',
-                )}
-                value={raw}
-                onChange={(e) => setRaw(e.target.value)}
-                aria-label={t('import.tabList', 'Paste list')}
-              />
+              <div className="import-field">
+                <label className="import-field-label" htmlFor="import-list-text">
+                  {t('import.tabList', 'Paste list')}
+                </label>
+                <textarea
+                  id="import-list-text"
+                  className="input mono"
+                  placeholder={t(
+                    'import.listPlaceholder',
+                    'One country per line, e.g.\nSpain: Madrid 2019, Barcelona 2021\nFrance\nJapan: Tokyo 2023',
+                  )}
+                  value={raw}
+                  onChange={(e) => setRaw(e.target.value)}
+                  aria-label={t('import.tabList', 'Paste list')}
+                />
+              </div>
 
               <div className="import-preview" aria-live="polite">
-                {(list.resolved.length > 0 || list.unmatched.length > 0) && (
-                  <span className={`pill ${list.unmatched.length > 0 ? 'pill-warn' : 'pill-ok'}`}>
-                    <ListPlus size={12} />{' '}
-                    {t('import.listSummary', {
-                      resolved: list.resolved.length,
-                      unmatched: list.unmatched.length,
-                      defaultValue: '{{resolved}} resolved · {{unmatched}} unmatched',
-                    })}
-                  </span>
-                )}
-                {cityCount > 0 && (
+                {raw.trim() === '' ? (
                   <span className="helper">
-                    {t('import.listCities', {
-                      cities: cityCount,
-                      defaultValue: '{{cities}} cities',
-                    })}
+                    {t('import.listAwaiting', 'Type or paste country names, one per line.')}
                   </span>
+                ) : (
+                  <>
+                    <span className={`pill ${list.unmatched.length > 0 ? 'pill-warn' : 'pill-ok'}`}>
+                      <ListPlus size={12} />{' '}
+                      {t('import.listSummary', {
+                        resolved: list.resolved.length,
+                        unmatched: list.unmatched.length,
+                        defaultValue: '{{resolved}} resolved · {{unmatched}} unmatched',
+                      })}
+                    </span>
+                    {cityCount > 0 && (
+                      <span className="helper">
+                        {t('import.listCities', {
+                          cities: cityCount,
+                          defaultValue: '{{cities}} cities',
+                        })}
+                      </span>
+                    )}
+                  </>
                 )}
               </div>
 
               {list.unmatched.length > 0 && (
-                <div className="helper">
+                <div className="import-unmatched">
                   <strong>{t('import.unmatchedTitle', "Couldn't match:")}</strong>{' '}
                   {list.unmatched.join(', ')}
                 </div>

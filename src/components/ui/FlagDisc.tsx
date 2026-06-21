@@ -1,12 +1,14 @@
-import { STATUS_COLORS, type MapStatus } from '@/features/map/countryMatch';
-import { codeForEnglishName } from '@/domain/countries';
+import { type MapStatus } from '@/features/map/countryMatch';
+import { Flag } from './Flag';
 
-/** Round disc showing a country's ISO code, tinted by its travel status. */
+/**
+ * Round country disc tinted by travel status, kept as the app-wide call site
+ * (CountryCard, Dashboard, Friends). It now renders the real circular flag
+ * artwork via <Flag> — including the status ring — and falls back to a tinted
+ * ISO-code disc when no flag is available. Props are unchanged so every
+ * existing call site upgrades automatically; sizing honours the 30px
+ * `.country-flag` contract by default.
+ */
 export function FlagDisc({ name, status }: { name: string; status: MapStatus }) {
-  const iso = codeForEnglishName(name) ?? (name || '··').slice(0, 2).toUpperCase();
-  return (
-    <div className="country-flag" style={{ background: STATUS_COLORS[status] }}>
-      {iso}
-    </div>
-  );
+  return <Flag name={name} status={status} />;
 }

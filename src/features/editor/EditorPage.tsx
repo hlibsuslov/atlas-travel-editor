@@ -4,11 +4,12 @@ import { toast } from 'sonner';
 import { AlertTriangle, Check, Globe, Redo2, Share2, Sparkles, Undo2, WifiOff, X } from 'lucide-react';
 import { useEditorStore } from '@/features/editor/store';
 import { useTravelData } from '@/features/editor/hooks/useTravelData';
-import { useAutosave } from '@/features/editor/hooks/useAutosave';
 import { validateTravelData } from '@/domain/schema';
 import { computeStats } from '@/domain/stats';
 import { makeEmptyData, makeSampleData } from '@/domain/sampleData';
 import { env } from '@/lib/env';
+import { SaveStatus } from '@/components/ui/SaveStatus';
+import type { SaveState } from '@/lib/persistence/useDataSync';
 import { CountryList } from './components/CountryList';
 import { CountrySelect } from './components/CountrySelect';
 import { EditorEmptyState } from './components/EditorEmptyState';
@@ -17,6 +18,7 @@ import { JsonPreview } from './components/JsonPreview';
 import { ImportModal } from './components/ImportModal';
 import { ExportMenu } from './components/ExportMenu';
 import { StaysEditor } from './components/StaysEditor';
+import './editor.css';
 
 /** localStorage flag: the welcome banner has been dismissed/acted on. */
 const ONBOARDED_KEY = 'atlas:onboarded';
@@ -107,15 +109,10 @@ export function EditorPage() {
   const shareUrl =
     record?.isPublic && record.shareSlug ? `${env.appUrl}/share/${record.shareSlug}` : null;
 
-  // Autosave: persist quietly a moment after edits settle, as long as the
-  // document is valid and we're online. The manual Save button stays as a
-  // fallback (and the only path while offline).
-  useAutosave({
-    data,
-    dirty,
-    canSave: validation.ok && !isOffline,
-    onSave: (d) => save.mutate(d),
-  });
+  // Autosave is armed GLOBALLY by `<DataSync/>` (mounted in AppShell), so edits
+  // persist from every route. The editor only reads `record`/`isOffline` and
+  // triggers explicit `save`/`share` below — it must NOT arm a second autosave,
+  // or the document would be written twice on every settle.
 
   const onSave = () =>
     save.mutate(data, {
@@ -145,7 +142,16 @@ export function EditorPage() {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [undo, redo]);
 
-  const saveStatus = save.isPending ? 'saving' : dirty ? 'unsaved' : 'synced';
+  // Reuse the shared <SaveStatus/> for a consistent indicator. We pass the state
+  // explicitly (rather than letting it auto-detect) so it reflects THIS hook
+  // instance's pending save and the local dirty/offline flags exactly.
+  const saveState: SaveState = save.isPending
+    ? 'saving'
+    : isOffline
+      ? 'offline'
+      : dirty
+        ? 'unsaved'
+        : 'synced';
 
   const onShare = () =>
     share.mutate(!record?.isPublic, {
@@ -163,14 +169,7 @@ export function EditorPage() {
           <p className="page-lede">{t('editor.lede')}</p>
         </div>
         <div className="toolbar">
-          <span className={`pill ${saveStatus === 'synced' ? 'pill-ok' : 'pill-warn'}`}>
-            <span className="dot" />
-            {saveStatus === 'saving'
-              ? t('actions.saving')
-              : saveStatus === 'unsaved'
-                ? t('status.unsaved')
-                : t('status.synced')}
-          </span>
+          <SaveStatus state={saveState} />
           <div className="btn-group">
             <button
               className="btn btn-sm btn-ghost"

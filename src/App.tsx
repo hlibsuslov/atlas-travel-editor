@@ -1,5 +1,6 @@
-import { lazy, Suspense, type ReactNode } from 'react';
+import { lazy, Suspense, useEffect, type ReactNode } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { LoginPage } from '@/features/auth/LoginPage';
 import { AppShell } from '@/components/AppShell';
@@ -36,7 +37,27 @@ function RequireAuth({ children }: { children: ReactNode }) {
   return session ? <>{children}</> : <LoginPage />;
 }
 
+/**
+ * Keeps `<html lang>` in sync with the active i18n language for EVERY route
+ * (including the public share pages, which render outside `AppShell`). This drives
+ * the `:lang(ru)/:lang(uk)` Cyrillic typography overrides in index.css and is the
+ * correct accessibility signal for screen readers / hyphenation. `resolvedLanguage`
+ * is the actually-applied locale (e.g. `ru` for a detected `ru-RU`).
+ */
+function useHtmlLangSync() {
+  const { i18n } = useTranslation();
+  useEffect(() => {
+    const apply = (lng: string) => {
+      document.documentElement.lang = (lng || i18n.language || 'en').split('-')[0]!;
+    };
+    apply(i18n.resolvedLanguage ?? i18n.language);
+    i18n.on('languageChanged', apply);
+    return () => i18n.off('languageChanged', apply);
+  }, [i18n]);
+}
+
 export function App() {
+  useHtmlLangSync();
   return (
     <StorageProvider>
       <BrowserRouter>

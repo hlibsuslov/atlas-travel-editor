@@ -10,7 +10,7 @@ export default tseslint.config(
   // plain modules. They are reviewed as docs, not app code.
   // `server/` is a separate package with its own toolchain (typecheck + node:test);
   // it is not part of the client's TS project, so it is linted there, not here.
-  { ignores: ['dist', 'coverage', 'node_modules', 'scripts', 'server'] },
+  { ignores: ['dist', 'coverage', 'node_modules', 'scripts', 'server', '.claude'] },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommendedTypeChecked],
     files: ['**/*.{ts,tsx}'],

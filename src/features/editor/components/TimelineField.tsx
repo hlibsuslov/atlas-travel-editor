@@ -114,8 +114,7 @@ export function TimelineField({ title, mode, items, onAdd, onRemove }: TimelineF
           editing === i ? (
             <input
               key={`edit-${i}`}
-              className="input mono"
-              style={{ flex: '0 1 96px', minWidth: 64 }}
+              className="input mono chip-edit"
               autoFocus
               value={editValue}
               aria-label={t('editor.editEntry', 'Edit entry')}
@@ -140,14 +139,6 @@ export function TimelineField({ title, mode, items, onAdd, onRemove }: TimelineF
               <button
                 type="button"
                 className="chip-label"
-                style={{
-                  border: 'none',
-                  background: 'none',
-                  padding: 0,
-                  font: 'inherit',
-                  color: 'inherit',
-                  cursor: 'pointer',
-                }}
                 aria-label={t('editor.editEntry', 'Edit entry')}
                 onClick={() => startEdit(i, item)}
               >

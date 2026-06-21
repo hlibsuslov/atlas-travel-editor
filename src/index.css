@@ -212,6 +212,7 @@ body {
 .btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 7px;
   padding: 9px 15px;
   border: 1px solid var(--line-strong);
@@ -221,14 +222,22 @@ body {
   font-family: var(--font-ui);
   font-size: 13px;
   font-weight: 600;
+  line-height: 1.2;
   cursor: pointer;
   text-decoration: none;
+  /* Long localized labels (German/Russian run longer) must not overflow or clip:
+     keep the label on one line by default but allow it to break if truly needed. */
+  white-space: nowrap;
   transition:
     transform 0.06s ease,
     box-shadow 0.2s,
     background 0.2s,
     border-color 0.2s;
   box-shadow: var(--shadow-sm);
+}
+/* Keep the icon crisp and from being squashed when the label is long. */
+.btn > svg {
+  flex-shrink: 0;
 }
 .btn:hover {
   border-color: var(--ink-faint);
@@ -354,6 +363,15 @@ body {
   align-items: center;
   flex-wrap: wrap;
 }
+/* On narrow screens let a page-head toolbar take the full row and align its
+   wrapped buttons to the start, so a long localized label never pushes a control
+   off-screen. */
+@media (max-width: 640px) {
+  .page-head .toolbar {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
 
 /* pills / chips */
 .pill {
@@ -364,13 +382,19 @@ body {
   border-radius: 999px;
   font-size: 11.5px;
   font-weight: 700;
+  line-height: 1.3;
   letter-spacing: 0.02em;
+  white-space: nowrap;
 }
 .pill .dot {
   width: 7px;
   height: 7px;
   border-radius: 50%;
   background: currentColor;
+  flex-shrink: 0;
+}
+.pill > svg {
+  flex-shrink: 0;
 }
 .pill-ok {
   background: #e8f5ee;
@@ -395,6 +419,10 @@ body {
   color: var(--ink-soft);
   font-size: 11.5px;
   font-weight: 600;
+  line-height: 1.3;
+}
+.chip > svg {
+  flex-shrink: 0;
 }
 .chip .mono {
   font-size: 10.5px;
@@ -1472,16 +1500,12 @@ textarea.input {
   flex: none;
 }
 .combobox-popover {
+  /* Surface (bg/border/radius/shadow/padding) comes from the shared rule above. */
   position: absolute;
   z-index: 45;
   top: calc(100% + 6px);
   left: 0;
   min-width: 260px;
-  background: var(--panel);
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow);
-  padding: 6px;
 }
 .combobox-search {
   display: flex;
@@ -1532,23 +1556,183 @@ textarea.input {
   text-align: center;
 }
 
-/* export / save menu */
-.export-menu {
-  position: relative;
-}
-.export-popover {
-  position: absolute;
-  z-index: 45;
-  top: calc(100% + 6px);
-  right: 0;
-  min-width: 248px;
-  max-height: 60vh;
-  overflow: auto;
+/* ============================================================================
+   Unified menu / popover system.
+   The single source of truth for EVERY floating menu in the app (export menu,
+   map status menu, future overflow menus, …). Build new menus on these classes
+   so they all look identical; only add area-specific bits on top.
+
+   Anatomy:
+     .atlas-pop          the floating panel (position it with inline left/top/right)
+     .atlas-pop-label    a small mono section label
+     .atlas-pop-item     a full-width row button (icon + label)
+     .atlas-pop-item.is-active / [aria-checked='true']   selected row
+     .atlas-pop-sep      a separating rule
+     .atlas-sheet / .atlas-sheet-backdrop   on narrow screens, dock as a bottom sheet
+   ========================================================================== */
+/* The shared panel look. `.export-popover` and `.combobox-popover` opt into the
+   exact same surface so all floating panels are identical; they only add their own
+   anchoring/width below. */
+.atlas-pop,
+.export-popover,
+.combobox-popover {
   background: var(--panel);
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow);
   padding: 6px;
+}
+.atlas-pop {
+  z-index: 45;
+  min-width: 220px;
+  max-height: 60vh;
+  overflow: auto;
+  /* Subtle entrance: fade + a small lift/scale. Disabled under reduced-motion by
+     the global rule. Menus that open upward can override transform-origin. */
+  transform-origin: top;
+  animation: atlas-pop-in 0.14s cubic-bezier(0.3, 0.7, 0.4, 1);
+}
+/* Anchored popovers share the entrance animation too. */
+.export-popover,
+.combobox-popover {
+  animation: atlas-pop-in 0.14s cubic-bezier(0.3, 0.7, 0.4, 1);
+}
+@keyframes atlas-pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.atlas-pop-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  padding: 8px 10px 4px;
+}
+.atlas-pop-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-lg);
+  font-family: var(--font-ui);
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+  text-align: left;
+  /* Long localized labels (German/Russian) wrap rather than clip or overflow. */
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.atlas-pop-item:hover {
+  background: var(--panel-2);
+}
+.atlas-pop-item:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.atlas-pop-item:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+/* Selected / checked state — both the explicit class and the ARIA attribute, so a
+   role=menuitemradio/checkbox row styles itself without an extra class. */
+.atlas-pop-item.is-active,
+.atlas-pop-item[aria-checked='true'] {
+  background: var(--panel-2);
+  color: var(--accent);
+}
+.atlas-pop-sep {
+  height: 1px;
+  margin: 6px 4px;
+  background: var(--line);
+  border: none;
+}
+
+/* Bottom-sheet variant: on narrow screens a menu may render docked to the bottom
+   of the viewport as a sheet with a drag affordance, instead of an anchored
+   popover. Apply `.atlas-sheet` to the panel and render `.atlas-sheet-backdrop`
+   behind it. */
+.atlas-sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 59;
+  background: rgba(28, 26, 22, 0.4);
+  animation: atlas-fade-in 0.16s ease;
+}
+.atlas-sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 60;
+  width: 100%;
+  min-width: 0;
+  max-height: 80vh;
+  /* Square off only the bottom corners so it reads as docked to the screen edge. */
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  /* A little breathing room + safe-area inset on notched devices. */
+  padding: 6px 6px max(10px, env(safe-area-inset-bottom, 0px));
+  animation: atlas-sheet-in 0.2s cubic-bezier(0.3, 0.7, 0.4, 1);
+}
+/* The drag affordance: a centered grabber pill at the top of the sheet. */
+.atlas-sheet::before {
+  content: '';
+  display: block;
+  width: 36px;
+  height: 4px;
+  margin: 6px auto 8px;
+  border-radius: 999px;
+  background: var(--line-strong);
+}
+/* On a sheet the rows get a touch larger for thumb targets. */
+.atlas-sheet .atlas-pop-item {
+  padding: 12px 12px;
+  font-size: 15px;
+}
+@keyframes atlas-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes atlas-sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* export / save menu — now built on the shared .atlas-pop system. The legacy
+   class names are kept as thin aliases so existing markup keeps working while
+   area agents migrate to .atlas-pop* directly. */
+.export-menu {
+  position: relative;
+}
+.export-popover {
+  /* Inherit the shared panel look; only the anchoring + scroll differ. */
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 248px;
+  max-height: 60vh;
+  overflow: auto;
 }
 .export-group-label {
   font-family: var(--font-mono);
@@ -1566,7 +1750,7 @@ textarea.input {
   padding: 8px 10px;
   border: none;
   background: transparent;
-  border-radius: var(--radius);
+  border-radius: var(--radius-lg);
   font-family: var(--font-ui);
   font-size: 13.5px;
   font-weight: 600;
@@ -1709,6 +1893,64 @@ textarea.input {
   .hide-sm {
     display: none;
   }
+}
+
+/* ============================================================================
+   Cyrillic typography (ru / uk).
+   The Latin-tuned uppercase "kicker"/tracked labels look wrong in Cyrillic:
+   wide letter-spacing on Russian/Ukrainian reads as broken, and forced uppercase
+   hurts legibility. These overrides are scoped strictly under :lang(ru)/:lang(uk)
+   (driven by <html lang>, kept in sync in AppShell) so Latin locales are
+   COMPLETELY unchanged. We relax tracking and drop uppercase where it reads
+   poorly, while keeping the mono font so the labels still feel like labels.
+
+   :lang() matches descendants of the element whose lang is ru/uk, so setting
+   <html lang="ru"> applies these everywhere. */
+:lang(ru) .kicker,
+:lang(uk) .kicker,
+:lang(ru) .brand-sub,
+:lang(uk) .brand-sub,
+:lang(ru) .country-meta,
+:lang(uk) .country-meta,
+:lang(ru) .section-label,
+:lang(uk) .section-label,
+:lang(ru) .friend-code,
+:lang(uk) .friend-code,
+:lang(ru) .friend-stat .l,
+:lang(uk) .friend-stat .l,
+:lang(ru) .export-group-label,
+:lang(uk) .export-group-label,
+:lang(ru) .atlas-pop-label,
+:lang(uk) .atlas-pop-label,
+:lang(ru) .field-label .req,
+:lang(uk) .field-label .req,
+:lang(ru) .divider,
+:lang(uk) .divider,
+:lang(ru) .atlas-coord,
+:lang(uk) .atlas-coord,
+:lang(ru) .atlas-tip-iso,
+:lang(uk) .atlas-tip-iso {
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+
+/* Tracked text that stays mixed-case (not uppercased) just needs the spacing
+   relaxed — Cyrillic has no small-caps tradition of wide tracking. */
+:lang(ru) .nav-link,
+:lang(uk) .nav-link,
+:lang(ru) .mono,
+:lang(uk) .mono,
+:lang(ru) .nav-count,
+:lang(uk) .nav-count,
+:lang(ru) .brand-name,
+:lang(uk) .brand-name,
+:lang(ru) .json-head .mono,
+:lang(uk) .json-head .mono,
+:lang(ru) .share-banner .mono,
+:lang(uk) .share-banner .mono,
+:lang(ru) .login-art-foot,
+:lang(uk) .login-art-foot {
+  letter-spacing: normal;
 }
 
 /* Honor the OS-level "reduce motion" preference: collapse all animations and

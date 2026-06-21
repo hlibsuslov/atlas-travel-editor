@@ -1,0 +1,243 @@
+/* ============================================================================
+   Map feature styles. Scoped to src/features/map/** and imported once from
+   MapPage.tsx. Builds ON TOP of the shared design tokens (:root) and the shared
+   popover system (.atlas-pop*, .atlas-sheet*) defined in src/index.css — this
+   file only adds map-specific bits (the status-brush toolbar, the precise-edit
+   affordance, and small popover/tooltip extras).
+   ========================================================================== */
+
+/* --- Status brush toolbar ------------------------------------------------- */
+/* Sits above the map: a segmented control that picks the active "paint". When a
+   brush is active, one click on a country applies it directly. */
+.map-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.map-controls-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.map-controls-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.brush-bar {
+  display: inline-flex;
+  align-items: stretch;
+  gap: 2px;
+  padding: 3px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+}
+.brush-bar-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  align-self: center;
+}
+.brush-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 12px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink-soft);
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.1;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background 0.15s,
+    color 0.15s,
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+.brush-item:hover {
+  color: var(--ink);
+  background: color-mix(in srgb, var(--panel) 70%, transparent);
+}
+.brush-item:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.brush-item.is-active {
+  color: var(--ink);
+  background: var(--panel);
+  border-color: var(--line-strong);
+  box-shadow: var(--shadow-sm);
+}
+/* The colour dot that previews what a brush paints. */
+.brush-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+}
+/* The "cycle" brush has no single colour — show a small tri-colour ring instead. */
+.brush-dot-cycle {
+  background: conic-gradient(var(--c-none) 0 33%, var(--c-visited) 0 66%, var(--c-lived) 0);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+/* "Erase" reads as an outlined empty dot. */
+.brush-dot-erase {
+  background: var(--panel);
+  border: 1px dashed var(--ink-faint);
+}
+/* Hide the text label on very narrow screens; the colour dot + aria-label carry it. */
+@media (max-width: 560px) {
+  .brush-item .brush-text {
+    display: none;
+  }
+  .brush-item {
+    padding: 6px 9px;
+  }
+}
+
+/* --- Precise-edit toggle -------------------------------------------------- */
+/* A small switch that turns a click into "open the per-country popover" instead
+   of painting — the discoverable replacement for Alt-click. */
+.map-precise {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--panel);
+  color: var(--ink-soft);
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition:
+    background 0.15s,
+    color 0.15s,
+    border-color 0.15s;
+}
+.map-precise > svg {
+  flex-shrink: 0;
+}
+.map-precise:hover {
+  border-color: var(--ink-faint);
+  color: var(--ink);
+}
+.map-precise.is-on {
+  background: color-mix(in srgb, var(--accent) 12%, var(--panel));
+  border-color: color-mix(in srgb, var(--accent) 42%, var(--line-strong));
+  color: var(--accent);
+}
+.map-precise:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* --- Per-country status popover (built on .atlas-pop) --------------------- */
+/* The popover is anchored absolutely inside the map wrapper; .atlas-pop supplies
+   the surface. These add the country header and the colour dots on each row. */
+.map-pop {
+  position: absolute;
+}
+.map-pop-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px 8px;
+}
+.map-pop-id {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 1px;
+}
+.map-pop-name {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+.map-pop-current {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  color: var(--ink-soft);
+}
+.map-pop-current .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+}
+/* The colour dot inside a status row in the popover. */
+.map-pop-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+.map-pop-dot-erase {
+  background: var(--panel);
+  border: 1px dashed var(--ink-faint);
+}
+/* A check on the row matching the country's current status. */
+.map-pop-check {
+  margin-left: auto;
+  color: var(--accent);
+  display: inline-flex;
+  flex: 0 0 auto;
+}
+
+/* --- Tooltip flag --------------------------------------------------------- */
+/* The shared .atlas-tip already supplies the surface; we add a header row so the
+   circular <Flag> sits beside the ISO/name. */
+.atlas-tip-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.atlas-tip-head .flag {
+  flex: 0 0 auto;
+}
+.atlas-tip-id {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+/* --- Edit affordance on the map ------------------------------------------ */
+/* A small floating hint badge so the precise/long-press path is discoverable. */
+.map-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  color: var(--ink-faint);
+}
+.map-hint > svg {
+  flex-shrink: 0;
+}

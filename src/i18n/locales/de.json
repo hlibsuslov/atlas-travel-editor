@@ -28,7 +28,41 @@
     "tripsPerYear": "erfasste Reisen pro Jahr",
     "statusMix": "Statusverteilung",
     "topDest": "Am häufigsten besuchte Ziele",
-    "byVisits": "nach Besuchen"
+    "byVisits": "nach Besuchen",
+    "hero": {
+      "kicker": "Der Welt",
+      "headline": "{{visited}} von 193 Ländern",
+      "sub": "Die Welt sind die 193 UN-Mitgliedstaaten. Das ist der ehrliche Nenner.",
+      "nonMembers": "Plus {{count}} Ort, der nicht in den % zählt — Taiwan / Vatikan sind keine UN-Mitglieder."
+    },
+    "milestones": {
+      "title": "Meilensteine",
+      "firstYear": "Erstes Jahr",
+      "activeYears": "Aktive Jahre",
+      "busiestYear": "Aktivstes Jahr",
+      "longestStreak": "Längste Serie (Jahre)",
+      "homes": "Zuhause"
+    },
+    "discovery": {
+      "title": "Entdeckungen im Zeitverlauf",
+      "toggleAria": "Datenreihe wählen",
+      "newCountries": "Neue Länder",
+      "trips": "Reisen",
+      "newCountriesLegend": "neue Länder / Jahr",
+      "tripsLegend": "Reisen / Jahr",
+      "busiest": "Aktivstes",
+      "streak": "Längste Serie",
+      "streakYears": "{{count}} J."
+    },
+    "passport": {
+      "title": "Reisepass"
+    },
+    "visitsCount": "{{count}}×",
+    "empty": {
+      "noTrips": "Noch keine datierten Reisen.",
+      "noCountries": "Noch keine Länder — füge welche im Editor hinzu.",
+      "noCities": "Noch keine Stadtbesuche erfasst."
+    }
   },
   "confirm": {
     "confirm": "Bestätigen",
@@ -145,7 +179,9 @@
     "timelineLived": "Zeitleiste — Wohnsitz",
     "noEntries": "Noch keine Einträge",
     "removeConfirm": "{{name}} entfernen?",
-    "thisCountry": "dieses Land"
+    "thisCountry": "dieses Land",
+    "statusLabel": "Status",
+    "removeCountry": "{{name}} entfernen"
   },
   "city": {
     "title": "Städte",
@@ -169,7 +205,8 @@
     "connect": "In der Cloud speichern",
     "soonBadge": "bald",
     "soon": "Die {{target}}-Integration kommt bald.",
-    "more": "Weitere Ziele können in exportTargets hinzugefügt werden."
+    "more": "Weitere Ziele können in exportTargets hinzugefügt werden.",
+    "snapshot": "Kopie exportieren"
   },
   "json": {
     "title": "JSON-Vorschau",
@@ -191,14 +228,33 @@
     "listSummary": "{{resolved}} erkannt · {{unmatched}} nicht erkannt",
     "listCities": "{{cities}} Städte",
     "unmatchedTitle": "Nicht gefunden:",
-    "listPlaceholder": "Ein Land pro Zeile, z. B.\nSpain: Madrid 2019, Barcelona 2021\nFrance\nJapan: Tokyo 2023"
+    "listPlaceholder": "Ein Land pro Zeile, z. B.\nSpain: Madrid 2019, Barcelona 2021\nFrance\nJapan: Tokyo 2023",
+    "pasteLabel": "JSON einfügen",
+    "awaiting": "Lege eine Datei ab oder füge sie ein, um sie in der Vorschau zu sehen.",
+    "warnHint": "Wird importiert, aber einige Felder müssen vor dem Speichern korrigiert werden.",
+    "listAwaiting": "Gib Ländernamen ein oder füge sie ein, einen pro Zeile.",
+    "replaceDesc": "Das aktuelle Dokument verwerfen und das importierte verwenden.",
+    "mergeDesc": "Die importierten Länder zu deinem aktuellen Dokument hinzufügen."
   },
   "storage": {
     "destination": "Speicherort",
     "switched": "Wird jetzt in {{target}} gespeichert",
     "connectFailed": "Verbindung zu {{target}} fehlgeschlagen",
     "connected": "Verbunden",
-    "reconnect": "Datei erneut verbinden"
+    "reconnect": "Datei erneut verbinden",
+    "groupLocal": "Auf diesem Gerät",
+    "groupRemote": "Mit einem Server / der Cloud synchronisieren",
+    "atlasServer": "Atlas Server (selbst gehostet)",
+    "honestyNote": "Atlas ist local-first: deine Daten bleiben auf diesem Gerät, sofern du oben keinen Server oder keine Cloud verbindest.",
+    "desc": {
+      "indexeddb": "Bleibt in diesem Browser auf diesem Gerät. Privat, offline.",
+      "localfile": "Wird in einer von dir gewählten .json-Datei auf deinem Computer gespeichert.",
+      "selfhost": "Wird mit einem von dir betriebenen Atlas Server synchronisiert. Ermöglicht das Teilen.",
+      "gdrive": "Wird mit deinem Google-Drive-App-Ordner synchronisiert.",
+      "dropbox": "Wird mit deinem Dropbox-App-Ordner synchronisiert.",
+      "webdav": "Wird mit deinem WebDAV-/Nextcloud-Server synchronisiert.",
+      "github": "Wird in ein von dir gewähltes GitHub-Repository committet."
+    }
   },
   "validation": {
     "invalidTimeline": "Ungültiges Format. Verwende {{formats}}.",
@@ -242,7 +298,27 @@
       "heading": "Deine Karte ist leer",
       "hint": "Klicke auf ein Land, um es zu markieren, oder importiere deine vorhandenen Reisedaten.",
       "import": "Daten importieren"
-    }
+    },
+    "brush": {
+      "label": "Malen",
+      "aria": "Status-Pinsel",
+      "cycle": "Wechseln",
+      "visited": "Besucht",
+      "lived": "Gewohnt",
+      "capital": "Hauptstadt",
+      "birthplace": "Geburtsort",
+      "erase": "Löschen"
+    },
+    "precise": "Präzise bearbeiten",
+    "preciseHint": "Klicke auf ein Land, um sein vollständiges Statusmenü zu öffnen",
+    "preciseActiveHint": "Klicke auf ein Land, um seinen Status zu wählen; auf Touch lange drücken",
+    "brushActiveHint": "Klicke auf ein Land, um es zu färben; doppelklicken zum Zoomen",
+    "save": "Speichern",
+    "saving": "Wird gespeichert",
+    "statusPickLabel": "Status festlegen",
+    "statusClose": "Schließen",
+    "exportFormatLabel": "Format wählen",
+    "exportCaption": "{{count}} von {{total}} Ländern, {{pct}}% der Welt"
   },
   "friends": {
     "kicker": "Andere Kartografen",
@@ -257,7 +333,18 @@
     "countriesCount": "{{count}} Länder",
     "remove": "Entfolgen",
     "connectTitle": "Einen Atlas-Server verbinden",
-    "connectBody": "Atlas funktioniert vollständig local-first — deine Karte lebt in diesem Browser. Das Verbinden eines optionalen, selbst hostbaren Atlas-Servers schaltet das Folgen von Personen, ein öffentliches @handle und einen Feed mit Updates von Freunden frei."
+    "connectBody": "Atlas funktioniert vollständig local-first — deine Karte lebt in diesem Browser. Das Verbinden eines optionalen, selbst hostbaren Atlas-Servers schaltet das Folgen von Personen, ein öffentliches @handle und einen Feed mit Updates von Freunden frei.",
+    "following": "Folge ich",
+    "count": "{{count}} Personen",
+    "removeNamed": "{{name}} entfolgen",
+    "topCountries": "Top-Länder",
+    "viewMapNamed": "Karte von {{name}} ansehen",
+    "ofWorld": "{{pct}}% der Welt",
+    "continents": "Kontinente",
+    "followed": "Du folgst jetzt.",
+    "findTitle": "Personen hinzufügen",
+    "findSubtitle": "Durchsuche das Verzeichnis oder füge einen Freigabecode oder Link ein.",
+    "addByCode": "Per Freigabecode oder Link hinzufügen"
   },
   "share": {
     "title": "Geteilte Reisekarte",
@@ -292,7 +379,12 @@
     "namePlaceholder": "Dein Name",
     "color": "Avatar-Farbe",
     "save": "Profil speichern",
-    "saved": "Profil gespeichert"
+    "saved": "Profil gespeichert",
+    "preview": "Vorschau",
+    "colorOption": "Akzentfarbe {{color}}",
+    "publicAddress": "Öffentliche Adresse",
+    "copyAddress": "Öffentliche Adresse kopieren",
+    "copyFailed": "Der Link konnte nicht kopiert werden."
   },
   "onboarding": {
     "welcomeTitle": "Willkommen bei Atlas",
@@ -300,5 +392,17 @@
     "loadSample": "Ein umfangreicheres Beispiel laden",
     "startBlank": "Leer beginnen",
     "dismiss": "Schließen"
+  },
+  "continent": {
+    "africa": "Afrika",
+    "americas": "Amerika",
+    "asia": "Asien",
+    "europe": "Europa",
+    "oceania": "Ozeanien",
+    "other": "Sonstige"
+  },
+  "discover": {
+    "hint": "Gib einen Namen oder @handle ein, um Personen zum Folgen zu finden.",
+    "noneFor": "Niemand für „{{q}}“ gefunden."
   }
 }

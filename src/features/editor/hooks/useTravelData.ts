@@ -21,6 +21,13 @@ import type { StorageDoc } from '@/lib/storage/types';
  * On mount it hydrates the store from cache immediately (instant UI), then
  * reconciles with the active backend. The strict validator lives in the registry
  * wrapper, so saves through any provider are validated identically.
+ *
+ * Autosave is NOT armed here. A single global persistence mount (`<DataSync/>`,
+ * rendered once in `AppShell`) calls this hook and drives `useAutosave`, so edits
+ * persist from EVERY route — not just the editor. Pages (the editor included) call
+ * this same hook purely to READ `record`/`isOffline` and to trigger `save`/`share`
+ * explicitly; they must NOT also arm a second autosave, or the document would be
+ * saved twice on every settle.
  */
 
 /** Map a backend `StorageDoc` to the legacy `TravelRecord` shape the UI expects. */

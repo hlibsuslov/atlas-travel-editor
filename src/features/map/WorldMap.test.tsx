@@ -1,5 +1,5 @@
-import { beforeAll, describe, expect, it } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { WorldMap, MiniMap } from './WorldMap';
 import { WORLD_VIEW, zoomToFit } from './useMapZoom';
 import type { TravelData } from '@/domain/schema';
@@ -156,5 +156,101 @@ describe('<MiniMap> is decorative', () => {
     expect(screen.queryByRole('button')).toBeNull();
     // The map svg wrapper is marked aria-hidden so it makes no announcements.
     expect(container.querySelector('[aria-hidden="true"]')).not.toBeNull();
+  });
+});
+
+// A single click on a country is deferred (so a double-click can cancel it). The
+// behaviour-under-brush tests advance fake timers to fire that deferred action.
+describe('<WorldMap> brush + precise click behaviour', () => {
+  // The France geography button, identified by its accessible name.
+  const france = () => screen.getByRole('button', { name: 'France: Birthplace' });
+
+  it('default (cycle brush): a click cycles via onCountryClick, not onSetStatus', () => {
+    vi.useFakeTimers();
+    try {
+      const onCountryClick = vi.fn();
+      const onSetStatus = vi.fn();
+      render(
+        <WorldMap data={sampleData} onCountryClick={onCountryClick} onSetStatus={onSetStatus} />,
+      );
+      fireEvent.click(france());
+      vi.advanceTimersByTime(300);
+      expect(onCountryClick).toHaveBeenCalledWith('France');
+      expect(onSetStatus).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('an active paint brush applies that status directly via onSetStatus', () => {
+    vi.useFakeTimers();
+    try {
+      const onCountryClick = vi.fn();
+      const onSetStatus = vi.fn();
+      render(
+        <WorldMap
+          data={sampleData}
+          onCountryClick={onCountryClick}
+          onSetStatus={onSetStatus}
+          brush="lived"
+        />,
+      );
+      fireEvent.click(france());
+      vi.advanceTimersByTime(300);
+      // France is currently birthplace, so the "lived" brush applies "lived".
+      expect(onSetStatus).toHaveBeenCalledWith('France', 'lived');
+      expect(onCountryClick).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('the erase brush clears the country to none via onSetStatus', () => {
+    vi.useFakeTimers();
+    try {
+      const onSetStatus = vi.fn();
+      render(<WorldMap data={sampleData} onSetStatus={onSetStatus} brush="erase" />);
+      fireEvent.click(france());
+      vi.advanceTimersByTime(300);
+      expect(onSetStatus).toHaveBeenCalledWith('France', 'none');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('precise mode opens the per-country status popover instead of painting', () => {
+    const onCountryClick = vi.fn();
+    const onSetStatus = vi.fn();
+    render(
+      <WorldMap
+        data={sampleData}
+        onCountryClick={onCountryClick}
+        onSetStatus={onSetStatus}
+        precise
+      />,
+    );
+    fireEvent.click(france());
+    // A labelled status menu appears; nothing was painted yet.
+    const menu = screen.getByRole('menu', { name: /Set status for France/ });
+    expect(menu).toBeInTheDocument();
+    expect(onCountryClick).not.toHaveBeenCalled();
+    expect(onSetStatus).not.toHaveBeenCalled();
+
+    // Choosing a status from the popover calls onSetStatus and closes it.
+    fireEvent.click(within(menu).getByRole('menuitemradio', { name: 'Visited' }));
+    expect(onSetStatus).toHaveBeenCalledWith('France', 'visited');
+  });
+
+  it('does not paint or open a popover when readOnly', () => {
+    vi.useFakeTimers();
+    try {
+      const onSetStatus = vi.fn();
+      render(<WorldMap data={sampleData} onSetStatus={onSetStatus} brush="visited" readOnly />);
+      fireEvent.click(france());
+      vi.advanceTimersByTime(300);
+      expect(onSetStatus).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

@@ -1,0 +1,434 @@
+/* ============================================================================
+   Editor feature — area-scoped styles.
+   Built ON TOP of the shared design tokens (:root) and the shared popover/menu
+   system (.atlas-pop*) defined in src/index.css. We add ONLY the bits specific
+   to the editor here; anything reusable lives in the foundation stylesheet.
+
+   Imported once from EditorPage.tsx.
+   ========================================================================== */
+
+/* --- Country filter input (text field + accessible clear button) ----------- */
+.filter-input {
+  position: relative;
+}
+.filter-input .input {
+  padding-right: 34px; /* room for the clear button */
+}
+.filter-clear {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink-faint);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+.filter-clear:hover {
+  color: var(--ink);
+  background: var(--panel-2);
+}
+.filter-clear:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* --- Country card: header, flag, affordances ------------------------------- */
+/* The flag is now the real circular <Flag>; it carries its own sizing, so the
+   legacy `.country-flag` tinted square is unused here. We just stop it shrinking. */
+.country-top .flag {
+  flex-shrink: 0;
+}
+/* The name + meta column must be allowed to shrink so a long localized country
+   name (or status label) ellipsises instead of pushing the actions off-row. */
+.country-id {
+  min-width: 0;
+}
+.country-meta {
+  flex-wrap: wrap;
+}
+/* The header action cluster keeps its controls on one line and never wraps under
+   the title; the record/delete buttons are icon-first and stay tappable. */
+.country-top-right {
+  flex-shrink: 0;
+}
+/* Compact, icon-led quick actions in the collapsed header. The "record this
+   year" pill keeps its year label; on very narrow rows the label can hide while
+   the icon (and its aria-label) remain, so the affordance never disappears. */
+.country-quick {
+  gap: 6px;
+  padding-inline: 9px;
+}
+.country-quick .country-quick-year {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+}
+/* Delete is danger-tinted only on hover/focus so the row stays calm at rest but
+   the destructive action reads clearly the moment it's targeted. */
+.country-delete:hover,
+.country-delete:focus-visible {
+  color: var(--c-danger);
+}
+@media (max-width: 460px) {
+  .country-quick .country-quick-year {
+    display: none;
+  }
+}
+
+/* --- Status control: a clearer, consistent segmented row ------------------- */
+/* The three travel statuses (visited / lived / capital) read as one labelled
+   control rather than three loose pills. Each toggle still owns its own colour
+   when active (set inline from the status palette). */
+.status-control {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.status-control-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.status-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+/* A check mark fades in when a toggle is on, making "this is selected" obvious
+   beyond colour alone (colour is never the only signal — a11y). The dot acts as
+   an off-state placeholder of the same footprint so the row doesn't reflow. */
+.status-toggle {
+  position: relative;
+}
+.status-toggle .status-check {
+  display: inline-flex;
+  width: 13px;
+  height: 13px;
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+.status-toggle.on .status-check {
+  opacity: 1;
+}
+/* When a toggle is on, hide the placeholder dot so the check takes its slot. */
+.status-toggle.on .sw {
+  display: none;
+}
+
+/* --- Inline chip-label edit buttons (timeline + city years) ---------------- */
+/* TimelineField/CityTimeline render the chip value as a borderless button so it
+   can be clicked to edit in place. Centralized here so the inline-style soup in
+   the components can go away. */
+.chip-label {
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+.chip-label:hover {
+  text-decoration: underline;
+}
+.chip-edit {
+  flex: 0 1 96px;
+  min-width: 64px;
+}
+
+/* --- Export / save menu: storage destinations (built on .atlas-pop*) -------- */
+/* Each destination row shows a name plus an honest one-line description of where
+   the data actually lives (on this device vs. leaving it for a server/cloud). */
+.export-dest {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+}
+.export-dest-icon {
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: var(--ink-soft);
+}
+.atlas-pop-item.is-active .export-dest-icon {
+  color: var(--accent);
+}
+.export-dest-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  flex: 1;
+}
+.export-dest-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.export-dest-desc {
+  font-family: var(--font-ui);
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--ink-faint);
+  line-height: 1.35;
+  /* Long localized descriptions wrap rather than clip. */
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.export-dest-check {
+  flex-shrink: 0;
+  margin-left: auto;
+  align-self: center;
+  color: var(--accent);
+}
+/* "Soon" badge for not-yet-implemented backends, aligned to the row end. */
+.export-soon-badge {
+  flex-shrink: 0;
+  align-self: center;
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 2px 7px;
+}
+/* A sub-action (e.g. "Reconnect file") indented under its destination. */
+.atlas-pop-item.is-sub {
+  font-weight: 500;
+  font-size: 12.5px;
+  color: var(--ink-soft);
+  padding-left: 34px;
+}
+/* Footnote-style honesty note at the bottom of the menu. */
+.export-note {
+  padding: 8px 10px 4px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--ink-faint);
+}
+
+/* The Atlas Server connect form, docked inside the menu under its destination. */
+.atlas-connect {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 6px 10px 8px;
+}
+.atlas-connect .helper {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+.atlas-connect .helper > svg {
+  flex-shrink: 0;
+}
+
+/* --- Import modal (built on the shared modal + design language) ------------- */
+.import-card {
+  width: min(640px, 100%);
+}
+.import-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+/* Mode switch (JSON / paste list) as a clear segmented control. */
+.import-modes {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  align-self: flex-start;
+}
+.import-mode {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 13px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink-soft);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+.import-mode > svg {
+  flex-shrink: 0;
+}
+.import-mode:hover {
+  color: var(--ink);
+}
+.import-mode.is-active {
+  background: var(--panel);
+  color: var(--ink);
+  box-shadow: var(--shadow-sm);
+}
+.import-mode:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* Drop zone — bigger, clearer, with a centered icon stack. */
+.import-drop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  text-align: center;
+  padding: 26px 20px;
+  border: 1.5px dashed var(--line-strong);
+  border-radius: var(--radius-lg);
+  background: var(--panel-2);
+  color: var(--ink-soft);
+  cursor: pointer;
+  font: inherit;
+  transition:
+    border-color 0.15s,
+    background 0.15s,
+    color 0.15s;
+}
+.import-drop > svg {
+  color: var(--ink-faint);
+  transition: color 0.15s;
+}
+.import-drop:hover,
+.import-drop.is-dragging {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, var(--panel-2));
+  color: var(--ink);
+}
+.import-drop:hover > svg,
+.import-drop.is-dragging > svg {
+  color: var(--accent);
+}
+.import-drop:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.import-drop-title {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--ink);
+}
+.import-drop-hint {
+  font-size: 12.5px;
+  color: var(--ink-faint);
+}
+
+.import-or {
+  text-align: center;
+  color: var(--ink-faint);
+}
+
+.import-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.import-field-label {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+/* Live preview row: the validation summary + any first-error helper. */
+.import-preview {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  min-height: 24px;
+}
+.import-preview .helper {
+  font-size: 12.5px;
+  color: var(--ink-soft);
+  overflow-wrap: anywhere;
+}
+
+/* Replace / merge choice: two explanatory radio cards rather than bare buttons,
+   so the consequence of each is honest before the user commits. */
+.import-apply {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+@media (max-width: 520px) {
+  .import-apply {
+    grid-template-columns: 1fr;
+  }
+}
+.import-apply-opt {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  text-align: left;
+  padding: 10px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-lg);
+  background: var(--panel);
+  color: var(--ink);
+  cursor: pointer;
+  font: inherit;
+  transition:
+    border-color 0.15s,
+    background 0.15s,
+    box-shadow 0.15s;
+}
+.import-apply-opt:hover {
+  border-color: var(--ink-faint);
+}
+.import-apply-opt[aria-pressed='true'] {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 7%, var(--panel));
+  box-shadow: 0 0 0 1px var(--accent) inset;
+}
+.import-apply-opt:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.import-apply-opt strong {
+  font-size: 13.5px;
+}
+.import-apply-opt .import-apply-desc {
+  font-size: 12px;
+  color: var(--ink-faint);
+  line-height: 1.35;
+}
+
+.import-unmatched {
+  font-size: 12.5px;
+  color: var(--ink-soft);
+  overflow-wrap: anywhere;
+}
+.import-unmatched strong {
+  color: var(--ink);
+}
+
+.import-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 2px;
+}
