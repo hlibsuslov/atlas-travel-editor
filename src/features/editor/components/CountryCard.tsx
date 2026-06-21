@@ -3,7 +3,7 @@ import type { MouseEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { useShallow } from 'zustand/react/shallow';
-import { CalendarPlus, ChevronRight, Star, X } from 'lucide-react';
+import { CalendarPlus, ChevronRight, Star, Trash2 } from 'lucide-react';
 import type { Country } from '@/domain/schema';
 import { CURRENT_YEAR } from '@/domain/constants';
 import { primaryStatus } from '@/domain/stats';
@@ -110,7 +110,7 @@ function CountryCardImpl({ country, index, invalid, defaultOpen }: CountryCardPr
           {!open && country.name && (
             <button
               type="button"
-              className="btn btn-sm btn-ghost"
+              className="btn btn-sm btn-ghost country-quick"
               aria-label={t('editor.actualizeYear', 'Record a visit this year ({{year}})', {
                 year: CURRENT_YEAR,
               })}
@@ -119,21 +119,25 @@ function CountryCardImpl({ country, index, invalid, defaultOpen }: CountryCardPr
               })}
               onClick={onActualize}
             >
-              <CalendarPlus size={13} /> {CURRENT_YEAR}
+              <CalendarPlus size={14} aria-hidden="true" />
+              <span className="country-quick-year">{CURRENT_YEAR}</span>
             </button>
           )}
           <button
             type="button"
-            className="btn btn-sm btn-ghost"
-            aria-label={t('actions.delete')}
+            className="btn btn-sm btn-ghost country-delete"
+            aria-label={t('country.removeCountry', 'Remove {{name}}', {
+              name: country.name || t('country.thisCountry'),
+            })}
+            title={t('actions.delete')}
             onClick={(e) => {
               e.stopPropagation();
               setConfirmOpen(true);
             }}
           >
-            <X size={14} />
+            <Trash2 size={14} aria-hidden="true" />
           </button>
-          <span className="caret">
+          <span className="caret" aria-hidden="true">
             <ChevronRight size={16} />
           </span>
         </div>

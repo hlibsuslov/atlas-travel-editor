@@ -1,0 +1,289 @@
+/* ============================================================================
+   Stats dashboard — feature-scoped styles.
+   Builds on the shared design tokens (:root in index.css) and the existing
+   .stat-tile / .bars / .spark / .donut / .panel patterns; only adds the bits
+   the richer dashboard needs (hero progress ring, milestone strip, continent
+   progress rows, year discovery chart, passport grid). No global classes are
+   touched here.
+   ========================================================================== */
+
+/* --- Hero "% of the world" ------------------------------------------------- */
+.dash-hero {
+  display: flex;
+  align-items: center;
+  gap: clamp(18px, 4vw, 40px);
+  flex-wrap: wrap;
+}
+.dash-hero-ring {
+  position: relative;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+}
+/* Centred read-out inside the SVG ring. */
+.dash-ring-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  pointer-events: none;
+}
+.dash-ring-pct {
+  font-family: var(--font-display);
+  font-size: clamp(30px, 6vw, 44px);
+  font-weight: 500;
+  line-height: 0.9;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.dash-ring-frac {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-soft);
+  margin-top: 4px;
+}
+.dash-hero-copy {
+  flex: 1;
+  min-width: 220px;
+}
+.dash-hero-copy h2 {
+  font-family: var(--font-display);
+  font-size: clamp(20px, 3vw, 26px);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  margin: 6px 0 4px;
+}
+.dash-hero-copy p {
+  color: var(--ink-soft);
+  margin: 0;
+  max-width: 46ch;
+}
+/* Small footnote noting non-UN places (Taiwan/Vatican) that don't count. */
+.dash-hero-note {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--ink-faint);
+}
+
+/* --- Milestones strip ------------------------------------------------------ */
+.dash-milestones {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+.dash-milestone {
+  background: var(--panel);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.dash-milestone-val {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+.dash-milestone-label {
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+/* --- Continent progress rows ---------------------------------------------- */
+.dash-continents {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.dash-cont-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+  gap: 10px 12px;
+}
+.dash-cont-name {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.dash-cont-frac {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+.dash-cont-frac .pct {
+  color: var(--ink-faint);
+  margin-left: 6px;
+}
+.dash-cont-track {
+  grid-column: 1 / -1;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--panel-2);
+  overflow: hidden;
+}
+.dash-cont-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.5s cubic-bezier(0.3, 0.7, 0.4, 1);
+}
+
+/* --- Discovery-over-time chart -------------------------------------------- */
+.dash-discovery-toggle {
+  display: inline-flex;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--panel-2);
+}
+.dash-toggle-btn {
+  border: none;
+  background: transparent;
+  padding: 5px 12px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.dash-toggle-btn[aria-pressed='true'] {
+  background: var(--panel);
+  color: var(--ink);
+  box-shadow: var(--shadow-sm);
+}
+.dash-toggle-sw {
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+/* Year columns: a labelled bar per calendar year. */
+.dash-years {
+  display: flex;
+  align-items: flex-end;
+  gap: clamp(2px, 1vw, 8px);
+  height: 130px;
+  margin-top: 14px;
+}
+.dash-year-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  height: 100%;
+  min-width: 0;
+}
+.dash-year-bar {
+  width: 100%;
+  max-width: 26px;
+  border-radius: 3px 3px 0 0;
+  min-height: 3px;
+  transition: height 0.5s cubic-bezier(0.3, 0.7, 0.4, 1);
+}
+.dash-year-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink-faint);
+}
+.dash-callouts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+/* --- Passport grid (visited countries by continent) ----------------------- */
+.dash-passport {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.dash-passport-group-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--line);
+}
+.dash-passport-group-head h3 {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0;
+}
+.dash-passport-flags {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+  gap: 8px 12px;
+}
+.dash-passport-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+}
+.dash-passport-item .name {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* --- Ranked destination list (top-returned) ------------------------------- */
+.dash-dest-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 2px;
+}
+.dash-dest-row + .dash-dest-row {
+  border-top: 1px solid var(--line);
+}
+.dash-dest-rank {
+  font-family: var(--font-display);
+  font-size: 20px;
+  color: var(--ink-faint);
+  width: 24px;
+  flex-shrink: 0;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.dash-dest-body {
+  flex: 1;
+  min-width: 0;
+}
+.dash-dest-name {
+  font-weight: 700;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* The discovery chart can get cramped on phones; keep the bars readable. */
+@media (max-width: 640px) {
+  .dash-years {
+    height: 104px;
+  }
+}

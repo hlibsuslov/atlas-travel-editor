@@ -1,4 +1,5 @@
 import { codeForEnglishName } from './countries';
+import { UN_MEMBER_CODES } from './sovereignty';
 
 /** ISO 3166-1 alpha-2 → continent bucket (Europe/Asia/Africa/Americas/Oceania). */
 const CONTINENT_BY_CODE: Record<string, string> = {
@@ -203,4 +204,33 @@ const CONTINENT_BY_CODE: Record<string, string> = {
 export function continentForName(englishName: string): string {
   const code = codeForEnglishName(englishName);
   return (code && CONTINENT_BY_CODE[code]) || 'Other';
+}
+
+/** The five continent buckets used by `continentForName`, in display order. */
+export const CONTINENTS = ['Africa', 'Americas', 'Asia', 'Europe', 'Oceania'] as const;
+export type Continent = (typeof CONTINENTS)[number];
+
+/**
+ * UN member states per continent — the "x of y" denominators for the
+ * dashboard. Counted once from the authoritative UN list so the totals stay in
+ * lock-step with `sovereignty.ts` (Africa 54, Asia 47, Europe 43, Americas 35,
+ * Oceania 14 = 193). Non-members (Vatican/Taiwan) are excluded by construction.
+ */
+const UN_MEMBERS_BY_CONTINENT: Record<string, number> = (() => {
+  const counts: Record<string, number> = {};
+  for (const code of UN_MEMBER_CODES) {
+    const continent = CONTINENT_BY_CODE[code];
+    if (continent) counts[continent] = (counts[continent] ?? 0) + 1;
+  }
+  return counts;
+})();
+
+/** How many UN member states a continent contains (0 for an unknown bucket). */
+export function unMembersInContinent(continent: string): number {
+  return UN_MEMBERS_BY_CONTINENT[continent] ?? 0;
+}
+
+/** UN members per continent as a fresh record (e.g. `{ Europe: 43, ... }`). */
+export function unMembersByContinent(): Record<string, number> {
+  return { ...UN_MEMBERS_BY_CONTINENT };
 }

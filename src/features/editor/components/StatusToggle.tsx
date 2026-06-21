@@ -1,3 +1,4 @@
+import { Check } from 'lucide-react';
 import { STATUS_COLORS, type MapStatus } from '@/features/map/countryMatch';
 
 interface StatusToggleProps {
@@ -7,7 +8,12 @@ interface StatusToggleProps {
   onClick: () => void;
 }
 
-/** Pill toggle whose accent is the status color when active. */
+/**
+ * Pill toggle whose accent is the status colour when active. Selection is signalled
+ * by BOTH the status colour and a check mark (never colour alone), so the on/off
+ * state is clear to colour-blind users and keyboard users alike. `aria-pressed`
+ * mirrors the visual state for assistive tech.
+ */
 export function StatusToggle({ label, on, status, onClick }: StatusToggleProps) {
   const color = STATUS_COLORS[status];
   return (
@@ -18,7 +24,8 @@ export function StatusToggle({ label, on, status, onClick }: StatusToggleProps) 
       onClick={onClick}
       style={on ? { color, borderColor: color } : undefined}
     >
-      <span className="sw" style={on ? { background: color } : undefined} />
+      <span className="sw" style={on ? { background: color } : undefined} aria-hidden="true" />
+      <Check className="status-check" size={13} aria-hidden="true" style={on ? { color } : undefined} />
       {label}
     </button>
   );

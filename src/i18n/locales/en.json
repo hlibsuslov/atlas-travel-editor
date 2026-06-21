@@ -28,7 +28,41 @@
     "tripsPerYear": "trips logged per year",
     "statusMix": "Status mix",
     "topDest": "Most-returned destinations",
-    "byVisits": "by visits"
+    "byVisits": "by visits",
+    "hero": {
+      "kicker": "Of the world",
+      "headline": "{{visited}} of 193 countries",
+      "sub": "The world is the 193 UN member states. That is the honest denominator.",
+      "nonMembers": "Plus {{count}} place not counted toward the % — Taiwan / Vatican are not UN members."
+    },
+    "milestones": {
+      "title": "Milestones",
+      "firstYear": "First year",
+      "activeYears": "Years active",
+      "busiestYear": "Busiest year",
+      "longestStreak": "Longest streak (yrs)",
+      "homes": "Homes"
+    },
+    "discovery": {
+      "title": "Discovery over time",
+      "toggleAria": "Choose a series",
+      "newCountries": "New countries",
+      "trips": "Trips",
+      "newCountriesLegend": "new countries / year",
+      "tripsLegend": "trips / year",
+      "busiest": "Busiest",
+      "streak": "Longest streak",
+      "streakYears": "{{count}} yrs"
+    },
+    "passport": {
+      "title": "Passport"
+    },
+    "visitsCount": "{{count}}×",
+    "empty": {
+      "noTrips": "No dated trips yet.",
+      "noCountries": "No countries yet — add some in the editor.",
+      "noCities": "No city visits recorded yet."
+    }
   },
   "confirm": {
     "confirm": "Confirm",
@@ -145,7 +179,9 @@
     "timelineLived": "Timeline — Lived",
     "noEntries": "No entries yet",
     "removeConfirm": "Remove {{name}}?",
-    "thisCountry": "this country"
+    "thisCountry": "this country",
+    "statusLabel": "Status",
+    "removeCountry": "Remove {{name}}"
   },
   "city": {
     "title": "Cities",
@@ -169,7 +205,8 @@
     "connect": "Save to cloud",
     "soonBadge": "soon",
     "soon": "{{target}} integration is coming soon.",
-    "more": "More destinations can be added in exportTargets."
+    "more": "More destinations can be added in exportTargets.",
+    "snapshot": "Export a copy"
   },
   "json": {
     "title": "JSON Preview",
@@ -191,14 +228,33 @@
     "listSummary": "{{resolved}} resolved · {{unmatched}} unmatched",
     "listCities": "{{cities}} cities",
     "unmatchedTitle": "Couldn't match:",
-    "listPlaceholder": "One country per line, e.g.\nSpain: Madrid 2019, Barcelona 2021\nFrance\nJapan: Tokyo 2023"
+    "listPlaceholder": "One country per line, e.g.\nSpain: Madrid 2019, Barcelona 2021\nFrance\nJapan: Tokyo 2023",
+    "pasteLabel": "Paste JSON",
+    "awaiting": "Drop or paste a file to preview it.",
+    "warnHint": "Imports, but some fields need fixing before it can save.",
+    "listAwaiting": "Type or paste country names, one per line.",
+    "replaceDesc": "Discard the current document and use the imported one.",
+    "mergeDesc": "Add the imported countries to your current document."
   },
   "storage": {
     "destination": "Storage destination",
     "switched": "Now saving to {{target}}",
     "connectFailed": "Could not connect to {{target}}",
     "connected": "Connected",
-    "reconnect": "Reconnect file"
+    "reconnect": "Reconnect file",
+    "groupLocal": "On this device",
+    "groupRemote": "Sync to a server / cloud",
+    "atlasServer": "Atlas Server (self-hosted)",
+    "honestyNote": "Atlas is local-first: your data lives on this device unless you connect a server or cloud above.",
+    "desc": {
+      "indexeddb": "Stays in this browser on this device. Private, offline.",
+      "localfile": "Saved to a .json file you choose on your computer.",
+      "selfhost": "Synced to an Atlas Server you run. Enables sharing.",
+      "gdrive": "Synced to your Google Drive app folder.",
+      "dropbox": "Synced to your Dropbox app folder.",
+      "webdav": "Synced to your WebDAV / Nextcloud server.",
+      "github": "Committed to a GitHub repository you choose."
+    }
   },
   "validation": {
     "invalidTimeline": "Invalid format. Use {{formats}}.",
@@ -242,7 +298,27 @@
       "heading": "Your map is empty",
       "hint": "Click a country to mark it, or import your existing travel data.",
       "import": "Import data"
-    }
+    },
+    "brush": {
+      "label": "Paint",
+      "aria": "Status brush",
+      "cycle": "Cycle",
+      "visited": "Visited",
+      "lived": "Lived",
+      "capital": "Capital",
+      "birthplace": "Birthplace",
+      "erase": "Erase"
+    },
+    "precise": "Precise edit",
+    "preciseHint": "Click a country to open its full status menu",
+    "preciseActiveHint": "Click a country to choose its status, long-press on touch",
+    "brushActiveHint": "Click a country to paint it, double-click to zoom",
+    "save": "Save",
+    "saving": "Saving",
+    "statusPickLabel": "Set status",
+    "statusClose": "Close",
+    "exportFormatLabel": "Choose a format",
+    "exportCaption": "{{count}} of {{total}} countries, {{pct}}% of the world"
   },
   "friends": {
     "kicker": "Other cartographers",
@@ -257,7 +333,18 @@
     "countriesCount": "{{count}} countries",
     "remove": "Unfollow",
     "connectTitle": "Connect an Atlas Server",
-    "connectBody": "Atlas runs fully local-first — your map lives in this browser. Connecting an optional, self-hostable Atlas Server unlocks following people, a public @handle, and a feed of friends’ updates."
+    "connectBody": "Atlas runs fully local-first — your map lives in this browser. Connecting an optional, self-hostable Atlas Server unlocks following people, a public @handle, and a feed of friends’ updates.",
+    "following": "Following",
+    "count": "{{count}} people",
+    "removeNamed": "Unfollow {{name}}",
+    "topCountries": "Top countries",
+    "viewMapNamed": "View {{name}}'s map",
+    "ofWorld": "{{pct}}% of the world",
+    "continents": "Continents",
+    "followed": "Now following.",
+    "findTitle": "Add people",
+    "findSubtitle": "Search the directory, or paste a share code or link.",
+    "addByCode": "Add by share code or link"
   },
   "share": {
     "title": "Shared travel map",
@@ -292,7 +379,12 @@
     "namePlaceholder": "Your name",
     "color": "Avatar color",
     "save": "Save profile",
-    "saved": "Profile saved"
+    "saved": "Profile saved",
+    "preview": "Preview",
+    "colorOption": "Accent colour {{color}}",
+    "publicAddress": "Public address",
+    "copyAddress": "Copy public address",
+    "copyFailed": "Could not copy the link."
   },
   "onboarding": {
     "welcomeTitle": "Welcome to Atlas",
@@ -300,5 +392,17 @@
     "loadSample": "Load a richer sample",
     "startBlank": "Start blank",
     "dismiss": "Dismiss"
+  },
+  "continent": {
+    "africa": "Africa",
+    "americas": "Americas",
+    "asia": "Asia",
+    "europe": "Europe",
+    "oceania": "Oceania",
+    "other": "Other"
+  },
+  "discover": {
+    "hint": "Type a name or @handle to find people to follow.",
+    "noneFor": "No one found for “{{q}}”."
   }
 }

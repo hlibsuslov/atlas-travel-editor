@@ -1,0 +1,373 @@
+/* ============================================================================
+   Friends + public profile — feature-scoped styles.
+   Built on the shared design tokens (:root in src/index.css) and the shared
+   .atlas-pop / .btn / .input / .pill / .chip classes. This file only adds the
+   bits unique to the social hub (the unified add/discover control, the richer
+   friend card, the profile editor preview) so nothing here duplicates the
+   foundation system. Imported once from FriendsPage.tsx.
+   ========================================================================== */
+
+/* The page reads as a single column of well-separated blocks. */
+.friends-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
+
+/* --- Unified "Add / discover people" control ------------------------------ */
+/* One panel that both follows by pasted code/link AND searches the directory,
+   so there is exactly one obvious place to find people. */
+.people-find {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.people-find-row {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+  flex-wrap: wrap;
+}
+.people-find-row .input {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+.people-find-row .btn {
+  flex-shrink: 0;
+}
+.people-find-hint {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--ink-faint);
+}
+
+/* The result list reuses the shared popover look so it matches every menu, but
+   docks inline under the search field rather than floating. */
+.people-results {
+  position: static;
+  min-width: 0;
+  max-height: 320px;
+}
+.people-results.is-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px 12px;
+  text-align: center;
+}
+/* A discover/result row: avatar + identity + follow action, on the shared
+   .atlas-pop-item rhythm but with a trailing action button. */
+.person-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.person-row .person-id {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 1px;
+  flex: 1;
+  text-decoration: none;
+  color: inherit;
+}
+.person-row .person-name {
+  font-weight: 600;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.person-av {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-weight: 700;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+.person-row .btn {
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+/* --- Activity feed --------------------------------------------------------- */
+.feed-list {
+  display: flex;
+  flex-direction: column;
+}
+.feed-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: var(--radius-lg);
+  text-decoration: none;
+  color: inherit;
+  transition: background 0.15s;
+}
+.feed-row:hover {
+  background: var(--panel-2);
+}
+.feed-row .feed-name {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.feed-row .feed-meta {
+  flex-shrink: 0;
+}
+
+/* --- Friends grid header + count ------------------------------------------ */
+.friends-grid-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 2px;
+}
+.friends-grid-head h2 {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+.friends-count {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-faint);
+}
+
+/* --- Friend card (richer) -------------------------------------------------- */
+/* The card itself is styled in index.css (.friend-card / .friend-head / …);
+   here we only add the parts the new card introduces: the flag stack, the
+   stat grid with UN-% sublabels, and the footer. */
+
+/* Avatar shows initials over the friend's accent colour (kept from index.css
+   via .friend-av); the home-base flag tucks into the corner as a badge. */
+.friend-id {
+  flex: 1;
+  min-width: 0;
+}
+.friend-id .friend-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* A horizontal strip of the friend's top-country flags under the header. */
+.friend-flags {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  min-height: 24px;
+}
+.friend-flags .flag-more {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--ink-faint);
+}
+.friend-home {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  color: var(--ink-soft);
+}
+.friend-home .friend-home-name {
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Stat grid: three tidy cells with a number, a label, and an optional sub. */
+.friend-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.friend-stat {
+  min-width: 0;
+}
+.friend-stat .n {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 500;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.friend-stat .sub {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink-faint);
+  margin-top: 2px;
+}
+
+/* The mini-map keeps its index.css sizing; we only soften the corners + add a
+   subtle inner edge so it sits inside the card cleanly. */
+.friend-card .friend-mini {
+  position: relative;
+}
+
+.friend-foot {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.friend-foot .btn {
+  flex: 1;
+}
+
+/* A skeleton shimmer while a friend's map loads, so cards don't jump. */
+.friend-skeleton {
+  height: 96px;
+  border-radius: var(--radius);
+  background: linear-gradient(
+    100deg,
+    var(--panel-2) 30%,
+    color-mix(in srgb, var(--panel-2) 60%, var(--panel)) 50%,
+    var(--panel-2) 70%
+  );
+  background-size: 200% 100%;
+  animation: friend-shimmer 1.2s ease-in-out infinite;
+}
+@keyframes friend-shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .friend-skeleton {
+    animation: none;
+  }
+}
+
+/* --- Public profile editor ------------------------------------------------- */
+/* A two-part body: a live avatar preview card on the left, the fields on the
+   right. Falls back to a single column on narrow screens. */
+.profile-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 20px;
+  align-items: start;
+}
+.profile-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--panel-2);
+  min-width: 150px;
+}
+.profile-preview .profile-av {
+  width: 64px;
+  height: 64px;
+  font-size: 22px;
+  box-shadow: var(--shadow-sm);
+}
+.profile-preview .preview-name {
+  font-weight: 700;
+  font-size: 14px;
+  text-align: center;
+  max-width: 16ch;
+  overflow-wrap: anywhere;
+}
+.profile-preview .preview-handle {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-faint);
+}
+.profile-preview .preview-label {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.profile-fields-col {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+.profile-fields-col .field {
+  margin-bottom: 0;
+}
+
+/* The public-address row: the live /u/handle URL plus a copy button. */
+.profile-address {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.profile-address .address-url {
+  flex: 1 1 200px;
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--ink);
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 8px 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.profile-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+
+.helper {
+  font-size: 12px;
+  color: var(--ink-faint);
+}
+
+@media (max-width: 640px) {
+  .profile-grid {
+    grid-template-columns: 1fr;
+  }
+  .profile-preview {
+    flex-direction: row;
+    justify-content: flex-start;
+    min-width: 0;
+  }
+  .profile-preview .preview-label {
+    display: none;
+  }
+}
+
+/* Cyrillic: relax the tracked mono sublabels (mirrors the index.css scoping). */
+:lang(ru) .friend-stat .sub,
+:lang(uk) .friend-stat .sub,
+:lang(ru) .friends-count,
+:lang(uk) .friends-count,
+:lang(ru) .profile-preview .preview-label,
+:lang(uk) .profile-preview .preview-label,
+:lang(ru) .profile-preview .preview-handle,
+:lang(uk) .profile-preview .preview-handle {
+  letter-spacing: 0.02em;
+  text-transform: none;
+}

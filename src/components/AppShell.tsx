@@ -4,6 +4,8 @@ import { Compass, LogOut, Map as MapIcon, PencilLine, Users } from 'lucide-react
 import { useAuth } from '@/features/auth/AuthProvider';
 import { BrandMark } from '@/components/brand/BrandMark';
 import { LanguageSwitcher } from '@/features/settings/LanguageSwitcher';
+import { DataSync } from '@/lib/persistence/DataSync';
+import { SaveStatus } from '@/components/ui/SaveStatus';
 
 const NAV = [
   { to: '/map', icon: MapIcon, key: 'nav.map' },
@@ -20,6 +22,9 @@ export function AppShell() {
 
   return (
     <>
+      {/* Global persistence: autosaves the working document on EVERY route, not
+          just the editor, and flushes on tab hide/close. Headless. */}
+      <DataSync />
       <a className="skip-link" href="#main">
         {t('a11y.skipToContent')}
       </a>
@@ -50,6 +55,8 @@ export function AppShell() {
         </nav>
 
         <div className="topbar-right">
+          {/* Live save/sync state, visible from every page (map, stats, …). */}
+          <SaveStatus className="hide-sm" />
           <LanguageSwitcher />
           <button className="btn btn-sm btn-ghost" onClick={() => void signOut()}>
             <LogOut size={14} />

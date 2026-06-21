@@ -1,0 +1,42 @@
+/* Real circular flag artwork, clipped to a perfect disc. Sizing defaults to the
+   30px `.country-flag` contract used in cards/lists; pass a `size` to override.
+   Reuses the shared status palette (--c-* tokens) for the ring. */
+
+.flag {
+  --flag-size: 30px;
+  --flag-ring: transparent;
+  position: relative;
+  width: var(--flag-size);
+  height: var(--flag-size);
+  flex-shrink: 0;
+  border-radius: 50%;
+  overflow: hidden;
+  /* A thin status-coloured ring sits flush around the disc when `status` is
+     given. `box-shadow` keeps the image edge-to-edge (no inset border eating
+     into the artwork) and never affects layout size. */
+  box-shadow: 0 0 0 2px var(--flag-ring);
+  background: var(--panel-2);
+  display: block;
+}
+
+.flag__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: 50%;
+}
+
+/* Graceful fallback when the flag asset is missing or the name is unknown:
+   the original tinted code disc, so nothing ever renders broken. */
+.flag--fallback {
+  display: grid;
+  place-items: center;
+  font-family: var(--font-mono);
+  font-size: calc(var(--flag-size) / 3);
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.02em;
+  /* The tint is set inline from STATUS_COLORS; default to the neutral token. */
+  background: var(--c-none);
+}

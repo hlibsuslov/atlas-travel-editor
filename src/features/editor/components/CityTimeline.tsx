@@ -205,8 +205,7 @@ function CityRow({ city, onRename, onRemove, onAddYear, onRemoveYear, onEditYear
           editing === yi ? (
             <input
               key={`edit-${yi}`}
-              className="input mono"
-              style={{ flex: '0 1 80px', minWidth: 60 }}
+              className="input mono chip-edit"
               type="number"
               inputMode="numeric"
               min={MIN_YEAR}
@@ -235,14 +234,6 @@ function CityRow({ city, onRename, onRemove, onAddYear, onRemoveYear, onEditYear
               <button
                 type="button"
                 className="chip-label"
-                style={{
-                  border: 'none',
-                  background: 'none',
-                  padding: 0,
-                  font: 'inherit',
-                  color: 'inherit',
-                  cursor: 'pointer',
-                }}
                 aria-label={t('editor.editYear', 'Edit year')}
                 onClick={() => startEdit(yi, y)}
               >
