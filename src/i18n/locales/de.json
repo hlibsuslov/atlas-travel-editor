@@ -196,6 +196,46 @@
     "from": "Von",
     "to": "Bis"
   },
+  "diary": {
+    "title": "Tagebuch",
+    "sub": "Orte & Aufenthalte, mit Kosten",
+    "empty": "Noch keine Aufenthalte — erfasse ein Hotel oder einen Ort, an dem du übernachtet hast.",
+    "namePlaceholder": "Hotel / Ortsname",
+    "add": "Aufenthalt hinzufügen",
+    "country": "Land",
+    "city": "Stadt",
+    "from": "Von",
+    "to": "Bis",
+    "cost": "Kosten",
+    "currency": "Währung",
+    "currencyPlaceholder": "Währung",
+    "currencySearch": "Code suchen…",
+    "currencyEmpty": "Keine Treffer — rechts eingeben",
+    "currencyManual": "Währungscode",
+    "currencyManualPlaceholder": "ISO",
+    "note": "Notiz (optional)",
+    "nights": "{{count}} Nächte",
+    "total": "Gesamt",
+    "sortBy": "Sortieren nach",
+    "sortDate": "Datum",
+    "sortCost": "Kosten",
+    "sortName": "Name"
+  },
+  "report": {
+    "budget": {
+      "title": "Reiseausgaben",
+      "stays": "{{count}} Aufenthalte",
+      "total": "Gesamtausgaben",
+      "multiCurrency": "Pro Währung angezeigt — nie umgerechnet (offline, keine Live-Kurse).",
+      "byCountry": "Ausgaben nach Land",
+      "nightly": "Pro Nacht",
+      "nights": "Nächte insgesamt",
+      "perNight": "/ Nacht",
+      "noNights": "Füge einem Aufenthalt Daten hinzu, um die Kosten pro Nacht zu sehen.",
+      "topStays": "Teuerste Aufenthalte",
+      "empty": "Noch keine Kosten erfasst — füge einem Aufenthalt Kosten hinzu, um die Ausgaben zu sehen."
+    }
+  },
   "export": {
     "title": "Exportieren",
     "local": "Auf diesem Gerät",

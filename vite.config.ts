@@ -43,10 +43,12 @@ export default defineConfig({
       },
       workbox: {
         // Don't precache the large world atlas json; serve it stale-while-revalidate.
+        // The app bundles the detailed 50m atlas (see WorldMap.tsx), so the runtime
+        // rule must match that filename — not the unused 110m one.
         globPatterns: ['**/*.{js,css,html,svg,woff2}'],
         runtimeCaching: [
           {
-            urlPattern: /countries-110m.*\.json$/,
+            urlPattern: /countries-50m.*\.json$/,
             handler: 'StaleWhileRevalidate',
             options: { cacheName: 'world-atlas' },
           },

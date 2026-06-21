@@ -281,9 +281,137 @@
   text-overflow: ellipsis;
 }
 
+/* --- Travel spend / budget ------------------------------------------------- */
+/* Honest multi-currency headline: each code stands on its own, never summed. */
+.dash-budget-headline {
+  margin-bottom: 18px;
+}
+.dash-budget-total {
+  font-family: var(--font-display);
+  font-size: clamp(22px, 3.4vw, 30px);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+  margin-top: 4px;
+  font-variant-numeric: tabular-nums;
+}
+.dash-budget-note {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--ink-faint);
+  max-width: 52ch;
+}
+/* Two columns on wide screens (countries | nightly + top stays); stacks below. */
+.dash-budget-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: clamp(18px, 3vw, 32px);
+  align-items: start;
+}
+.dash-budget-block-head {
+  margin-bottom: 12px;
+}
+/* One country group: flag + name header, then a bar per currency it mixes. */
+.dash-budget-country + .dash-budget-country {
+  margin-top: 14px;
+}
+.dash-budget-country-head {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 8px;
+}
+.dash-budget-country-name {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* Money column is wider than the stats bar-val default so currency fits. */
+.dash-budget-bar {
+  grid-template-columns: 44px 1fr auto;
+}
+.dash-budget-bar + .dash-budget-bar {
+  margin-top: 8px;
+}
+.dash-budget-money {
+  min-width: 84px;
+}
+.dash-budget-nights {
+  margin-bottom: 14px;
+}
+/* Per-currency average nightly figures, stacked. */
+.dash-budget-avg {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.dash-budget-avg-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.dash-budget-avg-val {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.dash-budget-avg-label {
+  font-size: 12px;
+  color: var(--ink-faint);
+}
+.dash-budget-top-head {
+  margin-top: 20px;
+}
+.dash-budget-top {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.dash-budget-top-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 0;
+}
+.dash-budget-top-row + .dash-budget-top-row {
+  border-top: 1px solid var(--line);
+}
+/* Keep a stay with no country aligned with flagged rows. */
+.dash-budget-top-nogeo {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: var(--panel-2);
+}
+.dash-budget-top-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 13.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dash-budget-top-cost {
+  font-size: 13px;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
 /* The discovery chart can get cramped on phones; keep the bars readable. */
 @media (max-width: 640px) {
   .dash-years {
     height: 104px;
+  }
+}
+
+/* Stack the budget columns once a single column gets too narrow for two. */
+@media (max-width: 760px) {
+  .dash-budget-grid {
+    grid-template-columns: 1fr;
   }
 }

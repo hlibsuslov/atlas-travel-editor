@@ -196,6 +196,46 @@
     "from": "Da",
     "to": "A"
   },
+  "diary": {
+    "title": "Diario",
+    "sub": "Luoghi e soggiorni, con costo",
+    "empty": "Ancora nessun soggiorno — registra un hotel o un luogo in cui hai soggiornato.",
+    "namePlaceholder": "Nome dell'hotel / del luogo",
+    "add": "Aggiungi soggiorno",
+    "country": "Paese",
+    "city": "Città",
+    "from": "Da",
+    "to": "A",
+    "cost": "Costo",
+    "currency": "Valuta",
+    "currencyPlaceholder": "Valuta",
+    "currencySearch": "Cerca un codice…",
+    "currencyEmpty": "Nessuna corrispondenza — digitalo a destra",
+    "currencyManual": "Codice valuta",
+    "currencyManualPlaceholder": "ISO",
+    "note": "Nota (facoltativa)",
+    "nights": "{{count}} notti",
+    "total": "Totale",
+    "sortBy": "Ordina per",
+    "sortDate": "Data",
+    "sortCost": "Costo",
+    "sortName": "Nome"
+  },
+  "report": {
+    "budget": {
+      "title": "Spesa di viaggio",
+      "stays": "{{count}} soggiorni",
+      "total": "Spesa totale",
+      "multiCurrency": "Mostrato per valuta — mai convertito (offline, senza tassi in tempo reale).",
+      "byCountry": "Spesa per paese",
+      "nightly": "Per notte",
+      "nights": "Notti totali",
+      "perNight": "/ notte",
+      "noNights": "Aggiungi le date a un soggiorno per vedere il costo per notte.",
+      "topStays": "Soggiorni più costosi",
+      "empty": "Ancora nessun costo registrato — aggiungi un costo a un soggiorno per vedere la spesa."
+    }
+  },
   "export": {
     "title": "Esporta",
     "local": "Su questo dispositivo",

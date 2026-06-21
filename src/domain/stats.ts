@@ -1,6 +1,11 @@
-import type { Country, TravelData } from './schema';
+import type { Country, Stay, TravelData } from './schema';
 import { continentForName, unMembersInContinent } from './continents';
 import { isUnMember, UN_MEMBER_COUNT } from './sovereignty';
+import { RE_YEAR, RE_YEAR_MONTH, RE_YEAR_MONTH_DAY, RE_YEAR_RANGE } from './constants';
+import { isValidTimelineString } from './timeline';
+
+/** Milliseconds in one UTC day — used to turn dates into whole-night counts. */
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 export type PrimaryStatus = 'birthplace' | 'lived' | 'visited' | 'capital' | 'none';
 
@@ -53,6 +58,47 @@ export interface Milestones {
   activeYears: number;
 }
 
+/** One country's spend, split by ISO-4217 currency (honest, never converted). */
+export interface CountrySpend {
+  /** The stay's `country` string (only stays that name a country appear here). */
+  country: string;
+  /** Minor units summed per currency for this country. */
+  byCurrency: Record<string, number>;
+}
+
+/** A single notably-expensive stay, surfaced for the "top stays" list. */
+export interface TopStay {
+  name: string;
+  country?: string;
+  /** Cost in integer minor units. */
+  amount: number;
+  /** ISO-4217 currency of `amount`. */
+  currency: string;
+}
+
+/**
+ * Budget figures derived purely from the optional diary (`data.travel.stays`).
+ * Multi-currency is grouped by currency code and NEVER silently converted —
+ * there is no live FX in a local-first app, so summing across currencies would
+ * be dishonest. All money stays in integer minor units.
+ */
+export interface BudgetStats {
+  /** Minor units summed per ISO-4217 currency across every stay with a cost. */
+  spendByCurrency: Record<string, number>;
+  /** Per-country spend (grouped by currency), sorted desc by the country's largest single-currency total. */
+  spendByCountry: CountrySpend[];
+  /** Total nights across stays where BOTH `from` and `to` parse to real dates (inclusive-exclusive). */
+  nights: number;
+  /** spendByCurrency / nights, per currency, in rounded minor units. Empty when there are no dated nights. */
+  avgNightlyByCurrency: Record<string, number>;
+  /** The most expensive stays (capped), each with its own currency. */
+  topStays: TopStay[];
+  /** Total number of stays (a stay with no cost still counts). */
+  stayCount: number;
+  /** Number of distinct currencies that appear across all stay costs. */
+  currencyCount: number;
+}
+
 export interface TravelStats {
   countries: number;
   /** Countries with any status (birthplace/lived/visited/capital). */
@@ -78,6 +124,127 @@ export interface TravelStats {
   distinctCities: number;
   /** Countries that have at least one city recorded. */
   countriesWithCities: number;
+  /** Spend/nights figures from the optional diary; all-empty when there are no stays. */
+  budget: BudgetStats;
+}
+
+/** How many top (most expensive) stays we surface. */
+const TOP_STAYS_LIMIT = 5;
+
+/**
+ * Parse a timeline string to a UTC day count (days since epoch) for night math.
+ * Accepts a single `YYYY`, `YYYY-MM`, or `YYYY-MM-DD` (partial dates normalise
+ * to the 1st of the month/year). A `YYYY-YYYY` range is NOT a single day, so it
+ * returns null — we only count nights when both endpoints are concrete dates.
+ * Returns null for anything that does not validate, so junk can never produce
+ * NaN/Infinity downstream.
+ */
+function timelineToEpochDay(value: string): number | null {
+  if (!isValidTimelineString(value)) return null;
+  const s = value.trim();
+  // A YYYY-YYYY range is two years, not one day — reject for night counting.
+  if (RE_YEAR_RANGE.test(s)) return null;
+
+  let y: number;
+  let m = 1;
+  let d = 1;
+  if (RE_YEAR.test(s)) {
+    y = Number(s);
+  } else if (RE_YEAR_MONTH.test(s)) {
+    y = Number(s.slice(0, 4));
+    m = Number(s.slice(5, 7));
+  } else if (RE_YEAR_MONTH_DAY.test(s)) {
+    const [yy, mm, dd] = s.split('-').map(Number) as [number, number, number];
+    y = yy;
+    m = mm;
+    d = dd;
+  } else {
+    return null;
+  }
+
+  const ms = Date.UTC(y, m - 1, d);
+  if (Number.isNaN(ms)) return null;
+  return Math.floor(ms / MS_PER_DAY);
+}
+
+/** Whole nights for a stay (inclusive-exclusive), or 0 when dates are missing/junk/non-positive. */
+function nightsForStay(stay: Stay): number {
+  if (!stay.from || !stay.to) return 0;
+  const from = timelineToEpochDay(stay.from);
+  const to = timelineToEpochDay(stay.to);
+  if (from === null || to === null) return 0;
+  const diff = to - from;
+  // Guard junk: same-day or reversed ranges contribute no nights.
+  return diff > 0 ? diff : 0;
+}
+
+/**
+ * Budget aggregation over the optional diary. Pure function of the stays array;
+ * with no stays (or none with costs/dates) every map is empty and every count
+ * is 0 — never NaN/Infinity, never a divide-by-zero.
+ */
+function computeBudget(stays: Stay[]): BudgetStats {
+  const spendByCurrency: Record<string, number> = {};
+  // country -> currency -> minor units
+  const byCountry = new Map<string, Record<string, number>>();
+  const topCandidates: TopStay[] = [];
+  let nights = 0;
+
+  for (const stay of stays) {
+    nights += nightsForStay(stay);
+
+    const cost = stay.cost;
+    if (!cost) continue; // costless stays still count toward stayCount, just not spend.
+
+    const { amount, currency } = cost;
+    spendByCurrency[currency] = (spendByCurrency[currency] ?? 0) + amount;
+    topCandidates.push({
+      name: stay.name,
+      ...(stay.country ? { country: stay.country } : {}),
+      amount,
+      currency,
+    });
+
+    // Per-country spend only makes sense when the stay names a country.
+    if (stay.country) {
+      const existing = byCountry.get(stay.country) ?? {};
+      existing[currency] = (existing[currency] ?? 0) + amount;
+      byCountry.set(stay.country, existing);
+    }
+  }
+
+  // Sort countries desc by their largest single-currency total (currencies are
+  // never summed together — that would imply an FX rate we do not have).
+  const spendByCountry: CountrySpend[] = [...byCountry.entries()]
+    .map(([country, currencies]) => ({ country, byCurrency: currencies }))
+    .sort((a, b) => maxCurrencyTotal(b.byCurrency) - maxCurrencyTotal(a.byCurrency));
+
+  // Average nightly per currency — only when there are dated nights to divide by.
+  const avgNightlyByCurrency: Record<string, number> = {};
+  if (nights > 0) {
+    for (const [currency, total] of Object.entries(spendByCurrency)) {
+      avgNightlyByCurrency[currency] = Math.round(total / nights);
+    }
+  }
+
+  const topStays = topCandidates.sort((a, b) => b.amount - a.amount).slice(0, TOP_STAYS_LIMIT);
+
+  return {
+    spendByCurrency,
+    spendByCountry,
+    nights,
+    avgNightlyByCurrency,
+    topStays,
+    stayCount: stays.length,
+    currencyCount: Object.keys(spendByCurrency).length,
+  };
+}
+
+/** The single largest per-currency total within one country's spend map (0 when empty). */
+function maxCurrencyTotal(byCurrency: Record<string, number>): number {
+  let max = 0;
+  for (const total of Object.values(byCurrency)) max = Math.max(max, total);
+  return max;
 }
 
 /**
@@ -226,5 +393,6 @@ export function computeStats(data: TravelData): TravelStats {
     milestones,
     distinctCities: cityNames.size,
     countriesWithCities,
+    budget: computeBudget(data.travel.stays ?? []),
   };
 }

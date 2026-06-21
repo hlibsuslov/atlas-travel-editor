@@ -196,6 +196,46 @@
     "from": "From",
     "to": "To"
   },
+  "diary": {
+    "title": "Diary",
+    "sub": "Places & stays, with cost",
+    "empty": "No stays yet — log a hotel or place you stayed.",
+    "namePlaceholder": "Hotel / place name",
+    "add": "Add stay",
+    "country": "Country",
+    "city": "City",
+    "from": "From",
+    "to": "To",
+    "cost": "Cost",
+    "currency": "Currency",
+    "currencyPlaceholder": "Currency",
+    "currencySearch": "Search a code…",
+    "currencyEmpty": "No match — type it on the right",
+    "currencyManual": "Currency code",
+    "currencyManualPlaceholder": "ISO",
+    "note": "Note (optional)",
+    "nights": "{{count}} nights",
+    "total": "Total",
+    "sortBy": "Sort by",
+    "sortDate": "Date",
+    "sortCost": "Cost",
+    "sortName": "Name"
+  },
+  "report": {
+    "budget": {
+      "title": "Travel spend",
+      "stays": "{{count}} stays",
+      "total": "Total spend",
+      "multiCurrency": "Shown per currency — never converted (offline, no live rates).",
+      "byCountry": "Spend by country",
+      "nightly": "Per night",
+      "nights": "Total nights",
+      "perNight": "/ night",
+      "noNights": "Add dates to a stay to see nightly cost.",
+      "topStays": "Top stays",
+      "empty": "No costs logged yet — add a cost to a stay to see spend."
+    }
+  },
   "export": {
     "title": "Export",
     "local": "On this device",

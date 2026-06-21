@@ -432,3 +432,130 @@
   gap: 8px;
   margin-top: 2px;
 }
+
+/* ============================================================================
+   Diary / Stays editor — fast per-stay logging tied to the countries list.
+   Built on the shared .panel/.city-card/.input/.btn language; these add only
+   the diary-specific layout (responsive field grid + computed summary line).
+   ========================================================================== */
+
+/* Running spend, grouped by currency (never summed across — no offline FX). */
+.stay-totals {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line);
+}
+.stay-totals-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.stay-totals-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.stay-total-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+/* Sort control: a small labelled cluster of segmented buttons. */
+.stay-sort {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.stay-sort-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-right: 2px;
+}
+
+/* The per-stay field grid: auto-fits columns, then stacks on narrow screens. */
+.stay-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px;
+  margin-top: 8px;
+}
+.stay-field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.stay-field-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+/* Country selector spans the row on its own — it is the strongly-suggested tie. */
+.stay-field--country {
+  grid-column: 1 / -1;
+}
+/* The amount + currency pair reads as one money control. */
+.stay-field--amount .input {
+  width: 100%;
+}
+.stay-currency {
+  display: flex;
+  gap: 6px;
+  align-items: stretch;
+}
+.stay-currency .combobox {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.stay-currency-manual {
+  flex: 0 0 58px;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.stay-note {
+  margin-top: 8px;
+}
+
+/* Computed summary: nights (when both dates parse) + the formatted cost. */
+.stay-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 8px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--ink-soft);
+}
+.stay-summary-cost {
+  font-weight: 700;
+  color: var(--ink);
+}
+
+/* Stack every field on phones so nothing is cramped. */
+@media (max-width: 460px) {
+  .stay-fields {
+    grid-template-columns: 1fr;
+  }
+}
