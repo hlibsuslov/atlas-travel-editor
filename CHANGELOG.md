@@ -9,6 +9,11 @@ and this project aims to follow [Semantic Versioning](https://semver.org/spec/v2
 
 ### Added
 
+- **Operational knowledge** — project status, data-model, development, testing,
+  deployment, server-operations, glossary, ADR index, and coding-agent guides.
+- **Deployment verification** — public `build-info.json`, a reusable black-box
+  HTTP/PWA/header smoke script, and a scheduled canonical-production check.
+- Documentation link validation in the local and GitHub CI gates.
 - **Rebrand to Atlas** — the project is now **Atlas**, an open-source, local-first
   personal travel-map editor (formerly "Travel Editor").
 - **Local-first by default** — a clean clone runs with `npm install && npm run dev`
@@ -46,6 +51,12 @@ and this project aims to follow [Semantic Versioning](https://semver.org/spec/v2
 
 ### Changed
 
+- Vercel is documented as the canonical static frontend; GitHub Pages is now an
+  optional manual mirror instead of a failing automatic parallel deployment.
+- Root tooling, CI, and the frontend Docker build align on Node 22.
+- Docker Compose binds web/API ports to loopback by default and accepts signup,
+  CORS, and bind settings from the environment.
+- The documented `npm run ci` gate now really includes Prettier.
 - Friends, profile and sharing degrade gracefully when no Atlas Server is connected.
 - Sign-out now purges the signed-in user's local cache.
 

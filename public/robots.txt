@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /share/
+
+Sitemap: https://atlas-travel-editor.vercel.app/sitemap.xml

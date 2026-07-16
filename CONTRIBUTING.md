@@ -6,7 +6,7 @@ releasable at all times.
 ## Getting started
 
 ```bash
-nvm use            # Node 20 (see .nvmrc)
+nvm use            # Node 22 (see .nvmrc)
 npm install
 npm run dev        # http://localhost:5173
 ```
@@ -29,7 +29,7 @@ open, comment on any issue you'd like to pick up and we'll help you scope it.
 2. Make the change with tests.
 3. Run the full gate before pushing:
    ```bash
-   npm run ci      # typecheck · lint · test · build
+   npm run ci      # typecheck · lint · format · docs · locales · test · build
    ```
    If you touched the optional server, also run its gate:
    ```bash
@@ -54,6 +54,10 @@ open, comment on any issue you'd like to pick up and we'll help you scope it.
   `any`; prefer `unknown` + narrowing. Imports of types use `import type`.
 - **Tests.** Pure/domain logic gets unit tests; components get Testing Library
   tests. The full client gate is `npm run ci`.
+- **Docs.** Keep [project status](docs/PROJECT_STATUS.md), the
+  [data contract](docs/DATA_MODEL.md), and the
+  [deployment runbook](docs/DEPLOYMENT.md) aligned with behavior. Local links are
+  checked in CI.
 - **Commits.** Conventional Commits style is encouraged
   (`feat:`, `fix:`, `refactor:`, `docs:`, `test:`, `chore:`).
 
@@ -74,3 +78,7 @@ If you change the domain in `src/domain`, re-sync the server's copy and make sur
 Update [`docs/SECURITY.md`](docs/SECURITY.md) if a change affects authentication or
 the public sharing path, and add an ADR under [`docs/adr`](docs/adr) for significant
 architectural decisions.
+
+Repository-specific implementation guidance and change recipes live in
+[`AGENTS.md`](AGENTS.md). The complete verification matrix is in
+[`docs/TESTING.md`](docs/TESTING.md).

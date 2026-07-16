@@ -168,7 +168,9 @@ export function ImportModal({ open, onClose, onImport }: ImportModalProps) {
 
               <div className="import-preview" aria-live="polite">
                 {preview.state === 'empty' && (
-                  <span className="helper">{t('import.awaiting', 'Drop or paste a file to preview it.')}</span>
+                  <span className="helper">
+                    {t('import.awaiting', 'Drop or paste a file to preview it.')}
+                  </span>
                 )}
                 {preview.state === 'parse' && (
                   <span className="pill pill-bad">
@@ -185,7 +187,11 @@ export function ImportModal({ open, onClose, onImport }: ImportModalProps) {
                       })}
                     </span>
                     <span className="helper">
-                      {preview.firstError ?? t('import.warnHint', 'Imports, but some fields need fixing before it can save.')}
+                      {preview.firstError ??
+                        t(
+                          'import.warnHint',
+                          'Imports, but some fields need fixing before it can save.',
+                        )}
                     </span>
                   </>
                 )}
@@ -214,7 +220,10 @@ export function ImportModal({ open, onClose, onImport }: ImportModalProps) {
                 >
                   <strong>{t('import.replace', 'Replace')}</strong>
                   <span className="import-apply-desc">
-                    {t('import.replaceDesc', 'Discard the current document and use the imported one.')}
+                    {t(
+                      'import.replaceDesc',
+                      'Discard the current document and use the imported one.',
+                    )}
                   </span>
                 </button>
                 <button

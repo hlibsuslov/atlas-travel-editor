@@ -1,146 +1,168 @@
-# Atlas — Product & Engineering Plan
+# Atlas — product and engineering plan
 
-> **This is the current north star.** It supersedes the Supabase-era direction in
-> [`STRATEGY.md`](./STRATEGY.md) (kept for its subsystem analysis, but its
-> "keep Supabase as default" conclusion no longer holds). Decision date: 2026-06-19.
+> Current north star. It replaces the hosted-backend direction preserved in
+> [STRATEGY.md](STRATEGY.md). For shipped detail, use
+> [PROJECT_STATUS.md](PROJECT_STATUS.md); for task-level backlog, use
+> [ROADMAP.md](ROADMAP.md).
 
-## Status — all six sprints shipped (2026-06-19)
+## Product promise
 
-The full plan below is **implemented** on branch
-`feat/storage-seam-correctness-and-portable-io` (client + `server/`), CI-green at
-every step:
+Atlas helps a person build a durable map and diary of their travel life without
+giving up control of their data.
 
-- **Sprint 1** — Supabase removed; local-first by default (IndexedDB), no login wall. ✓
-- **Sprint 2** — **Atlas Server** (Hono + `node:sqlite`, zero native deps, Docker) +
-  `SelfHostStore`; connect a server, register/sign-in, sync with optimistic
-  concurrency. ✓
-- **Sprint 3** — publish (private/unlisted/public + rotatable slug); read-only view by
-  `/share/:slug` and `/u/:handle`; handles + column-minimized public reads (leak-tested). ✓
-- **Sprint 4** — directed follow graph (by handle or pasted link); Friends page with
-  real names/colors/mini-maps. ✓
-- **Sprint 5** — discovery search, activity feed, and mutual-follow friends. ✓
-- **Sprint 6** — diary foundation (schema v2: optional `Money` + `travel.stays`,
-  v1→v2 normalize ladder, zero backend migration) + an in-app stays editor. ✓
+The first useful session requires no account, environment variables, or backend.
+The user can record countries, cities, timelines, and stays; understand their map
+and statistics; export the complete document; and return offline.
 
-**Deferred (documented, not yet built):** the explicit friend-request handshake +
-`audience:'friends'` visibility tier (needs a consent table + an authed friends-only
-read path); a CI locale-key-parity linter; map matching by ISO code. Mutual-follow
-already provides a "friends" set today.
+An Atlas Server is an explicit upgrade for people who want cross-device sync,
+public maps, profiles, and social features on infrastructure they choose.
 
-## 1. What we are building
+## Commitments
 
-Atlas is a **serious, open-source, local-first travel social network**. A person
-records where they have been — countries, cities, dates — on a beautiful world
-map, and (when they want to) **shares their profile and map with others and
-follows people back**. Everything works fully offline on one device; sharing is an
-opt-in layer on top, served by **our own self-hostable backend**, not a third party.
+### 1. Local-first is the default experience
 
-Two commitments shape every decision:
+- The editor starts without a login wall.
+- IndexedDB is ready immediately.
+- Network/server failure never silently discards unsaved local edits.
+- The complete travel document is exportable in a documented format.
+- Server-only UI is hidden or explains the required connection honestly.
 
-1. **Local-first is the source of truth.** All travel data lives on the device
-   (IndexedDB), works with no account and no network, and is portable as a single
-   self-describing JSON envelope (`{app,schemaVersion,updatedAt,data}`). The server
-   is only ever a *publish / sync / social target*.
-2. **The whole thing is OSS and easy to self-host.** Anyone can `docker run` our
-   backend and have a working instance — accounts, sharing, follows — in minutes.
-   No vendor lock-in. (Supabase is being removed entirely.)
+Local-first does not mean automatic conflict-free collaboration. Atlas currently
+detects stale versions; a guided conflict resolver is a priority.
 
-The product grows in sprints toward a **rich travel diary** (visited places,
-hotels + cost, journal entries) and **full social features** (follows, friends,
-feed, discovery).
+### 2. User-controlled persistence
 
-## 2. Architecture: "Atlas Server" + the storage seam
+Every backend implements one `DocumentStore` contract. Features do not couple to
+a storage vendor. Providers advertise honest capabilities and remain disabled
+until they work end to end.
 
-The client already has a pluggable storage seam (`src/lib/storage/`): every
-backend implements one `DocumentStore` contract (`load` / `save` /
-`setSharing?` / `readPublic?`), and a registry wrapper enforces normalize-on-load
-and validate-on-save centrally. We reuse it **verbatim**.
+The portable envelope and normalization policy are product features, not internal
+implementation details: they protect migration, backup, and exit.
 
-- **Client (this repo):** the React SPA. Default backend = `IndexedDbStore`
-  (account-less, offline). Optional file backend. When a user points the app at an
-  Atlas Server instance, a new **`SelfHostStore`** (`id: 'selfhost'`) becomes
-  available — the first store with **both** `sharing: true` **and** real
-  `concurrency: 'token'` (which the seam was designed for).
-- **Atlas Server (new `server/` workspace):** a small OSS **Hono + SQLite**
-  (Postgres-optional) single-binary REST backend, shipped as one Docker image that
-  can also serve the static SPA (single origin → CSP `'self'`, no CORS for the
-  common self-host case).
-  - **Document storage is an opaque `PortableEnvelope` blob + a few indexed
-    metadata columns** (`visibility`, `share_slug`, `version`, `updated_at`),
-    *not* a relational country/city/year tree. This is the key graft: diary growth
-    (places / stays / journal) needs **zero backend migration** — only a
-    `schemaVersion` bump + a `normalize.ts` step.
-  - **One source of truth for the document contract:** the server reuses the
-    client's exact Zod `travelDataSchema` / `normalizeTravelData` (vendored, with a
-    CI drift check) so client and server can never disagree on valid data.
-  - **Identity:** instance-local accounts (`handle@instance`), server-side
-    Argon2id/scrypt password hashing, **opaque revocable session tokens** (Bearer
-    access token in memory + HttpOnly/Secure/SameSite refresh cookie — never a
-    secret in the SPA bundle, never tokens in localStorage). First account = admin.
-  - **Optimistic concurrency:** `PUT /me/document` takes `If-Match: <version>`;
-    a stale write returns `409` with the remote document, which the client surfaces
-    via the existing `ConflictError` → keep-mine / take-theirs / merge UI.
+### 3. Optional, self-hostable social layer
 
-### Sharing logic (end to end)
+Atlas Server owns:
 
-- **Publish:** user A edits locally (IndexedDB is the mirror), then sets document
-  visibility `private | unlisted | public`. First publish mints an **opaque,
-  rotatable** `share_slug`. Profile visibility is independent of map visibility.
-- **Address:** share `/share/{slug}` (link-only, backward-compatible with existing
-  links) **or** the human `/u/{handle}` (revives the long-dead `public_handle`).
-- **View:** anyone opens the address; the server returns a **column-minimized**
-  public DTO (bare `TravelData` + `{handle, displayName, avatarColor}`) — never
-  email / account id / version internals. Missing / private / revoked all return an
-  **identical generic 404** so existence can't be probed.
-- **Follow:** signed-in user B follows A by handle (or by pasting a `/share/<slug>`
-  URL, resolved via the existing `extractSlug`). A real **directed follow edge**
-  (keyed on handle) replaces the opaque `friend_links` code; `FriendCard` shows
-  real names + avatar colors. Following is private to the follower.
-- **Friendship / feed / discovery (later):** consent-gated symmetric friendship,
-  an `audience:'friends'` visibility tier, a column-minimized activity feed, and
-  handle search over discoverable public profiles.
+- instance-local accounts and sessions;
+- one versioned document per user;
+- private/unlisted/public publication;
+- handles and revocable links;
+- follows, mutual friends, discovery, and feed.
 
-**Capability gating:** a pure local-first deployment (no server configured) hides
-all Follow / Profile / Feed UI via `DocumentStore.capabilities.sharing` plus a
-social capability advertised by the server's `GET /healthz` — exactly like today's
-`cloudAvailable()` degrade pattern.
+The static frontend remains independently useful. Vercel hosting never implies a
+central Atlas database.
 
-## 3. Sprint plan
+### 4. Privacy by explicit publication
 
-Every sprint ships something usable, keeps the app **local-first by default**, and
-keeps `npm run ci` green.
+- New documents are private.
+- Public endpoints return minimized DTOs.
+- A share slug can be rotated/revoked.
+- Following does not grant access to private data.
+- Future audience tiers need explicit server authorization and tests.
 
-| Sprint | Goal | Ships |
-|---|---|---|
-| **1 — Local-first decoupling** *(no backend yet)* | Remove Supabase from the default/runtime path; a clean clone runs entirely on IndexedDB — no accounts, no cloud, no env required. | Supabase client/store/types deleted; `AuthProvider` becomes a local-session provider; editor/friends/profile `api.ts` become local degraded stubs satisfying the same types; `env.ts` backend-agnostic; CSP `connect-src 'self'`; `@supabase/supabase-js` removed; the three Supabase-mocking tests rewritten local. |
-| **2 — Atlas Server skeleton + `SelfHostStore`** | One Docker container: register, sign in, sync your map. Server opt-in via the storage picker. | `server/` (Hono + better-sqlite3, WAL, idempotent migrations); vendored Zod domain; `users/sessions/profiles/documents`; Argon2id + opaque Bearer + refresh cookie; `/auth/*`, `/me`, `GET/PUT /me/document` (If-Match → 409 + remote), `/healthz`, `/config`; client `SelfHostStore` + URL field in the picker; `AuthProvider` wired to `/auth`. |
-| **3 — Publishing + public read + handles** | Publish a map, address it by slug **and** by `/u/{handle}`, view it read-only. | `profiles.handle` (unique), availability check, visibility `PATCH`, slug rotate/revoke; column-minimized public DTO endpoints; identical generic 404; a **CI test asserting no public response leaks email/id/hash/token**; client `SharePage` reads by slug + handle; `ProfileEditor` sets handle + visibility. |
-| **4 — Follow graph** | Real directed follow edges replace follow-by-code; `FriendsPage` shows real people. | `follows(follower,target,label)` UNIQUE + CASCADE; enriched `GET/POST/DELETE /follows`; `GET /followers`; client `friends/api.ts` rewritten; `FriendCard` renders handle + name + color; backward-compatible with pasted `/share` links. |
-| **5 — Friendship + feed + discovery** | The "serious social network" inflection. | Consent-gated friend requests → symmetric Friendship + reciprocal follow; `audience:'friends'` tier; cursor-paginated column-minimized feed; handle discovery over discoverable public profiles; all gated by `/healthz`. |
-| **6 — Rich diary growth** *(schemaVersion 2+)* | Grow toward the travel diary entirely via **additive** optional fields — zero backend migration. | `schemaVersion 2` optional `travel.places?[]` (+ Country/City `code/lat/lng`); v3 `travel.stays?[]` (`Money` = integer minor units + ISO-4217); v4 `travel.journal?[]` with per-entry visibility; non-throwing `v1→vN` ladder in `normalize.ts`; `/healthz` advertises `schemaVersionRange` for feature detection; Postgres-optional driver + one-click deploy templates. |
+### 5. Compatibility before novelty
 
-## 4. Key decisions & open questions
+Schema changes are additive when possible. Older supported documents normalize
+forward. Newer unsupported documents must eventually fail closed instead of
+losing unknown fields. Every change is validated on both client and server.
 
-- **Single-instance self-host is the default deploy.** The server serves its own
-  SPA with a templated `connect-src`, so CSP/CORS just work. A split
-  client/server hosted variant is a separately-built target (build-time
-  `VITE_SELFHOST_URL` injection). Sprint 1 sets `connect-src 'self'`.
-- **`is_public` → `visibility` migration maps to `unlisted`** (link-only), not
-  `public`, so existing shared maps are never silently made discoverable. (Sprint 3.)
-- **Existing hosted-Supabase data migration is manual:** export the JSON envelope
-  from the old build, import it into the new one. No automated importer.
-- **Server reuses the client's Zod domain by vendoring** `src/domain` into
-  `server/`, guarded by a CI diff check, until a monorepo package is justified.
-- **Tokens are never stored in localStorage** (access token in memory + HttpOnly
-  refresh cookie) — a deliberate change from the old Supabase `persistSession`.
-- **Diary per-entry visibility on partially-public docs** (Sprint 6): decide
-  between client-only private entries on public docs vs. a small server-side
-  per-entry visibility index. To be settled before Sprint 6.
+## Who Atlas serves
 
-## 5. What stays from the pre-pivot work
+### Private traveler
 
-The local-first correctness foundation already landed and is unaffected: correct
-`dirty`/undo semantics, the reconcile race fix, city-rename validation, and the
-portable export/import envelope (`{app,schemaVersion,updatedAt,data}`) — the same
-envelope the server stores opaquely. The domain model, editor store, map, and i18n
-core never touched Supabase, so the decoupling blast radius is small and contained.
+Wants a beautiful personal map and diary with no account. Values offline use,
+export, predictable autosave, and long-term ownership.
+
+### Self-hoster
+
+Wants sync and sharing without a mandatory SaaS. Values a small Docker service,
+clear TLS/CORS configuration, backups, and reversible upgrades.
+
+### Social traveler
+
+Wants a public profile, shareable map, follows, mutual friends, and discovery.
+Values clear visibility and identity controls.
+
+### Contributor
+
+Wants strong boundaries, executable tests, truthful docs, and small changes that
+do not require reconstructing project history.
+
+## Current product architecture
+
+```text
+React/Vite PWA
+  -> Zustand working TravelData + bounded history
+  -> global autosave / TanStack Query
+  -> DocumentStore registry (normalize-load, validate-save)
+       -> IndexedDB (default)
+       -> local file
+       -> Atlas Server (optional)
+
+Atlas Server
+  -> Hono HTTP API
+  -> authenticated ownership boundary
+  -> SQLite (users, sessions, profiles, opaque documents, follows)
+```
+
+The travel contract is one opaque document, not a relational country/city tree.
+Server tables model identity, authorization, publication, and concurrency.
+
+## Evolution priorities
+
+### Priority 0 — prevent data loss and ambiguity
+
+1. Interactive conflict resolution using the already-returned remote document.
+2. Fail-closed handling for unsupported future envelope versions.
+3. Tested backup/restore and release rollback for Atlas Server.
+4. Resolve inherited map dependency advisories without behavior regression.
+
+### Priority 1 — deepen the travel product
+
+1. Persist ISO country codes and localize map labels.
+2. Compare maps and explore travel over time.
+3. Improve bulk entry/editing and diary detail.
+4. Add E2E, accessibility, and performance budgets around core journeys.
+
+### Priority 2 — make public social use safer
+
+1. Explicit private/unlisted/public UX.
+2. Optional friend requests and audience authorization.
+3. Block/report and abuse controls.
+4. Rate limiting, request limits, account recovery, session management, and audit
+   logging before broad multi-tenant claims.
+
+### Priority 3 — expand user-owned storage
+
+Implement WebDAV/GitHub/Drive/Dropbox one at a time. Each needs least-privilege
+credentials, concurrency semantics, failure recovery, provider-specific setup,
+and an exit path. Placeholder classes are not progress toward “shipped”.
+
+## What “shipped” means
+
+A capability is shipped only when:
+
+- the normal and failure journeys are usable;
+- persisted/public contracts are documented;
+- client and server authorization/validation tests cover it;
+- all locale keys are complete;
+- `npm run ci` and the server gate pass;
+- deployment/runtime changes have smoke or health evidence;
+- project status and changelog are updated;
+- security and recovery implications are explicit.
+
+An implementation branch, disabled adapter, design mock, or unchecked migration
+does not count.
+
+## Deliberate non-goals today
+
+- A mandatory hosted Atlas account.
+- Real-time multi-user editing.
+- Multiple travel documents per account.
+- Server-side SQL analytics over every country/city field.
+- Claiming production-grade public SaaS security from the current self-host
+  defaults.
+- Enabling every cloud provider at once.
+
+These can be revisited through an ADR when user evidence outweighs the simplicity
+and ownership benefits of the current model.

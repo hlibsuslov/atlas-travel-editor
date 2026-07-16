@@ -20,6 +20,9 @@ const SharePage = lazy(() =>
   import('@/features/sharing/SharePage').then((m) => ({ default: m.SharePage })),
 );
 
+const routerBase =
+  import.meta.env.BASE_URL === '/' ? undefined : import.meta.env.BASE_URL.replace(/\/$/, '');
+
 function PageFallback() {
   return (
     <div className="full-center">
@@ -60,7 +63,7 @@ export function App() {
   useHtmlLangSync();
   return (
     <StorageProvider>
-      <BrowserRouter>
+      <BrowserRouter basename={routerBase}>
         <div className="atlas-app">
           <Suspense fallback={<PageFallback />}>
             <Routes>

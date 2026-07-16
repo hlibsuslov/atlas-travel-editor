@@ -19,9 +19,10 @@ import {
 /**
  * DocumentStore backed by a self-hosted **Atlas Server** instance. It is the first
  * store with real token concurrency: a stale save surfaces as the shared
- * {@link ConflictError} carrying the remote document, so the editor's
- * keep-mine / take-theirs flow works unchanged. Local-first stays the source of
- * truth; this store only engages when the user has connected a server.
+ * {@link ConflictError} carrying the remote document. The current UI preserves
+ * local edits and reports the failed save; an interactive keep/take/merge
+ * resolver remains future work. This store only engages when the user has
+ * explicitly connected a server.
  *
  * Normalize-on-load and validate-on-save are enforced centrally by the registry
  * wrapper, so this adapter only shapes bytes ↔ StorageDoc.
