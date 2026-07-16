@@ -1,18 +1,20 @@
 # Security Model
 
 Atlas is **local-first by default**, and its security posture follows from that:
-in the default mode there is no account, no server, and no network — so there is
-almost nothing to attack. Accounts and sharing only exist when you opt into the
+in the default mode there is no account or data server. Accounts and sharing only
+exist when you opt into the
 optional, self-hostable **Atlas Server**, which has a small, auditable model of
 its own. This document covers both.
 
 ## Local-first default: nothing leaves the device
 
 A clean clone runs entirely in the browser. The travel document lives in
-**IndexedDB**; there is no account, no login wall, no `.env`, and no network call
-for normal use. Data only ever leaves the device when **you** choose to export a
-JSON file, save to a local file, or connect a server. With no server connected,
-all sharing/social UI is hidden because no sharing-capable backend is advertised.
+**IndexedDB**; there is no account, login wall, or required `.env`. Travel data
+only leaves the device when **you** choose to export a JSON file, save to a local
+file, or connect a server. The hosted shell can still fetch static assets and
+Google Fonts, and optional Sentry sends telemetry when configured. With no server
+connected, all sharing/social UI is hidden because no sharing-capable backend is
+advertised.
 
 Because there is no shared backend in this mode, classic web-app concerns
 (authn/authz, multi-tenant isolation, RLS) simply do not apply — the only data on
@@ -74,8 +76,8 @@ exposes nothing they did not choose to publish.
 
 `PUT /me/document` takes `If-Match: <version>`; a stale version returns `409` with
 the current remote document. This prevents a lagging client from silently
-clobbering a newer server copy and gives the editor the data it needs to offer
-keep/take/merge.
+clobbering a newer server copy. The adapter preserves the remote document, but an
+interactive keep/take/merge resolver is not shipped yet.
 
 ### Configurable CORS and signup gating
 
@@ -114,6 +116,9 @@ keep/take/merge.
   owner connects to. If you deploy somewhere other than Vercel, re-express these
   headers for your host. (The Vite dev server does not apply `vercel.json`
   headers, so local development is unaffected.)
+- **Deployment provenance**: `build-info.json` exposes only app/version,
+  commit, environment class, and build time. It must never include tokens,
+  project ids, or environment contents.
 
 ## Reporting a vulnerability
 
@@ -130,6 +135,15 @@ opening a public issue. Include reproduction steps and an impact assessment.
   content), so terminate TLS in front of it (see [`SELF_HOSTING.md`](./SELF_HOSTING.md)).
 - **No edit audit log yet**; the per-document `version` column is the foundation
   for one.
+- **Bearer tokens live in browser localStorage.** The strict script CSP and
+  no-third-party-script design reduce exposure, but successful same-origin XSS
+  could read a token. Keep dependencies patched and do not weaken `script-src`.
+- **No email verification, password reset, MFA, or session-management UI** is
+  included. Treat public multi-tenant operation as security engineering work, not
+  a configuration toggle.
+- **Backups are operator-owned.** Follow
+  [`SERVER_OPERATIONS.md`](SERVER_OPERATIONS.md); a database copy contains
+  personal data and authentication material and must be encrypted off-host.
 - **Bring-your-own-cloud backends** (GitHub, WebDAV, Google Drive, Dropbox) are
   stubbed and not enabled in the default build; their OAuth/credential handling
   will be documented as each ships.

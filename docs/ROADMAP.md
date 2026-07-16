@@ -1,150 +1,148 @@
-# Roadmap — the work backlog (the "stream")
+# Roadmap
 
-This is the living backlog the planner agent maintains and executor agents drain
-(see [ORCHESTRATION.md](./ORCHESTRATION.md)). Items are grouped into epics and
-sized **S / M / L**. Each carries acceptance criteria so any agent can pick it up
-and know when it's done. The non-negotiable Definition of Done for every item:
+Living backlog for work that is not fully shipped. Current capability truth lives
+in [PROJECT_STATUS.md](PROJECT_STATUS.md); this file combines completed foundations
+with their remaining acceptance work.
 
-> `npm run ci` passes (typecheck · lint · format · test · build), new behavior is
-> covered by tests, and user-facing strings go through i18n (all 8 locales or a
-> documented English fallback).
+Last reconciled with code: **2026-07-16**.
 
-Status legend: ☐ todo · ◐ in progress · ☑ done.
+Legend: ☑ shipped · ◐ partial/foundation · ☐ planned. Sizes: S / M / L.
 
----
+Every completed item must keep `npm run ci` and
+`npm --prefix server run ci` green, add risk-proportionate tests, translate
+user-facing strings, and update the relevant reference docs.
 
-## Epic A — Interactivity & UX polish
+## A — Editor and interaction
 
-- ☑ **A1 (M)** Map: click a country to cycle status; pan + zoom. _(done)_
-- ☑ **A2 (S)** Editor: live country filter/search. _(done)_
-- ☐ **A3 (M)** Drag-and-drop reordering of countries (keyboard-accessible).
-  _Accept:_ reorder persists to the document; dnd works with keyboard; tested.
-- ◐ **A4 (S)** Map: zoom in/out/reset buttons + double-click to zoom to a country.
-  _Zoom in/out/reset buttons shipped in `WorldMap.tsx` (`.atlas-zoom`)._ Remaining:
-  double-click a country to zoom-to-fit — split out as **A10**.
-- ☐ **A5 (M)** Map ↔ editor cross-highlight: hovering a country in the editor
-  highlights it on the map and vice-versa.
-- ☐ **A6 (S)** Undo/redo for editor mutations (zundo middleware on the store).
-  _Note:_ `useEditorStore` (`src/features/editor/store.ts`) currently has no history
-  middleware; add `zundo` and wire temporal store + UI controls/shortcuts.
-- ☑ **A7 (S)** Replace native `confirm()` with an accessible confirm dialog. _(done —
-  `src/components/ui/ConfirmDialog.tsx` + tests; Escape/backdrop/focus handled.)_
-- ☐ **A8 (M)** Empty states and skeleton loaders for map/friends/editor.
-- ☐ **A9 (S)** Keyboard shortcuts (save, add country, toggle theme) + a help sheet.
-- ☐ **A10 (S)** Map: double-click a country to zoom-to-fit its bounds (split from A4).
-  _Accept:_ centers + scales to the geography's bounding box; reset returns to world;
-  works with the existing `ZoomableGroup` controlled `position` state; tested.
-- ☐ **A11 (S)** Focus trap + restore-focus for `ConfirmDialog` and `ImportModal`.
-  _Accept:_ Tab/Shift+Tab stay within the dialog; focus returns to the trigger on
-  close; covered by tests (extends the a11y work in G1).
+- ☑ **A1 (M) Interactive map editing** — click cycle, status brushes, precise
+  menu, erase, pan/zoom, reset, and double-click zoom-to-fit.
+- ☑ **A2 (S) Country filtering** — local editor search.
+- ☑ **A3 (M) Accessible reordering** — pointer and keyboard country ordering with
+  persisted array order.
+- ☑ **A4 (S) Document undo/redo** — bounded history, toolbar controls, and
+  Ctrl/Cmd-Z behavior outside text inputs.
+- ☑ **A5 (M) Empty/loading states** — editor/map empty states and friend-map
+  skeleton.
+- ☐ **A6 (M) Map/editor cross-highlight** — hover/focus a country in one surface
+  and identify it in the other.
+- ☐ **A7 (S) Shortcut help** — save/add/theme shortcuts plus a discoverable help
+  sheet without overriding native text editing.
+- ☐ **A8 (M) Multi-select/bulk edits** — apply status/timeline operations to
+  several countries with one undo step.
 
-## Epic B — Map intelligence
+## B — Geography and map intelligence
 
-- ◐ **B1 (L)** Add ISO-3166 country codes to the domain model (optional field)
-  and match the map by code, not name. _Foundation shipped:_ `src/domain/countries.ts`
-  holds the ISO-3166 alpha-2 list and the picker stores canonical English names that
-  match the atlas exactly (`codeForEnglishName`). Remaining: persist an optional `code`
-  field on `Country` in the schema and match the atlas by code rather than name so
-  free-text/renamed entries still resolve — split out as **B6**.
-- ☐ **B2 (M)** Localized country names on the map (per active i18n locale).
-  _Note:_ the picker localizes via `Intl.DisplayNames`, but `WorldMap.tsx` tooltips
-  still render the raw English geography name — localize the hover tip + legend.
-- ☐ **B3 (M)** Choropleth intensity by number of visit-years; year time-slider to
-  animate the map over time. _`computeStats` already returns `yearTrips` per year —
-  build the slider/choropleth on top of it._
-- ☑ **B4 (S)** Stats panel: % of world visited, continents covered, streaks. _(done —
-  `src/domain/stats.ts` `computeStats` + `computeCoverage`; surfaced on dashboard/map.)_
-- ☐ **B5 (M)** City markers (lat/long) layered on the map with clustering.
-- ☐ **B6 (M)** Match the atlas by ISO code, not name (split from B1). _Accept:_ add
-  optional `code` to the `Country` schema (migration-free), prefer code over the
-  canonical-name path in `buildStatusMap`/`statusForGeography`, keep name fallback
-  for legacy docs, and add tests for renamed/aliased countries.
+- ◐ **B1 (L) Persist ISO 3166 codes** — country catalog and localized picker
+  exist; add an optional code to the schema, normalization, import, and map match.
+- ☐ **B2 (M) Localized map names** — tooltips/accessible geography labels should
+  follow the active locale while persistence retains stable identity.
+- ☐ **B3 (M) Time map** — choropleth or time slider using existing year stats.
+- ☐ **B4 (M) City coordinates** — optional coordinates and clustered markers.
+- ☐ **B5 (M) Sovereignty policy UI** — make map boundary/counting choices
+  transparent without rewriting user data.
 
-## Epic C — Social / friends
+## C — Social experience
 
-- ☐ **C1 (L)** Username/profile system (`profiles` table + RLS) so friends are
-  found by handle, not raw share code.
-- ☐ **C2 (M)** Friends feed: recent changes from people you follow.
-- ☐ **C3 (M)** Compare maps: overlay two users to see shared/!shared countries.
-- ☐ **C4 (S)** Friend request/accept flow (mutual follow) instead of open follow.
-- ☐ **C5 (S)** Public profile page at `/u/:handle` with map + stats.
+- ☑ **C1 (L) Profiles and handles** — editable profile, handle availability,
+  public `/u/:handle`.
+- ☑ **C2 (M) Directed follows and feed** — follow by handle/slug, discovery,
+  follower count, feed, and mutual friends.
+- ☐ **C3 (M) Compare maps** — explicit two-map overlap/difference view.
+- ☐ **C4 (S) Friend requests** — optional accept/reject workflow rather than
+  deriving friendship only from mutual follows.
+- ☐ **C5 (M) Privacy controls UX** — expose private/unlisted/public explicitly;
+  the current primary toggle maps only public/private.
+- ☐ **C6 (S) Block/report controls** — required before broad public multi-tenant
+  operation.
 
-## Epic D — Data & persistence
+## D — Data and synchronization
 
-- ☐ **D1 (M)** Optimistic-concurrency save via `save_travel(data, version)` RPC;
-  surface conflicts and offer merge/overwrite.
-- ☐ **D2 (S)** Autosave (debounced) toggle, building on D1.
-- ☐ **D3 (M)** Edit history / audit log (uses the existing `version` column).
-- ☐ **D4 (S)** Export to GeoJSON and PNG snapshot of the map.
-- ☐ **D5 (M)** Conflict-free offline edits queue that syncs on reconnect.
+- ◐ **D1 (M) Conflict resolution** — version checks and remote payload are
+  shipped; add keep-mine, take-theirs, and deterministic merge UI.
+- ☑ **D2 (S) Global autosave** — debounce, route-independent mount, validation
+  gate, and page-hide flush.
+- ☐ **D3 (M) Edit audit/history** — server-side version history and restore.
+- ◐ **D4 (S) Rich export** — JSON and PNG are shipped; GeoJSON remains.
+- ☐ **D5 (L) Offline operation queue** — ordered remote mutation replay with
+  authentication and conflict semantics.
+- ☐ **D6 (M) Future-envelope safety** — reject unsupported newer schema versions
+  before version 3 to prevent unknown-field loss.
+- ☐ **D7 (M) Multi-document support** — only if product direction changes; the
+  current contract intentionally has one document per provider/user.
 
-## Epic E — Internationalization
+## E — Storage providers
 
-- ☐ **E1 (M)** ICU pluralization for all counters (cities/countries/errors) across
-  locales. _Accept:_ correct plural forms in ru/uk/pl etc.
-- ☐ **E2 (S)** Add locales: pl, zh, ja, tr, ar (with RTL support for ar).
-- ☐ **E3 (S)** Locale-aware number/date formatting via `Intl`.
-- ☐ **E4 (S)** A `lint:i18n` script that fails CI on missing/extra keys per locale.
-  _Note:_ all 8 locale JSONs exist under `src/i18n/locales/` but nothing verifies key
-  parity; add a `scripts/lint-i18n.mjs` that diffs every locale against `en.json` and
-  wire it into the `ci` npm script + the GitHub workflow.
+- ☑ **E1 (M) IndexedDB provider** — default, versioned, tested.
+- ☑ **E2 (M) Local-file provider** — File System Access API plus fallback.
+- ☑ **E3 (L) Atlas Server provider** — auth, sharing, token concurrency.
+- ☐ **E4 (L) WebDAV provider** — credentials, ETag concurrency, CORS guidance.
+- ☐ **E5 (L) GitHub provider** — least-privilege auth, blob-SHA concurrency.
+- ☐ **E6 (L) Google Drive provider** — user-owned OAuth client and revision
+  checks.
+- ☐ **E7 (L) Dropbox provider** — user-owned OAuth client and rev checks.
 
-## Epic F — Quality, infra, observability
+No placeholder provider becomes selectable until its complete connection,
+load/save, failure, conflict, disconnect, and documentation flow is tested.
 
-- ☐ **F1 (M)** Playwright E2E: login (demo) → edit → map → share smoke flow, run
-  in CI against a preview build. _Note:_ no Playwright dep/config yet; add
-  `@playwright/test`, a `test:e2e` script, and a CI job that builds + previews first.
-- ◐ **F2 (S)** Coverage gate in CI (e.g. 80% on `src/domain` and stores).
-  _CI already runs `test:coverage` and uploads the report (`.github/workflows/ci.yml`),
-  but there is no enforced threshold — add `coverage.thresholds` to the Vitest config
-  so the run fails below target._
-- ☐ **F3 (S)** Bundle-size budget check in CI.
-- ◐ **F4 (S)** Sentry source-map upload on release; release tagging. _Runtime wired
-  (`@sentry/react` + `src/lib/observability.ts`); remaining: build-time source-map
-  upload + release tagging in the deploy/CI pipeline._
-- ☐ **F5 (S)** Lighthouse CI for performance/a11y/PWA budgets.
-- ☐ **F6 (S)** Storybook for the component library.
-- ☐ **F7 (S)** Add `format:check` to the local `ci` npm script. _Note:_ the GitHub
-  workflow runs the format check, but `npm run ci` (the documented Definition of Done)
-  does not, so a contributor can pass `ci` locally and still fail CI on formatting.
-- ☐ **F8 (S)** Remove the stale `Travel Editor/` legacy directory (the pre-migration
-  `.jsx` prototype) so it does not get linted/searched or confuse contributors.
-  _Confirmed still present_ (`Travel Editor/Travel Editor.html`, `app/*.jsx`,
-  `tweaks-panel.jsx`) after the React migration. (The root `index.html` is now the
-  live Vite entry — the 721-line standalone prototype that used to live there has been
-  removed, so this dir is the last copy of the dead code and is safe to delete.)
-- ☐ **F11 (S)** Verify the slimmed-down root `index.html` is complete after dropping the
-  721-line inline prototype. _Note:_ the entry now defers everything to `/src/main.tsx`
-  and `public/favicon.svg` (confirmed present). _Accept:_ confirm `npm run build` emits a
-  working `dist/index.html`, no SPA fallback / meta (OG/Twitter card, canonical URL) was
-  lost in the deletion, and add a smoke check that the app mounts into `#root`.
-- ☐ **F12 (S)** Add an ESLint ignore + tsconfig exclude (or outright delete via F8) for
-  `Travel Editor/` so the orphaned `.jsx` prototype can never be picked up by lint,
-  typecheck, the Vite build glob, or content search now that nothing imports it.
-  _Accept:_ `eslint .` and `tsc --noEmit` skip the dir; CI green; documented in CLAUDE.md.
-- ☐ **F9 (S)** Real PWA icons for installability. _Note:_ `vite.config.ts` ships only a
-  single `favicon.svg` with `purpose: 'any maskable'`, which fails the Lighthouse/PWA
-  installability audit (F5) on most platforms. _Accept:_ add 192×192 and 512×512 PNG icons
-  plus a dedicated maskable icon, reference them in the `VitePWA` manifest, and verify the
-  generated `manifest.webmanifest` passes the installability checks.
-- ☑ **F10 (S)** Validate ALL `VITE_` runtime flags in `src/lib/env.ts`. _Done:_ the Zod
-  `envSchema` now validates every supported flag — `VITE_APP_URL`, `VITE_SELFHOST_URL`,
-  `VITE_LOCAL_ONLY`, `VITE_DEMO_AUTH`/`VITE_DEMO_LOGIN`/`VITE_DEMO_PASSWORD`, and
-  `VITE_SENTRY_DSN` — all optional with sane defaults, and the typed `env` object is the
-  single consumer (modules no longer read raw `import.meta.env`). All flags are optional,
-  so a clean clone is always valid and boots straight into the editor.
+## F — Internationalization and accessibility
 
-## Epic G — Accessibility
+- ☑ **F1 (S) Eight locale bundles** — en/de/es/fr/it/pt/ru/uk.
+- ☑ **F2 (S) Locale completeness guard** — CI key parity against English.
+- ☐ **F3 (M) ICU-quality plurals** — especially Slavic counters.
+- ☐ **F4 (M) More locales** — Polish, Chinese, Japanese, Turkish, Arabic; Arabic
+  includes RTL layout acceptance.
+- ◐ **F5 (S) Locale-aware values** — money uses `Intl`; audit every displayed
+  date/number.
+- ◐ **F6 (M) Modal accessibility** — focus trap/restore and keyboard semantics
+  exist; run a full axe/manual screen-reader audit.
+- ◐ **F7 (S) Reduced motion/contrast** — reduced-motion hooks/styles exist; keep
+  a measured AA contrast matrix for both themes.
+- ☑ **F8 (S) Map screen-reader labels** — interactive regions and legend have
+  tested accessible names.
 
-- ☐ **G1 (M)** Full keyboard nav + focus trap in modals; audit with axe.
-- ☐ **G2 (S)** Respect `prefers-reduced-motion`; ensure AA contrast in both themes.
-- ☐ **G3 (S)** Screen-reader labels for the map regions and legend.
+## G — Quality and security
 
----
+- ☐ **G1 (M) Playwright E2E** — local-first edit/reload/import plus two-user
+  server sharing flow in CI.
+- ◐ **G2 (S) Coverage policy** — coverage artifacts exist; add meaningful
+  thresholds for domain/storage/server rather than a global vanity number.
+- ☐ **G3 (S) Bundle budgets** — initial JS/CSS and lazy map chunk limits.
+- ◐ **G4 (S) Sentry release integration** — runtime hook exists; add source-map
+  upload, release id, and privacy review.
+- ☐ **G5 (S) Lighthouse budgets** — performance, accessibility, best-practice,
+  and PWA checks.
+- ☐ **G6 (M) Component workbench** — Storybook or a lighter equivalent if the
+  reusable UI surface justifies it.
+- ☑ **G7 (S) Honest local CI gate** — format, docs, locales, tests, and build match
+  GitHub CI.
+- ☑ **G8 (S) Build/deployment smoke** — mount, routes, PWA, assets, headers, and
+  provenance.
+- ☐ **G9 (M) Map dependency advisory** — remove or safely upgrade the inherited
+  `d3-color` advisory chain without regressing zoom/map behavior.
+- ☐ **G10 (M) Server abuse controls** — rate limiting, request-body limits,
+  structured audit logs, and deployment guidance.
+- ☐ **G11 (L) Account lifecycle** — email verification, password reset, session
+  listing/revocation, and optional MFA before public multi-tenant claims.
 
-## How items are prioritized
+## H — Deployment and operations
 
-The planner orders by **(user value × confidence) ÷ size**, keeping epics
-balanced so the product improves on multiple axes each cycle. Newly discovered
-work (from the completeness critic, bug reports, or failing checks) is inserted
-here, which is what makes the stream continuous.
+- ☑ **H1 (S) Canonical Vercel contract** — static frontend, `main` Production,
+  branch previews, SPA rewrites, headers, immutable assets.
+- ☑ **H2 (S) Build provenance** — public non-secret `build-info.json`.
+- ☑ **H3 (S) Production monitoring** — scheduled black-box GitHub smoke.
+- ☑ **H4 (S) Pages deconfliction** — optional manual mirror, no automatic false
+  production failure.
+- ◐ **H5 (M) Server runbook** — backup/restore/upgrade documented; automate and
+  regularly test encrypted off-host backups.
+- ☐ **H6 (M) Release process** — tags, changelog promotion, artifacts, rollback
+  evidence, and release notes.
+- ☐ **H7 (S) Custom domain** — only if product branding requires it; preserve the
+  canonical URL and redirects.
+
+## Prioritization
+
+Use **user value × risk reduction × confidence ÷ effort**. Compatibility,
+data-loss, privacy, and broken-production work outranks cosmetic expansion.
+
+When a partial item is completed, update its acceptance evidence here and move
+the user-visible outcome into `PROJECT_STATUS.md`/the changelog.

@@ -39,9 +39,7 @@ export function EditorPage() {
   const [importOpen, setImportOpen] = useState(false);
   const [filter, setFilter] = useState('');
   // Show the first-run welcome banner until the user dismisses or acts on it.
-  const [onboarded, setOnboarded] = useState(
-    () => localStorage.getItem(ONBOARDED_KEY) === '1',
-  );
+  const [onboarded, setOnboarded] = useState(() => localStorage.getItem(ONBOARDED_KEY) === '1');
 
   const dismissWelcome = () => {
     localStorage.setItem(ONBOARDED_KEY, '1');
@@ -210,7 +208,11 @@ export function EditorPage() {
       </div>
 
       {!onboarded && (
-        <div className="welcome-banner" role="region" aria-label={t('onboarding.welcomeTitle', 'Welcome to Atlas')}>
+        <div
+          className="welcome-banner"
+          role="region"
+          aria-label={t('onboarding.welcomeTitle', 'Welcome to Atlas')}
+        >
           <Sparkles size={18} className="welcome-icon" aria-hidden="true" />
           <div className="welcome-body">
             <strong>{t('onboarding.welcomeTitle', 'Welcome to Atlas')}</strong>

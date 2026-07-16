@@ -47,9 +47,18 @@ const STORE_ICON: Partial<Record<StoreId, LucideIcon>> = {
 
 /** Honest one-line description of where a destination actually stores the data. */
 const STORE_DESC: Record<StoreId, { key: string; fallback: string }> = {
-  indexeddb: { key: 'storage.desc.indexeddb', fallback: 'Stays in this browser on this device. Private, offline.' },
-  localfile: { key: 'storage.desc.localfile', fallback: 'Saved to a .json file you choose on your computer.' },
-  selfhost: { key: 'storage.desc.selfhost', fallback: 'Synced to an Atlas Server you run. Enables sharing.' },
+  indexeddb: {
+    key: 'storage.desc.indexeddb',
+    fallback: 'Stays in this browser on this device. Private, offline.',
+  },
+  localfile: {
+    key: 'storage.desc.localfile',
+    fallback: 'Saved to a .json file you choose on your computer.',
+  },
+  selfhost: {
+    key: 'storage.desc.selfhost',
+    fallback: 'Synced to an Atlas Server you run. Enables sharing.',
+  },
   gdrive: { key: 'storage.desc.gdrive', fallback: 'Synced to your Google Drive app folder.' },
   dropbox: { key: 'storage.desc.dropbox', fallback: 'Synced to your Dropbox app folder.' },
   webdav: { key: 'storage.desc.webdav', fallback: 'Synced to your WebDAV / Nextcloud server.' },
@@ -125,7 +134,9 @@ export function ExportMenu({ data }: { data: TravelData }) {
       // User cancelled the picker — silently revert, no error.
       setActive(previousId);
       if (!isAbortError(err)) {
-        toast.error(t('storage.connectFailed', 'Could not connect to {{target}}', { target: label }));
+        toast.error(
+          t('storage.connectFailed', 'Could not connect to {{target}}', { target: label }),
+        );
       }
     } finally {
       setBusyId(null);
@@ -208,12 +219,16 @@ export function ExportMenu({ data }: { data: TravelData }) {
 
           {/* --- Server / cloud (leaves the device when active) ------------- */}
           <hr className="atlas-pop-sep" />
-          <div className="atlas-pop-label">{t('storage.groupRemote', 'Sync to a server / cloud')}</div>
+          <div className="atlas-pop-label">
+            {t('storage.groupRemote', 'Sync to a server / cloud')}
+          </div>
           {/* The Atlas Server destination + its inline connect form. */}
           <div className="export-dest" style={{ padding: '8px 10px 2px' }}>
             <Cloud className="export-dest-icon" size={17} aria-hidden="true" />
             <span className="export-dest-text">
-              <span className="export-dest-name">{t('storage.atlasServer', 'Atlas Server (self-hosted)')}</span>
+              <span className="export-dest-name">
+                {t('storage.atlasServer', 'Atlas Server (self-hosted)')}
+              </span>
               <span className="export-dest-desc">
                 {t(STORE_DESC.selfhost.key, STORE_DESC.selfhost.fallback)}
               </span>

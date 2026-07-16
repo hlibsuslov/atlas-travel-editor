@@ -1,16 +1,49 @@
 /// <reference types="vitest/config" />
-import { defineConfig } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import { fileURLToPath, URL } from 'node:url';
+
+/**
+ * Emit public, non-secret build provenance. Vercel and GitHub Actions provide the
+ * commit/environment variables automatically; local builds intentionally report
+ * a null commit. Operators can verify what is live without dashboard access.
+ */
+const buildInfoPlugin: Plugin = {
+  name: 'atlas-build-info',
+  generateBundle() {
+    const commit = process.env.VERCEL_GIT_COMMIT_SHA ?? process.env.GITHUB_SHA ?? null;
+    const environment =
+      process.env.VERCEL_ENV ??
+      (process.env.GITHUB_ACTIONS === 'true' ? 'github-actions' : 'local');
+    this.emitFile({
+      type: 'asset',
+      fileName: 'build-info.json',
+      source: `${JSON.stringify(
+        {
+          app: 'atlas',
+          version: process.env.npm_package_version ?? null,
+          commit,
+          environment,
+          builtAt: new Date().toISOString(),
+        },
+        null,
+        2,
+      )}\n`,
+    });
+  },
+};
+
+const basePath = process.env.GITHUB_PAGES === 'true' ? '/atlas-travel-editor/' : '/';
 
 // https://vitejs.dev/config/
 export default defineConfig({
   // GitHub Pages serves the app under /atlas-travel-editor/; Vercel, Docker and
   // any root-domain/self-host deploy stay at '/'.
-  base: process.env.GITHUB_PAGES ? '/atlas-travel-editor/' : '/',
+  base: basePath,
   plugins: [
     react(),
+    buildInfoPlugin,
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: [
@@ -28,17 +61,28 @@ export default defineConfig({
         theme_color: '#f3efe6',
         background_color: '#f3efe6',
         display: 'standalone',
-        start_url: '/',
+        start_url: basePath,
+        scope: basePath,
         icons: [
-          { src: '/favicon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
-          { src: '/maskable-icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'maskable' },
+          { src: `${basePath}favicon.svg`, sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
           {
-            src: '/maskable-512.png',
+            src: `${basePath}maskable-icon.svg`,
+            sizes: 'any',
+            type: 'image/svg+xml',
+            purpose: 'maskable',
+          },
+          {
+            src: `${basePath}maskable-512.png`,
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any maskable',
           },
-          { src: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png', purpose: 'any' },
+          {
+            src: `${basePath}apple-touch-icon.png`,
+            sizes: '180x180',
+            type: 'image/png',
+            purpose: 'any',
+          },
         ],
       },
       workbox: {

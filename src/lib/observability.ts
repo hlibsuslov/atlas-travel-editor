@@ -1,4 +1,5 @@
 import * as Sentry from '@sentry/react';
+import { env } from '@/lib/env';
 
 /**
  * Initialize error/performance monitoring. No-op unless VITE_SENTRY_DSN is set,
@@ -6,7 +7,7 @@ import * as Sentry from '@sentry/react';
  * until explicitly configured for an environment.
  */
 export function initObservability(): void {
-  const dsn = import.meta.env.VITE_SENTRY_DSN;
+  const dsn = env.sentryDsn;
   if (!dsn) return;
 
   Sentry.init({

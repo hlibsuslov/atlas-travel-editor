@@ -4,9 +4,9 @@ import { isValidTimelineString } from './timeline';
 
 /**
  * The travel domain model, expressed once as Zod schemas.
- * Everything else (TypeScript types, UI validation, API validation, the
- * Postgres JSONB shape) is derived from this file — it is the single source
- * of truth for what a valid travel record looks like.
+ * Everything else (TypeScript types, UI validation, storage validation, and the
+ * Atlas Server's vendored validation) is derived from this file — it is the
+ * single source of truth for what a valid travel record looks like.
  */
 
 export const yearSchema = z

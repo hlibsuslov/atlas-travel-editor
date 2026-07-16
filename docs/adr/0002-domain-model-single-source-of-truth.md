@@ -21,15 +21,16 @@ everything from it:
   reused by the UI and by the write path before persistence.
 - Lenient normalization (`normalize.ts`) for untrusted input that never throws.
 
-Domain code imports nothing from React or Supabase.
+Domain code imports nothing from React or a persistence provider. The optional
+Atlas Server vendors the validation subset and checks drift in CI.
 
 ## Consequences
 
 **Positive**
 
 - One place to change the model; types, validation, and tests follow.
-- The same validation can run client-side and (in future) in an edge function
-  for true end-to-end enforcement.
+- The same validation runs client-side and on Atlas Server writes for end-to-end
+  enforcement.
 - The pure, dependency-free domain is exhaustively unit-tested.
 
 **Negative**

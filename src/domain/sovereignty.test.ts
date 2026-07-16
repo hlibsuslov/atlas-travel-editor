@@ -1,10 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  UN_MEMBER_CODES,
-  UN_MEMBER_COUNT,
-  isUnMember,
-  recognition,
-} from './sovereignty';
+import { UN_MEMBER_CODES, UN_MEMBER_COUNT, isUnMember, recognition } from './sovereignty';
 
 describe('UN member truth', () => {
   it('declares exactly 193 members', () => {
