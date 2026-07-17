@@ -8,12 +8,13 @@ services:
     build: ./server
     image: atlas-server:local
     ports:
-      - '8787:8787'
+      # Loopback by default; expose publicly through a TLS reverse proxy.
+      - '${ATLAS_BIND_IP:-127.0.0.1}:8787:8787'
     environment:
-      # Set a strong value in production; rotates nothing secret but documents intent.
-      ATLAS_ALLOW_SIGNUP: '1'
+      # Open for local bootstrap; set ATLAS_ALLOW_SIGNUP=0 after creating accounts.
+      ATLAS_ALLOW_SIGNUP: '${ATLAS_ALLOW_SIGNUP:-1}'
       # Comma-separated allowed web-app origins for CORS (default '*' for local dev).
-      # ATLAS_CORS_ORIGINS: 'https://your-atlas.example.com'
+      ATLAS_CORS_ORIGINS: '${ATLAS_CORS_ORIGINS:-*}'
     volumes:
       - atlas-data:/data
     restart: unless-stopped
@@ -25,7 +26,7 @@ services:
     build: .
     image: atlas-web:local
     ports:
-      - '8080:80'
+      - '${ATLAS_WEB_BIND_IP:-127.0.0.1}:8080:80'
     restart: unless-stopped
 
 volumes:

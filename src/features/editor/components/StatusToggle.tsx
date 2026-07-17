@@ -25,7 +25,12 @@ export function StatusToggle({ label, on, status, onClick }: StatusToggleProps) 
       style={on ? { color, borderColor: color } : undefined}
     >
       <span className="sw" style={on ? { background: color } : undefined} aria-hidden="true" />
-      <Check className="status-check" size={13} aria-hidden="true" style={on ? { color } : undefined} />
+      <Check
+        className="status-check"
+        size={13}
+        aria-hidden="true"
+        style={on ? { color } : undefined}
+      />
       {label}
     </button>
   );

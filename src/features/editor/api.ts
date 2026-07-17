@@ -5,8 +5,8 @@ import { validateTravelData } from '@/domain/schema';
  * Remote document data-access layer. In local-first mode there is no remote
  * backend, so these are graceful stubs: the editor loads and saves through the
  * active DocumentStore (IndexedDB by default), never these functions. They keep
- * their shapes so the sharing surfaces compile, and are filled in with real HTTP
- * calls when the self-hostable Atlas Server lands (SelfHostStore, later sprint).
+ * their legacy shapes for callers/tests; real remote behavior now flows through
+ * `SelfHostStore` and the typed client under `src/lib/atlas/`.
  */
 export interface TravelRecord {
   data: TravelData;

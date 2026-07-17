@@ -10,7 +10,7 @@
     "type": "git",
     "url": "git+https://github.com/hlibsuslov/atlas-travel-editor.git"
   },
-  "homepage": "https://github.com/hlibsuslov/atlas-travel-editor#readme",
+  "homepage": "https://atlas-travel-editor.vercel.app",
   "bugs": {
     "url": "https://github.com/hlibsuslov/atlas-travel-editor/issues"
   },
@@ -27,7 +27,7 @@
     "typescript"
   ],
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "scripts": {
     "dev": "vite",
@@ -41,9 +41,10 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "check:docs": "node scripts/check-no-supabase-docs.mjs",
+    "check:docs": "node scripts/check-no-supabase-docs.mjs && node scripts/check-doc-links.mjs",
     "check:locales": "node scripts/check-locales.mjs",
-    "ci": "npm run typecheck && npm run lint && npm run check:docs && npm run check:locales && npm run test && npm run build"
+    "smoke:deploy": "node scripts/smoke-deployment.mjs",
+    "ci": "npm run typecheck && npm run lint && npm run format:check && npm run check:docs && npm run check:locales && npm run test && npm run build"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

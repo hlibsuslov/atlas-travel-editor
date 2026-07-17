@@ -1,0 +1,29 @@
+name: Production smoke
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 6 * * *'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-smoke
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    name: Vercel · HTTP · PWA · headers
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+      - name: Verify canonical production deployment
+        env:
+          ATLAS_EXPECT_COMMIT: ${{ github.sha }}
+          ATLAS_EXPECT_ENV: production
+        run: npm run smoke:deploy -- https://atlas-travel-editor.vercel.app

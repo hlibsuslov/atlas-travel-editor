@@ -20,7 +20,7 @@ graph, mutual friends, the activity feed and profile discovery all work today.
 
 ```bash
 # Docker (recommended) — one command, from the repo root:
-docker compose up --build           # → http://localhost:8787
+docker compose up --build           # → http://127.0.0.1:8787
 
 # or bare metal (Node 22+)
 cd server && npm install && npm start
@@ -43,6 +43,10 @@ The SQLite database is the only state. In Docker it lives in the `atlas-data`
 volume mounted at `/data`; back that volume up and you've backed up everything.
 On bare metal it defaults to `./data/atlas.db` next to where you launched the
 process.
+
+Use the [server operations runbook](../docs/SERVER_OPERATIONS.md) for a
+WAL-consistent stop/copy/start backup, restore, upgrades, health checks, and
+rollback.
 
 > **WARNING — set `ATLAS_CORS_ORIGINS` in production.** It defaults to `*`,
 > which is convenient for local dev but means *any* website can call your
@@ -136,7 +140,7 @@ docker compose up --build           # register via the web app at :8787
 docker compose down
 
 # 2. Re-launch with registration closed.
-ATLAS_ALLOW_SIGNUP=0 docker compose up
+ATLAS_ALLOW_SIGNUP=0 docker compose up -d atlas-server
 ```
 
 Your account (and its data volume) persists across the restart, so you can keep

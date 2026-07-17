@@ -739,9 +739,7 @@ export function DashboardPage() {
       </div>
 
       {/* Travel spend: only when a diary exists; otherwise nothing is shown. */}
-      {stats.budget.stayCount > 0 && (
-        <BudgetSection budget={stats.budget} locale={i18n.language} />
-      )}
+      {stats.budget.stayCount > 0 && <BudgetSection budget={stats.budget} locale={i18n.language} />}
     </div>
   );
 }

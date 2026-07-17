@@ -2,8 +2,8 @@ import { env } from '@/lib/env';
 
 /**
  * Local session types. The app is local-first, so identity is a lightweight local
- * shape (no third-party auth SDK). When a self-hostable Atlas Server is wired up
- * (later sprint), the same shape is populated from the server's `/me` response.
+ * shape (no third-party auth SDK). With a self-hostable Atlas Server connected,
+ * the same shape is populated from the server's `/me` response.
  */
 export interface LocalUser {
   id: string;
