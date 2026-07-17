@@ -318,6 +318,7 @@
     "unmatchedHint": "Some names didn't match the map. Use official English country names for best results.",
     "regionAria": "{{name}}: {{status}}",
     "mapAria": "World travel map",
+    "crimeaUkraine": "Crimea (Ukraine)",
     "statusMenuAria": "Set status for {{name}}",
     "statusClear": "Clear",
     "zoomIn": "Zoom in",

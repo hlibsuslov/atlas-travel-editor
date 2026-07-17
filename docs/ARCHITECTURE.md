@@ -82,6 +82,12 @@ Vertical slices, each owning its UI, state, and data access:
   `useTravelData` bridges the store and the active store (load on mount, explicit
   save, optional share toggle); presentational components (`CountryCard`,
   `CityTimeline`, `TagList`, `JsonPreview`, …) are thin and prop-driven.
+- **map** — an interactive Equal Earth SVG uses Natural Earth's lightweight 110m
+  topology. Sovereign microstates omitted at that resolution are represented by
+  small interactive centroid markers, preserving country coverage without the
+  full 50m geometry cost. The country canvas is memoized separately from tooltip
+  and popover state; pointer coordinates update one tooltip transform per frame
+  and do not enter React state.
 - **sharing / friends / profile** — read a public map by slug or handle, follow
   by handle or share link, and browse the feed/discovery — all served by the
   Atlas Server and hidden when none is connected.

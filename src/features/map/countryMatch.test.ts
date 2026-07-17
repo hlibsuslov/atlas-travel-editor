@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { buildStatusMap, canonical, statusForGeography } from './countryMatch';
+import {
+  buildStatusMap,
+  canonical,
+  countryNameForGeography,
+  isOnAtlas,
+  statusForGeography,
+} from './countryMatch';
 import { makeDefaultData, makeEmptyCountry } from '@/domain/normalize';
+import { COUNTRIES } from '@/domain/countries';
 import type { TravelData } from '@/domain/schema';
 
 describe('canonical', () => {
@@ -14,6 +21,16 @@ describe('canonical', () => {
     expect(canonical('United States')).toBe('united states of america');
     expect(canonical('UK')).toBe('united kingdom');
     expect(canonical('Czech Republic')).toBe('czechia');
+  });
+
+  it('turns Natural Earth labels back into canonical picker values', () => {
+    expect(countryNameForGeography('United States of America')).toBe('United States');
+    expect(countryNameForGeography('Bosnia and Herz.')).toBe('Bosnia & Herzegovina');
+    expect(countryNameForGeography('Dem. Rep. Congo')).toBe('Congo - Kinshasa');
+  });
+
+  it('keeps every picker country representable with polygons or lightweight markers', () => {
+    expect(COUNTRIES.filter((country) => !isOnAtlas(country.en))).toEqual([]);
   });
 });
 

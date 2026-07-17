@@ -119,16 +119,18 @@ export function makeEmptyCountry(): Country {
   };
 }
 
-/** The default example shown to first-time users (replaces the MVP DEFAULT_DATA). */
+/** The clean first-run document: only the user's birthplace, Ukraine. */
 export function makeDefaultData(): TravelData {
   return {
     person: { birthplace: { country: 'Ukraine' } },
     travel: {
       countries: [
         {
-          name: 'Austria',
-          status: { visited: true, lived: false, birthplace: false },
-          capitalVisit: { visited: true },
+          name: 'Ukraine',
+          // Primary statuses are cumulative in the editor: birthplace implies
+          // lived + visited, while the UI/map still shows the strongest tier.
+          status: { visited: true, lived: true, birthplace: true },
+          capitalVisit: { visited: false },
           timeline: { visited: [], lived: [] },
           cities: [],
         },

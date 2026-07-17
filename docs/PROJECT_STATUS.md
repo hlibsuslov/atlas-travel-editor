@@ -45,6 +45,8 @@ not imply that an Atlas Server is available.
 
 - Interactive world map with click cycling, status brushes, precise selection,
   pan/zoom, zoom-to-fit, coverage reporting, and unmatched-name diagnostics.
+- Optimized 110m map geometry with lightweight microstate markers, render-free
+  pointer tracking, localized tooltips, and responsive country-status overlays.
 - PNG map export with multiple aspect ratios.
 - World/continent progress, milestones, yearly activity, streaks, city counts,
   and budget summaries.

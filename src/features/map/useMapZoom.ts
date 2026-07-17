@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { geoBounds, geoCentroid } from 'd3-geo';
 
 /**
@@ -56,33 +56,43 @@ export function useMapZoom() {
   // Tracks a pending single-click so a double-click can cancel the status cycle.
   const clickTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const clearPending = () => {
+  const clearPending = useCallback(() => {
     if (clickTimer.current) {
       clearTimeout(clickTimer.current);
       clickTimer.current = null;
     }
-  };
+  }, []);
+
+  useEffect(() => clearPending, [clearPending]);
 
   /** Multiply the current zoom (e.g. 1.5 to zoom in, 1/1.5 to zoom out). */
-  const setZoom = (factor: number) =>
-    setPosition((p) => ({ ...p, zoom: clampZoom(p.zoom * factor) }));
+  const setZoom = useCallback(
+    (factor: number) => setPosition((p) => ({ ...p, zoom: clampZoom(p.zoom * factor) })),
+    [],
+  );
 
-  const reset = () => setPosition(WORLD_VIEW);
+  const reset = useCallback(() => setPosition(WORLD_VIEW), []);
 
   /** Center + fit the given geography, cancelling any pending single-click. */
-  const zoomToGeo = (geo: unknown) => {
-    clearPending();
-    setPosition(zoomToFit(geo));
-  };
+  const zoomToGeo = useCallback(
+    (geo: unknown) => {
+      clearPending();
+      setPosition(zoomToFit(geo));
+    },
+    [clearPending],
+  );
 
   /** Run `fn` after a short delay unless a double-click cancels it first. */
-  const deferClick = (fn: () => void) => {
-    clearPending();
-    clickTimer.current = setTimeout(() => {
-      clickTimer.current = null;
-      fn();
-    }, CLICK_DEFER_MS);
-  };
+  const deferClick = useCallback(
+    (fn: () => void) => {
+      clearPending();
+      clickTimer.current = setTimeout(() => {
+        clickTimer.current = null;
+        fn();
+      }, CLICK_DEFER_MS);
+    },
+    [clearPending],
+  );
 
   return { position, setPosition, setZoom, reset, zoomToGeo, deferClick };
 }
