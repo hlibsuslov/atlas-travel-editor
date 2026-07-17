@@ -318,6 +318,7 @@
     "unmatchedHint": "Einige Namen konnten nicht zugeordnet werden. Verwende für beste Ergebnisse die offiziellen englischen Ländernamen.",
     "regionAria": "{{name}}: {{status}}",
     "mapAria": "Weltreisekarte",
+    "crimeaUkraine": "Krim (Ukraine)",
     "statusMenuAria": "Status für {{name}} festlegen",
     "statusClear": "Löschen",
     "zoomIn": "Vergrößern",

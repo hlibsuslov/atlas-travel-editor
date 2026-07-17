@@ -1,6 +1,6 @@
-import worldData from 'world-atlas/countries-50m.json';
 import type { TravelData } from '@/domain/schema';
-import { canonicalCountryName } from '@/domain/countries';
+import { canonicalCountryName, COUNTRIES } from '@/domain/countries';
+import { SUPPLEMENTAL_PLACES, WORLD_GEO } from './mapData';
 
 /** Visual status of a country on the map, from strongest to weakest. */
 export type MapStatus = 'birthplace' | 'lived' | 'visited' | 'capital' | 'none';
@@ -44,19 +44,49 @@ const ALIASES: Record<string, string> = {
   'the netherlands': 'netherlands',
   holland: 'netherlands',
   burma: 'myanmar',
-  'ivory coast': "cote d'ivoire",
+  'myanmar burma': 'myanmar',
+  'ivory coast': 'cote d ivoire',
   'cape verde': 'cabo verde',
   swaziland: 'eswatini',
   macedonia: 'north macedonia',
+  'bosnia and herz': 'bosnia herzegovina',
+  'central african rep': 'central african republic',
   'democratic republic of the congo': 'dem rep congo',
   'dr congo': 'dem rep congo',
+  'congo kinshasa': 'dem rep congo',
   'republic of the congo': 'congo',
+  'congo brazzaville': 'congo',
+  'dominican rep': 'dominican republic',
+  'eq guinea': 'equatorial guinea',
+  'marshall is': 'marshall islands',
+  's sudan': 'south sudan',
+  'solomon is': 'solomon islands',
+  'st kitts and nevis': 'st kitts nevis',
+  'sao tome and principe': 'sao tome principe',
+  'st vin and gren': 'st vincent grenadines',
+  turkiye: 'turkey',
+  'trinidad tobago': 'trinidad and tobago',
+  vatican: 'vatican city',
 };
 
 /** Canonical comparison key for a country name. */
 export function canonical(name: string): string {
   const s = canonicalCountryName(name);
   return ALIASES[s] ?? s;
+}
+
+const COUNTRY_BY_CANONICAL = new Map(
+  COUNTRIES.map((country) => [canonical(country.en), country.en]),
+);
+
+/**
+ * Turn a Natural Earth geography label into the canonical English value used by
+ * the editor. This keeps map clicks from creating duplicates such as
+ * "United States of America" beside the picker value "United States" and also
+ * gives tooltips a name that Intl.DisplayNames can localize.
+ */
+export function countryNameForGeography(name: string): string {
+  return COUNTRY_BY_CANONICAL.get(canonical(name)) ?? name;
 }
 
 /**
@@ -96,13 +126,14 @@ export function statusForGeography(
 }
 
 /** Canonical names present in the bundled atlas. */
-const GEO_NAMES: ReadonlySet<string> = new Set(
-  (
-    worldData as unknown as {
+const GEO_NAMES: ReadonlySet<string> = new Set([
+  ...(
+    WORLD_GEO as unknown as {
       objects: { countries: { geometries: { properties: { name: string } }[] } };
     }
   ).objects.countries.geometries.map((g) => canonical(g.properties.name)),
-);
+  ...SUPPLEMENTAL_PLACES.map((place) => canonical(place.name)),
+]);
 
 /** Whether a (canonical) key exists on the bundled atlas. */
 export function isOnAtlas(name: string): boolean {

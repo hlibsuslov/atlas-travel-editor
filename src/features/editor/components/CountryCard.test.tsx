@@ -38,8 +38,9 @@ describe('<CountryCard> bound to the store', () => {
   it('toggles a status through the store', async () => {
     const user = userEvent.setup();
     render(<CardUnderTest />);
-    await user.click(screen.getByRole('button', { name: 'Lived' }));
     expect(useEditorStore.getState().data.travel.countries[0]!.status.lived).toBe(true);
+    await user.click(screen.getByRole('button', { name: 'Lived' }));
+    expect(useEditorStore.getState().data.travel.countries[0]!.status.lived).toBe(false);
   });
 
   it('adds a city', async () => {
@@ -62,7 +63,7 @@ describe('<CountryCard> bound to the store', () => {
     const country = useEditorStore.getState().data.travel.countries[0]!;
     expect(country.status.visited).toBe(true);
     expect(country.timeline.visited).toContain(String(CURRENT_YEAR));
-    expect(toast.success).toHaveBeenCalledWith(`Recorded Austria ${CURRENT_YEAR}`);
+    expect(toast.success).toHaveBeenCalledWith(`Recorded Ukraine ${CURRENT_YEAR}`);
   });
 
   it('does not show the quick-actualize button when the card is open', () => {

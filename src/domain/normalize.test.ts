@@ -104,6 +104,14 @@ describe('factories', () => {
   });
 
   it('makeDefaultData passes strict validation', () => {
-    expect(validateTravelData(makeDefaultData()).ok).toBe(true);
+    const data = makeDefaultData();
+    expect(validateTravelData(data).ok).toBe(true);
+    expect(data.person.birthplace.country).toBe('Ukraine');
+    expect(data.travel.countries).toHaveLength(1);
+    expect(data.travel.countries[0]).toMatchObject({
+      name: 'Ukraine',
+      status: { birthplace: true },
+      capitalVisit: { visited: false },
+    });
   });
 });

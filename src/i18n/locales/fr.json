@@ -318,6 +318,7 @@
     "unmatchedHint": "Certains noms ne correspondent pas à la carte. Utilisez les noms officiels en anglais pour de meilleurs résultats.",
     "regionAria": "{{name}} : {{status}}",
     "mapAria": "Carte des voyages dans le monde",
+    "crimeaUkraine": "Crimée (Ukraine)",
     "statusMenuAria": "Définir le statut de {{name}}",
     "statusClear": "Effacer",
     "zoomIn": "Zoom avant",

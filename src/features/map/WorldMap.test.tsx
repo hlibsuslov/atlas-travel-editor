@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { Profiler } from 'react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { WorldMap, MiniMap } from './WorldMap';
 import { WORLD_VIEW, zoomToFit } from './useMapZoom';
 import type { TravelData } from '@/domain/schema';
@@ -147,6 +148,44 @@ describe('<WorldMap> accessibility (G3)', () => {
     expect(screen.getByRole('button', { name: 'Zoom in' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Zoom out' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Reset view' })).toBeInTheDocument();
+  });
+
+  it('moves the tooltip without committing a React render on every mousemove', async () => {
+    const onRender = vi.fn();
+    render(
+      <Profiler id="map" onRender={onRender}>
+        <WorldMap data={sampleData} />
+      </Profiler>,
+    );
+
+    const group = screen.getByRole('group', { name: 'World travel map' });
+    vi.spyOn(group, 'getBoundingClientRect').mockReturnValue({
+      x: 0,
+      y: 0,
+      top: 0,
+      left: 0,
+      right: 960,
+      bottom: 500,
+      width: 960,
+      height: 500,
+      toJSON: () => ({}),
+    });
+    const france = screen.getByRole('button', { name: 'France: Birthplace' });
+    fireEvent.mouseEnter(france, { clientX: 120, clientY: 90 });
+    const tooltip = screen.getByRole('tooltip');
+    expect(within(tooltip).getByText('France')).toBeInTheDocument();
+    await waitFor(() => expect(tooltip.style.transform).toContain('translate3d'));
+
+    const commitsAfterEnter = onRender.mock.calls.length;
+    const firstTransform = tooltip.style.transform;
+    fireEvent.mouseMove(france, { clientX: 140, clientY: 100 });
+    fireEvent.mouseMove(france, { clientX: 160, clientY: 110 });
+    fireEvent.mouseMove(france, { clientX: 180, clientY: 120 });
+    await waitFor(() => expect(tooltip.style.transform).not.toBe(firstTransform));
+
+    // Coordinates are applied directly to the tooltip element; the memoized SVG
+    // tree and its parent do not commit another React update for pointer motion.
+    expect(onRender).toHaveBeenCalledTimes(commitsAfterEnter);
   });
 });
 

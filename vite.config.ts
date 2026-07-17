@@ -86,17 +86,10 @@ export default defineConfig({
         ],
       },
       workbox: {
-        // Don't precache the large world atlas json; serve it stale-while-revalidate.
-        // The app bundles the detailed 50m atlas (see WorldMap.tsx), so the runtime
-        // rule must match that filename — not the unused 110m one.
+        // The optimized 110m atlas is bundled into the lazy map chunk; there is no
+        // standalone JSON request to cache. Keep the service-worker precache to
+        // executable/static app assets only.
         globPatterns: ['**/*.{js,css,html,svg,woff2}'],
-        runtimeCaching: [
-          {
-            urlPattern: /countries-50m.*\.json$/,
-            handler: 'StaleWhileRevalidate',
-            options: { cacheName: 'world-atlas' },
-          },
-        ],
       },
     }),
   ],
@@ -108,9 +101,9 @@ export default defineConfig({
   build: {
     target: 'es2022',
     sourcemap: true,
-    // The detailed 50m world atlas lives in a lazy-loaded map chunk, so a large
-    // size there is expected and does not affect the initial load.
-    chunkSizeWarningLimit: 1500,
+    // The optimized 110m world atlas lives in a lazy-loaded map chunk, keeping
+    // both initial navigation and the interactive SVG payload bounded.
+    chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
         // Split vendor chunks so app code can be cached independently of deps.
