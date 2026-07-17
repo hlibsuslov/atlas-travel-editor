@@ -808,6 +808,8 @@ textarea.input {
   background: var(--sea);
   overflow: hidden;
   touch-action: none;
+  contain: layout paint;
+  isolation: isolate;
 }
 .atlas-svg {
   width: 100%;
@@ -816,40 +818,58 @@ textarea.input {
 }
 .atlas-tip {
   position: absolute;
+  left: 0;
+  top: 0;
   z-index: 20;
   pointer-events: none;
-  transform: translateY(-50%);
-  background: var(--ink);
+  transform: translate3d(-1000px, -1000px, 0);
+  background: color-mix(in srgb, var(--ink) 96%, transparent);
   color: #f3efe6;
-  border-radius: 6px;
-  padding: 8px 11px;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 12px;
+  padding: 10px 11px;
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
-  min-width: 120px;
+  gap: 8px;
+  box-shadow:
+    0 14px 34px rgba(0, 0, 0, 0.28),
+    0 2px 8px rgba(0, 0, 0, 0.16);
+  min-width: 168px;
+  max-width: 240px;
+  contain: layout paint;
+  will-change: transform;
 }
 .atlas-tip-iso {
-  font-size: 10px;
+  width: max-content;
+  font-size: 9px;
   letter-spacing: 0.14em;
-  color: #b8b09c;
+  color: #d4ccb8;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  padding: 1px 5px;
 }
 .atlas-tip-name {
   font-weight: 700;
   font-size: 14px;
   font-family: var(--font-display);
+  line-height: 1.15;
+  overflow-wrap: anywhere;
 }
 .atlas-tip-status {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
+  padding-top: 7px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  font-size: 11.5px;
+  font-weight: 600;
   color: #d8d2c2;
 }
 .atlas-tip-status i {
   width: 9px;
   height: 9px;
   border-radius: 50%;
+  flex: 0 0 auto;
 }
 .atlas-zoom {
   position: absolute;

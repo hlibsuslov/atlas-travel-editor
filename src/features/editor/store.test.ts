@@ -123,10 +123,10 @@ describe('useEditorStore', () => {
     const store = useEditorStore.getState();
     store.addCountry(); // empty country prepended at index 0
     store.setCountryName(0, 'Zed');
-    // Order is now ['Zed', 'Austria']; move Zed to the end.
+    // Order is now ['Zed', 'Ukraine']; move Zed to the end.
     useEditorStore.getState().reorderCountries(0, 1);
     const names = useEditorStore.getState().data.travel.countries.map((c) => c.name);
-    expect(names).toEqual(['Austria', 'Zed']);
+    expect(names).toEqual(['Ukraine', 'Zed']);
   });
 
   it('reorderCountries with an out-of-range index is a no-op', () => {
@@ -136,7 +136,16 @@ describe('useEditorStore', () => {
   });
 
   it('mergeCountries appends new countries and merges matching ones in one undo step', () => {
-    // Default doc has Austria (visited, capital visited, no timelines/cities).
+    // Use an explicit fixture so this merge test is independent of first-run data.
+    const fixture = makeDefaultData();
+    fixture.travel.countries = [
+      makeCountry({
+        name: 'Austria',
+        status: { visited: true, lived: false, birthplace: false },
+        capitalVisit: { visited: true },
+      }),
+    ];
+    useEditorStore.getState().setData(fixture, { markClean: true });
     const incoming: Country[] = [
       makeCountry({
         name: 'austria', // canonical match against existing 'Austria'
@@ -170,17 +179,17 @@ describe('useEditorStore', () => {
   });
 
   it('mergeCountries dedupes city years and timeline entries on a matching city', () => {
-    useEditorStore.getState().addCity(0, 'Vienna', 2020); // Austria gets Vienna [2020]
+    useEditorStore.getState().addCity(0, 'Kyiv', 2020); // Ukraine gets Kyiv [2020]
     useEditorStore.getState().mergeCountries([
       makeCountry({
-        name: 'Austria',
+        name: 'Ukraine',
         timeline: { visited: [], lived: [] },
-        cities: [{ name: 'Vienna', timeline: { visited: [2020, 2019] } }],
+        cities: [{ name: 'Kyiv', timeline: { visited: [2020, 2019] } }],
       }),
     ]);
-    const austria = useEditorStore.getState().data.travel.countries[0]!;
-    expect(austria.cities).toHaveLength(1);
-    expect(austria.cities[0]!.timeline.visited).toEqual([2019, 2020]);
+    const ukraine = useEditorStore.getState().data.travel.countries[0]!;
+    expect(ukraine.cities).toHaveLength(1);
+    expect(ukraine.cities[0]!.timeline.visited).toEqual([2019, 2020]);
   });
 
   it('mergeCountries is a single undo step', () => {
@@ -189,7 +198,7 @@ describe('useEditorStore', () => {
       .mergeCountries([makeCountry({ name: 'Poland' }), makeCountry({ name: 'Spain' })]);
     expect(useEditorStore.getState().data.travel.countries).toHaveLength(3);
     useEditorStore.getState().undo();
-    expect(useEditorStore.getState().data.travel.countries.map((c) => c.name)).toEqual(['Austria']);
+    expect(useEditorStore.getState().data.travel.countries.map((c) => c.name)).toEqual(['Ukraine']);
   });
 
   it('actualizeCountry creates a missing country, sets visited, and adds the year', () => {
@@ -203,11 +212,11 @@ describe('useEditorStore', () => {
 
   it('actualizeCountry reuses an existing country and is idempotent', () => {
     const store = useEditorStore.getState();
-    store.actualizeCountry('austria', 2022); // canonical match to existing 'Austria'
-    store.actualizeCountry('Austria', 2022); // duplicate year ignored
+    store.actualizeCountry('ukraine', 2022); // canonical match to existing 'Ukraine'
+    store.actualizeCountry('Ukraine', 2022); // duplicate year ignored
     const countries = useEditorStore.getState().data.travel.countries;
     expect(countries).toHaveLength(1);
-    expect(countries[0]!.name).toBe('Austria');
+    expect(countries[0]!.name).toBe('Ukraine');
     expect(countries[0]!.status.visited).toBe(true);
     expect(countries[0]!.timeline.visited).toEqual(['2022']);
   });

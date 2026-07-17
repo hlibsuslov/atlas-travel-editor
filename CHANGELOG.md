@@ -51,6 +51,17 @@ and this project aims to follow [Semantic Versioning](https://semver.org/spec/v2
 
 ### Changed
 
+- **Map performance and overlays** — the interactive SVG now uses an optimized
+  110m topology plus lightweight markers for omitted microstates, isolates the
+  expensive country tree from tooltip state, and positions tooltips with one
+  animation-frame transform instead of a React render on every pointer move.
+  Country tooltips and the status picker were redesigned, including viewport
+  clamping and a polished mobile bottom sheet.
+- **Clean first run** — new documents now contain only Ukraine as the birthplace;
+  the previous preselected Austria example was removed.
+- Natural Earth geography labels are normalized back to canonical picker names,
+  preventing duplicate entries such as `United States of America` and preserving
+  complete picker-country coverage on the optimized map.
 - Vercel is documented as the canonical static frontend; GitHub Pages is now an
   optional manual mirror instead of a failing automatic parallel deployment.
 - Root tooling, CI, and the frontend Docker build align on Node 22.
