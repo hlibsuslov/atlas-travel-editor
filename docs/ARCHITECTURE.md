@@ -31,10 +31,11 @@ indexeddb   localfile      selfhost  ┄┄┄  github · webdav · gdrive · dr
 
 The two design pillars:
 
-1. **Local-first is the source of truth.** All travel data lives on the device.
-   The document is portable as one self-describing JSON envelope
-   (`{ app, schemaVersion, updatedAt, data }`). Any server is only ever a
-   *publish / sync / social target*, never the primary store.
+1. **Local-first is the default.** The app boots, edits, and persists on the
+   device without a network. The document is portable as one self-describing JSON
+   envelope (`{ app, schemaVersion, updatedAt, data }`). A server is used only
+   after an explicit provider choice; the browser still retains the working
+   document/cache, while the selected provider is authoritative for sync.
 2. **Pluggable storage behind one seam.** Every backend implements the same
    `DocumentStore` contract, so the editor only ever loads and saves one
    self-contained `TravelData` blob plus a little sync metadata — and never knows
@@ -53,13 +54,14 @@ derive:
   by the storage seam to refuse persisting malformed data.
 - **Lenient normalization** (`normalize.ts`) for untrusted input — pasted JSON,
   legacy caches, an imported file, a server payload — which never throws and
-  best-effort shapes data into the current model, walking older `schemaVersion`s
-  up the ladder.
+  best-effort shapes data into the current model. Today that includes bare/v1
+  documents and the additive v2 stays shape; future versions must add an explicit
+  migration or fail-closed compatibility guard.
 
-This layer has zero React or backend dependencies, so it is trivially
-unit-tested and is the most heavily covered part of the codebase. The optional
-Atlas Server **vendors this exact domain** (guarded by a CI drift check) so the
-client and server can never disagree on what counts as valid data.
+This layer has zero React or backend dependencies, so it is straightforward to
+unit test and is heavily covered. The optional Atlas Server vendors the subset
+needed for document validation (guarded by a CI drift check) so client and server
+agree on accepted persisted data.
 
 ### Lib (`src/lib`)
 
@@ -169,19 +171,20 @@ documents (
 )
 ```
 
-This is the key graft: growing the diary (places / stays / journal) needs **zero
-backend migration** — only a `schemaVersion` bump and a `normalize.ts` step in
-the shared domain. On every write the server still normalizes the untrusted input
-and validates it against the vendored Zod schema, so it can never store data the
-client would reject.
+This is the key graft: additive diary growth normally needs no travel-detail SQL
+migration — it needs a schema-version decision plus normalization in the shared
+domain. Metadata/table changes can still require an ordinary SQLite migration. On
+every write the server normalizes the untrusted input and validates it against the
+vendored Zod schema.
 
 ### Optimistic concurrency (If-Match)
 
 `PUT /me/document` takes an `If-Match: <version>` header. If the supplied version
 no longer matches the stored row, the server returns `409` with the current
 remote document, which the `SelfHostStore` surfaces as the seam's `ConflictError`
-so the editor can offer keep-mine / take-theirs / merge. On success it bumps
-`version`.
+and preserves for a future resolver. The current UI reports the failed save but
+does not yet offer keep-mine / take-theirs / merge controls. On success the server
+bumps `version`.
 
 ### What else it provides
 
@@ -202,23 +205,25 @@ capability, so all Follow / Profile / Feed UI is hidden.
 2. UI mutations go through typed store actions (immutable via Immer) and flip
    `dirty`. The JSON preview and validation badge derive from store state with
    `useMemo`.
-3. **Save** is explicit and user-triggered. The registry validates against the
-   strict schema before any backend writes — the client never persists invalid
-   data; the Atlas Server validates again server-side.
+3. A single global **debounced autosave** runs across routes, with an actionable
+   save-status control and page-hide flush. The registry validates before any
+   backend write; invalid edits stay local until corrected. Atlas Server validates
+   again server-side.
 4. When the active backend is the Atlas Server, the loaded `VersionToken` is sent
-   back on save as `If-Match`; a `409` becomes a `ConflictError` the UI resolves.
+   back on save as `If-Match`; a `409` becomes a `ConflictError`.
 
 ## Testing strategy
 
-- **Domain** — exhaustive unit tests on validation, timeline parsing, and the
-  `v1→vN` normalization ladder (the riskiest, purest logic).
+- **Domain** — unit tests on validation, timeline parsing, normalization,
+  geography, and statistics.
 - **Storage seam** — the registry invariants (normalize-on-load,
   validate-on-save), READY gating, and per-adapter behavior.
 - **Store** — behavioral tests on mutations, dedup/sort invariants, and
   out-of-range safety.
 - **Components** — Testing Library tests on validated inputs and the store↔UI
   binding.
-- **CI gate** — client `npm run ci` = typecheck + lint + tests + build. Server
+- **CI gate** — client `npm run ci` = typecheck + lint + formatting + docs +
+  locales + tests + build. Server
   `npm run ci` = `check:domain` (the vendored-domain drift guard) + typecheck +
   `node:test`. A leak test asserts no public response ever contains an
   email/id/hash/token.
@@ -230,9 +235,9 @@ capability, so all Follow / Profile / Feed UI is hidden.
   the document contract lives in exactly one place (the Zod domain). Search and
   analytics, if ever needed, can index derived columns without changing the
   contract.
-- **Explicit save over autosave**: a simpler, predictable write story; the
-  per-backend `VersionToken` is already the foundation for autosave with
-  conflict resolution later.
+- **Debounced autosave with optimistic detection, not collaborative merge**:
+  routine edits persist quietly and stale writes are refused, but users still
+  need a dedicated conflict-resolution experience.
 - **Local-first default over an always-on backend**: the app is useful with zero
   infrastructure and zero accounts; everyone who wants sharing opts into a server
   they (or someone) self-hosts, with no vendor lock-in.

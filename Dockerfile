@@ -3,7 +3,7 @@
 # Build & run:  docker build -t atlas-web . && docker run -p 8080:80 atlas-web
 
 # ---- Stage 1: build the static PWA ----------------------------------------
-FROM node:20-alpine AS build
+FROM node:22-alpine AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci

@@ -54,7 +54,7 @@ export const env = {
   localOnly: forceLocal || !selfHostUrl,
   /** Demo login form (default credentials 1/1) for the explorable demo. */
   demoAuth: parsed.success ? parsed.data.VITE_DEMO_AUTH === '1' : false,
-  /** Whether a sharing/social backend is configured at all (false until wired). */
+  /** Whether a sharing/social backend is configured at all. */
   socialBackendConfigured: !!selfHostUrl,
   sentryDsn: (parsed.success && parsed.data.VITE_SENTRY_DSN) || undefined,
 } as const;

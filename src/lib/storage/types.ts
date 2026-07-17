@@ -44,7 +44,7 @@ export interface Capabilities {
   auth: boolean;
 }
 
-/** All store ids known to the registry. `selfhost` + the cloud ids are stubs this wave. */
+/** All store ids known to the registry. Cloud ids are reserved, disabled adapters. */
 export type StoreId =
   | 'indexeddb'
   | 'localfile'

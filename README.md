@@ -2,6 +2,8 @@
 
 [![CI](https://github.com/hlibsuslov/atlas-travel-editor/actions/workflows/ci.yml/badge.svg)](https://github.com/hlibsuslov/atlas-travel-editor/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/hlibsuslov/atlas-travel-editor/actions/workflows/codeql.yml/badge.svg)](https://github.com/hlibsuslov/atlas-travel-editor/actions/workflows/codeql.yml)
+[![Production smoke](https://github.com/hlibsuslov/atlas-travel-editor/actions/workflows/smoke-production.yml/badge.svg)](https://github.com/hlibsuslov/atlas-travel-editor/actions/workflows/smoke-production.yml)
+[![Vercel](https://img.shields.io/website?url=https%3A%2F%2Fatlas-travel-editor.vercel.app&label=vercel)](https://atlas-travel-editor.vercel.app)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
@@ -15,9 +17,17 @@ needs **no account**, **no login wall**, and **no `.env` file**. Sharing and soc
 features are entirely optional and only appear when you connect your own
 self-hosted [Atlas Server](#optional-atlas-server--accounts--sharing--social).
 
+**[Open Atlas](https://atlas-travel-editor.vercel.app)** ·
+[Project status](docs/PROJECT_STATUS.md) ·
+[Documentation](docs/README.md) ·
+[Deployment](docs/DEPLOYMENT.md)
+
+![Atlas social preview: map your life in countries](public/og-image.png)
+
 ## Try it in 60 seconds
 
-No backend, no account, no configuration:
+Use the [live app](https://atlas-travel-editor.vercel.app), or run it locally with
+no backend, account, or configuration:
 
 ```bash
 git clone https://github.com/hlibsuslov/atlas-travel-editor.git
@@ -43,6 +53,8 @@ until you point Atlas at an Atlas Server — see below.
 - **Local-first & offline** — installable PWA backed by IndexedDB and a service
   worker. No account, no network required. Back up and move data via JSON
   Export/Import.
+- **Safe editing** — global debounced autosave, save-state feedback, bounded
+  undo/redo, validated imports, and optimistic version checks.
 - **Travel diary** — keep stays (places/hotels with dates and cost) alongside the
   map.
 - **Friends** (optional, needs an Atlas Server) — follow people by **handle** or a
@@ -66,7 +78,7 @@ until you point Atlas at an Atlas Server — see below.
 | Validation   | Zod — one schema shared by UI, storage, and tests             |
 | Storage      | Pluggable `DocumentStore` seam — IndexedDB by default          |
 | Server (opt) | Node + Hono + built-in `node:sqlite` (zero native deps)        |
-| Hosting / CI | Static PWA on any host + GitHub Actions (typecheck · lint · test · build) |
+| Hosting / CI | Vercel static PWA + GitHub Actions + production smoke checks |
 
 ## Storage options
 
@@ -78,7 +90,7 @@ normalize-on-load and validate-on-save enforced centrally
 | Mode | Account? | Data lives in | Sharing / social | Status |
 | ---- | -------- | ------------- | ---------------- | ------ |
 | **Local-first (IndexedDB)** | no | your browser | no | **default, ready** |
-| **Single local file** | no | one JSON file on disk (File System Access API) | no | ready |
+| **Single local file** | no | one JSON file on disk (File System Access API) | no | ready on supporting browsers; fallback elsewhere |
 | **Atlas Server (self-hosted)** | yes | your own server (SQLite) | yes — public maps, follows, feed | ready (optional) |
 | GitHub / WebDAV / Google Drive / Dropbox | varies | your own cloud / repo | no | coming soon (not yet enabled) |
 
@@ -144,27 +156,34 @@ only `VITE_`-prefixed values reach the browser (embedded at build time). See
 | `npm run preview`       | Serve the production build locally               |
 | `npm run typecheck`     | `tsc` project references, no emit                |
 | `npm run lint`          | ESLint (type-aware)                              |
+| `npm run format:check`  | Verify repository formatting                    |
 | `npm run format`        | Prettier write                                   |
+| `npm run check:docs`    | Documentation policy + local-link checks        |
+| `npm run check:locales` | Verify all locale keys against English          |
 | `npm run test`          | Vitest unit + component tests                    |
 | `npm run test:coverage` | Tests with V8 coverage                           |
-| `npm run ci`            | The full gate: typecheck → lint → test → build   |
+| `npm run smoke:deploy -- URL` | Verify a deployed SPA/PWA and headers    |
+| `npm run ci`            | Full frontend quality gate                      |
 
 The optional server has its own gate: `npm --prefix server run ci`
 (check:domain → typecheck → `node:test`).
 
 ## Deployment
 
-Atlas is a **static PWA** — build it and host `dist/` anywhere.
+Atlas is a **static PWA**. The canonical frontend is live at
+[atlas-travel-editor.vercel.app](https://atlas-travel-editor.vercel.app).
 
 - **Vercel** — `vercel.json` configures SPA rewrites, long-term asset caching, and
-  security headers (CSP/HSTS/etc.). The CSP `connect-src` is `'self' https: wss:`
-  so a hosted Atlas can reach a user-configured Atlas Server.
-- **GitHub Pages** — build and publish `dist/` (a workflow pointer lands alongside
-  this release).
+  security headers (CSP/HSTS/etc.). Pushes to `main` produce Production and other
+  branches produce protected Preview deployments.
+- **GitHub Pages** — an optional manually dispatched mirror after Pages is enabled
+  in repository settings.
 - **Netlify / any static host / a container** — serve `dist/` with SPA fallback.
 
 The optional **Atlas Server** deploys separately via Docker
-(`docker compose up --build`); see [`docs/SELF_HOSTING.md`](docs/SELF_HOSTING.md).
+(`docker compose up --build`); Vercel never hosts its SQLite database. See the
+[deployment runbook](docs/DEPLOYMENT.md) and
+[`docs/SELF_HOSTING.md`](docs/SELF_HOSTING.md).
 
 ## Project layout
 
@@ -178,13 +197,12 @@ src/
   features/
     editor/    store (Zustand), data hooks, components
     map/       world map, country-name matching, legend
-    diary/     stays (places/hotels) with dates and cost
     friends/   follow by handle / share link, browse friends' maps
     settings/  theme + language switchers
     sharing/   public read-only share page (with map)
   components/  cross-feature UI (AppShell nav, ErrorBoundary)
 server/        optional Atlas Server (Node + Hono + node:sqlite)
-docs/          product plan, architecture, security, ADRs
+docs/          status, architecture, model, operations, security, ADRs
 ```
 
 ## Contributing
@@ -197,11 +215,18 @@ our [`Code of Conduct`](CODE_OF_CONDUCT.md). To report a vulnerability, see the
 
 - [Docs index](docs/README.md) — start here
 - [Product plan](docs/PRODUCT_PLAN.md) — the north star
+- [Project status](docs/PROJECT_STATUS.md) — shipped, deferred, and limitations
 - [Architecture overview](docs/ARCHITECTURE.md)
+- [Data model & compatibility](docs/DATA_MODEL.md)
+- [Development guide](docs/DEVELOPMENT.md)
+- [Testing & quality gates](docs/TESTING.md)
+- [Deployment runbook](docs/DEPLOYMENT.md)
 - [Self-hosting & run modes](docs/SELF_HOSTING.md)
+- [Atlas Server operations](docs/SERVER_OPERATIONS.md)
 - [Security model](docs/SECURITY.md)
+- [Glossary](docs/GLOSSARY.md)
 - [Brand & assets](docs/brand/BRAND.md)
-- [ADRs](docs/adr)
+- [ADRs](docs/adr/README.md)
 - [Contributing](CONTRIBUTING.md)
 - [Code of Conduct](CODE_OF_CONDUCT.md)
 - [Security policy](.github/SECURITY.md)

@@ -7,7 +7,7 @@ want to own. The **default needs nothing at all** — no account, no server, no
 | Mode | Account? | Data lives in | Sharing / friends | Best for |
 | ---- | -------- | ------------- | ----------------- | -------- |
 | **(a) Local-only / no backend** | no | your device (IndexedDB) + JSON you export | no | the default — private/offline use, trying it out |
-| **(b) Single-container Atlas Server** | yes | a SQLite DB in your container | yes | a personal/group instance on one box |
+| **(b) Docker-hosted Atlas Server** | yes | a SQLite DB in a persistent volume | yes | a personal/group instance on one box |
 | **(c) Split client + server (hosted)** | yes | your Atlas Server | yes | a public deployment, separate static host + API |
 
 All three use the **same build**; the only difference is whether (and how) you
@@ -39,19 +39,19 @@ this mode — they genuinely need a server. To get them, connect an Atlas Server
 
 ---
 
-## (b) Single-container Atlas Server
+## (b) Docker-hosted Atlas Server
 
 The optional **Atlas Server** is a small OSS backend (Hono + the built-in
 `node:sqlite`, **zero native dependencies**) that adds accounts, publishing,
 follows, friends, a feed, and discovery. Stand it up with one command:
 
 ```bash
-docker compose up --build      # http://localhost:8787
+docker compose up --build      # http://127.0.0.1:8787
 ```
 
-That boots the server with a SQLite database (a WAL file under `data/` by
-default; override with `ATLAS_DB`). Then connect the web app to it — either way
-works:
+That boots the server and a local static web container. Both bind to loopback by
+default (`8787` and `8080`), and SQLite persists in the `atlas-data` volume.
+Then connect the web app to it — either way works:
 
 - **At runtime**: open the web app's **storage picker**, choose the Atlas Server
   backend, and paste the server URL (`http://localhost:8787`). Register an
@@ -65,7 +65,8 @@ Useful server environment variables:
 | --- | ------- |
 | `ATLAS_DB` | SQLite file path (default `data/atlas.db`; `:memory:` for tests) |
 | `ATLAS_ALLOW_SIGNUP` | set to `0` to close registration after bootstrapping |
-| `ATLAS_CORS_ORIGINS` | comma-separated allowed origins (omit for single-origin) |
+| `ATLAS_CORS_ORIGINS` | comma-separated allowed origins (default `*` for development) |
+| `ATLAS_BIND_IP` | Compose host bind (default `127.0.0.1`) |
 
 For a quick local trial over plain HTTP (the dev server at `http://localhost:5173`
 talking to `http://localhost:8787`) there is no mixed-content problem because both
@@ -149,7 +150,7 @@ with your explicit origin(s):
 
 - No server connected (the default) → **local-only**. Sharing/social UI is hidden.
 - Storage picker (or `VITE_SELFHOST_URL`) pointed at an Atlas Server on the same
-  box → **single-container**.
+  box → **Docker-hosted server**.
 - SPA and Atlas Server on different hosts, server behind TLS → **split / hosted**.
 
 ---
@@ -167,4 +168,6 @@ secret. Nothing is shipped in the default build, so there is no credential to
 configure today.
 
 See [`docs/ARCHITECTURE.md`](ARCHITECTURE.md) for the storage seam and Atlas
-Server design, and [`docs/SECURITY.md`](SECURITY.md) for the security model.
+Server design, [`SERVER_OPERATIONS.md`](SERVER_OPERATIONS.md) for backups,
+upgrades, and rollback, and [`docs/SECURITY.md`](SECURITY.md) for the security
+model.

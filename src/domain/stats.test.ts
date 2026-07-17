@@ -280,9 +280,7 @@ describe('computeStats — budget aggregation', () => {
       ]),
     );
     expect(stats.budget.spendByCurrency).toEqual({ USD: 10000 });
-    expect(stats.budget.spendByCountry).toEqual([
-      { country: 'USA', byCurrency: { USD: 3000 } },
-    ]);
+    expect(stats.budget.spendByCountry).toEqual([{ country: 'USA', byCurrency: { USD: 3000 } }]);
     expect(stats.budget.stayCount).toBe(2);
   });
 
@@ -295,18 +293,26 @@ describe('computeStats — budget aggregation', () => {
     );
     expect(stats.budget.stayCount).toBe(2);
     expect(stats.budget.spendByCurrency).toEqual({ EUR: 5000 });
-    expect(stats.budget.spendByCountry).toEqual([
-      { country: 'France', byCurrency: { EUR: 5000 } },
-    ]);
+    expect(stats.budget.spendByCountry).toEqual([{ country: 'France', byCurrency: { EUR: 5000 } }]);
   });
 
   it('sums nights only when both endpoints are concrete dates (inclusive-exclusive)', () => {
     const stats = computeStats(
       dataWithStays([
         // 4 nights: Jun 1 -> Jun 5.
-        { name: 'A', from: '2024-06-01', to: '2024-06-05', cost: { amount: 40000, currency: 'EUR' } },
+        {
+          name: 'A',
+          from: '2024-06-01',
+          to: '2024-06-05',
+          cost: { amount: 40000, currency: 'EUR' },
+        },
         // 1 night across a month boundary normalises YYYY-MM -> 1st: Jul 1 -> Jul 2.
-        { name: 'B', from: '2024-07-01', to: '2024-07-02', cost: { amount: 10000, currency: 'EUR' } },
+        {
+          name: 'B',
+          from: '2024-07-01',
+          to: '2024-07-02',
+          cost: { amount: 10000, currency: 'EUR' },
+        },
       ]),
     );
     expect(stats.budget.nights).toBe(5);
@@ -318,7 +324,12 @@ describe('computeStats — budget aggregation', () => {
     const stats = computeStats(
       dataWithStays([
         // 3 nights, 10000 total -> 10000/3 = 3333.33 -> 3333
-        { name: 'A', from: '2024-01-01', to: '2024-01-04', cost: { amount: 10000, currency: 'EUR' } },
+        {
+          name: 'A',
+          from: '2024-01-01',
+          to: '2024-01-04',
+          cost: { amount: 10000, currency: 'EUR' },
+        },
       ]),
     );
     expect(stats.budget.nights).toBe(3);
@@ -340,9 +351,24 @@ describe('computeStats — budget aggregation', () => {
     const stats = computeStats(
       dataWithStays([
         { name: 'OnlyFrom', from: '2024-06-01', cost: { amount: 1000, currency: 'EUR' } },
-        { name: 'Reversed', from: '2024-06-10', to: '2024-06-01', cost: { amount: 1000, currency: 'EUR' } },
-        { name: 'SameDay', from: '2024-06-01', to: '2024-06-01', cost: { amount: 1000, currency: 'EUR' } },
-        { name: 'YearRange', from: '2018-2020', to: '2018-2020', cost: { amount: 1000, currency: 'EUR' } },
+        {
+          name: 'Reversed',
+          from: '2024-06-10',
+          to: '2024-06-01',
+          cost: { amount: 1000, currency: 'EUR' },
+        },
+        {
+          name: 'SameDay',
+          from: '2024-06-01',
+          to: '2024-06-01',
+          cost: { amount: 1000, currency: 'EUR' },
+        },
+        {
+          name: 'YearRange',
+          from: '2018-2020',
+          to: '2018-2020',
+          cost: { amount: 1000, currency: 'EUR' },
+        },
       ]),
     );
     expect(stats.budget.nights).toBe(0);
