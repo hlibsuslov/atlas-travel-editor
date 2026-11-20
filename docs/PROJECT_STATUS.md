@@ -43,13 +43,18 @@ not imply that an Atlas Server is available.
 
 ### Map and statistics
 
-- Interactive world map with click cycling, status brushes, precise selection,
-  pan/zoom, zoom-to-fit, coverage reporting, and unmatched-name diagnostics.
-- Optimized 110m map geometry with lightweight microstate markers, render-free
-  pointer tracking, localized tooltips, and responsive country-status overlays.
+- Full-screen map as the home screen, opening fitted on Europe. Click opens a
+  docked country panel (bottom sheet on phones); double-click cycles a
+  country's status; scroll/pinch zoom; country search flies to a country.
+- Natural Earth 1:110m geometry for first paint, replaced by 1:50m once its
+  chunk loads; Crimea is part of Ukraine in the geometry itself. Microstates
+  missing from 110m keep lightweight point markers.
+- One-step visit logging (date + cities) shared by the map panel and the
+  Countries list; JSON export is tidied (chronological timelines, merged
+  duplicates).
 - PNG map export with multiple aspect ratios.
-- World/continent progress, milestones, yearly activity, streaks, city counts,
-  and budget summaries.
+- Stats: share of the 193 UN members, continent cards, year chart, status mix,
+  milestones, most-visited cities, and budget summaries.
 - Eight bundled locales: English, German, Spanish, French, Italian, Portuguese,
   Russian, and Ukrainian.
 
