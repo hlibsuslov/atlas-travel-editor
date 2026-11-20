@@ -11,7 +11,8 @@
     "map": "Map",
     "stats": "Stats",
     "friends": "Friends",
-    "signOut": "Sign in"
+    "signOut": "Sign in",
+    "countries": "Countries"
   },
   "dash": {
     "kicker": "Reading the map",
@@ -348,7 +349,8 @@
       "lived": "Lived",
       "capital": "Capital",
       "birthplace": "Birthplace",
-      "erase": "Erase"
+      "erase": "Erase",
+      "select": "Select"
     },
     "precise": "Precise edit",
     "preciseHint": "Click a country to open its full status menu",
@@ -359,7 +361,8 @@
     "statusPickLabel": "Set status",
     "statusClose": "Close",
     "exportFormatLabel": "Choose a format",
-    "exportCaption": "{{count}} of {{total}} countries, {{pct}}% of the world"
+    "exportCaption": "{{count}} of {{total}} countries, {{pct}}% of the world",
+    "selectHint": "Click a country to open it · double-click to change its status · scroll or pinch to zoom"
   },
   "friends": {
     "kicker": "Other cartographers",
@@ -445,5 +448,24 @@
   "discover": {
     "hint": "Type a name or @handle to find people to follow.",
     "noneFor": "No one found for “{{q}}”."
+  },
+  "panel": {
+    "close": "Close",
+    "status": "Status",
+    "statusNone": "Not yet",
+    "capital": "Visited the capital",
+    "visits": "Visits",
+    "visitsCount_one": "{{count}} visit",
+    "visitsCount_other": "{{count}} visits",
+    "noVisits": "No dated visits yet. Log one below.",
+    "removeVisit": "Remove visit {{date}}",
+    "undatedCities": "Cities without a date",
+    "logVisit": "Log a visit",
+    "month": "Month (optional)",
+    "cities": "Cities",
+    "citiesPlaceholder": "Lisbon, Porto",
+    "addVisit": "Add visit",
+    "visitLogged": "Visit to {{country}} saved",
+    "openInCountries": "All details in Countries"
   }
 }

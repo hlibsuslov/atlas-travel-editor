@@ -11,7 +11,8 @@
     "map": "Карта",
     "stats": "Статистика",
     "friends": "Друзі",
-    "signOut": "Увійти"
+    "signOut": "Увійти",
+    "countries": "Країни"
   },
   "dash": {
     "kicker": "Читаючи карту",
@@ -348,7 +349,8 @@
       "lived": "Жив(ла)",
       "capital": "Столиця",
       "birthplace": "Місце народження",
-      "erase": "Стерти"
+      "erase": "Стерти",
+      "select": "Вибір"
     },
     "precise": "Точне редагування",
     "preciseHint": "Натисніть на країну, щоб відкрити повне меню статусів",
@@ -359,7 +361,8 @@
     "statusPickLabel": "Задати статус",
     "statusClose": "Закрити",
     "exportFormatLabel": "Виберіть формат",
-    "exportCaption": "{{count}} із {{total}} країн, {{pct}}% світу"
+    "exportCaption": "{{count}} із {{total}} країн, {{pct}}% світу",
+    "selectHint": "Натисніть на країну, щоб відкрити · подвійний клік змінює статус · коліщатко або щипок — масштаб"
   },
   "friends": {
     "kicker": "Інші картографи",
@@ -445,5 +448,26 @@
   "discover": {
     "hint": "Введіть імʼя або @нік, щоб знайти людей для підписки.",
     "noneFor": "Нікого не знайдено за запитом «{{q}}»."
+  },
+  "panel": {
+    "close": "Закрити",
+    "status": "Статус",
+    "statusNone": "Ще ні",
+    "capital": "Був(ла) у столиці",
+    "visits": "Поїздки",
+    "visitsCount_one": "{{count}} поїздка",
+    "visitsCount_few": "{{count}} поїздки",
+    "visitsCount_many": "{{count}} поїздок",
+    "visitsCount_other": "{{count}} поїздки",
+    "noVisits": "Ще немає поїздок із датою. Додайте нижче.",
+    "removeVisit": "Видалити поїздку {{date}}",
+    "undatedCities": "Міста без дати",
+    "logVisit": "Додати поїздку",
+    "month": "Місяць (необов’язково)",
+    "cities": "Міста",
+    "citiesPlaceholder": "Лісабон, Порту",
+    "addVisit": "Додати поїздку",
+    "visitLogged": "Поїздку: {{country}} — збережено",
+    "openInCountries": "Усі деталі в розділі «Країни»"
   }
 }

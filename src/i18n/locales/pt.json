@@ -11,7 +11,8 @@
     "map": "Mapa",
     "stats": "Estatísticas",
     "friends": "Amigos",
-    "signOut": "Entrar"
+    "signOut": "Entrar",
+    "countries": "Países"
   },
   "dash": {
     "kicker": "Lendo o mapa",
@@ -348,7 +349,8 @@
       "lived": "Morou",
       "capital": "Capital",
       "birthplace": "Local de nascimento",
-      "erase": "Apagar"
+      "erase": "Apagar",
+      "select": "Selecionar"
     },
     "precise": "Edição precisa",
     "preciseHint": "Clique em um país para abrir o menu de status completo",
@@ -359,7 +361,8 @@
     "statusPickLabel": "Definir status",
     "statusClose": "Fechar",
     "exportFormatLabel": "Escolha um formato",
-    "exportCaption": "{{count}} de {{total}} países, {{pct}}% do mundo"
+    "exportCaption": "{{count}} de {{total}} países, {{pct}}% do mundo",
+    "selectHint": "Clique num país para o abrir · duplo clique muda o estado · role ou belisque para zoom"
   },
   "friends": {
     "kicker": "Outros cartógrafos",
@@ -445,5 +448,24 @@
   "discover": {
     "hint": "Digite um nome ou @handle para encontrar pessoas para seguir.",
     "noneFor": "Ninguém encontrado para “{{q}}”."
+  },
+  "panel": {
+    "close": "Fechar",
+    "status": "Estado",
+    "statusNone": "Ainda não",
+    "capital": "Visitei a capital",
+    "visits": "Visitas",
+    "visitsCount_one": "{{count}} visita",
+    "visitsCount_other": "{{count}} visitas",
+    "noVisits": "Ainda sem visitas datadas. Registe uma abaixo.",
+    "removeVisit": "Remover visita {{date}}",
+    "undatedCities": "Cidades sem data",
+    "logVisit": "Registar uma visita",
+    "month": "Mês (opcional)",
+    "cities": "Cidades",
+    "citiesPlaceholder": "Lisboa, Porto",
+    "addVisit": "Adicionar visita",
+    "visitLogged": "Visita a {{country}} guardada",
+    "openInCountries": "Todos os detalhes em Países"
   }
 }

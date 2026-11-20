@@ -51,10 +51,11 @@ describe('<DashboardPage> "% of the world"', () => {
     ]);
     render(<DashboardPage />);
 
-    // The hero ring + headline both report "3 / 193", never "5 / 193".
+    // The figures and the world grid both report "3 / 193", never "5 / 193".
     expect(screen.getAllByText('3 / 193').length).toBeGreaterThan(0);
     // 3 / 193 ≈ 1.55% → rounds to 2%.
-    expect(screen.getByText('2%')).toBeInTheDocument();
+    const figures = screen.getByRole('region', { name: /of the world/i });
+    expect(within(figures).getByText('2%')).toBeInTheDocument();
     // The two non-members are acknowledged honestly but excluded from the %.
     expect(screen.getByText(/not counted toward the %/i)).toBeInTheDocument();
   });
@@ -63,7 +64,8 @@ describe('<DashboardPage> "% of the world"', () => {
     loadData([visited('Taiwan')]);
     render(<DashboardPage />);
     expect(screen.getAllByText('0 / 193').length).toBeGreaterThan(0);
-    expect(screen.getByText('0%')).toBeInTheDocument();
+    const figures = screen.getByRole('region', { name: /of the world/i });
+    expect(within(figures).getByText('0%')).toBeInTheDocument();
   });
 
   it('shows continent coverage as visited / UN-member denominator', () => {

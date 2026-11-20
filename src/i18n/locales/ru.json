@@ -11,7 +11,8 @@
     "map": "Карта",
     "stats": "Статистика",
     "friends": "Друзья",
-    "signOut": "Выйти"
+    "signOut": "Выйти",
+    "countries": "Страны"
   },
   "dash": {
     "kicker": "Чтение карты",
@@ -348,7 +349,8 @@
       "lived": "Жил(а)",
       "capital": "Столица",
       "birthplace": "Место рождения",
-      "erase": "Стереть"
+      "erase": "Стереть",
+      "select": "Выбор"
     },
     "precise": "Точная правка",
     "preciseHint": "Нажмите на страну, чтобы открыть полное меню статусов",
@@ -359,7 +361,8 @@
     "statusPickLabel": "Задать статус",
     "statusClose": "Закрыть",
     "exportFormatLabel": "Выберите формат",
-    "exportCaption": "{{count}} из {{total}} стран, {{pct}}% мира"
+    "exportCaption": "{{count}} из {{total}} стран, {{pct}}% мира",
+    "selectHint": "Нажмите на страну, чтобы открыть · двойной клик меняет статус · колесо или щипок — масштаб"
   },
   "friends": {
     "kicker": "Другие картографы",
@@ -445,5 +448,26 @@
   "discover": {
     "hint": "Введите имя или @ник, чтобы найти людей для подписки.",
     "noneFor": "Никого не найдено по запросу «{{q}}»."
+  },
+  "panel": {
+    "close": "Закрыть",
+    "status": "Статус",
+    "statusNone": "Пока нет",
+    "capital": "Был(а) в столице",
+    "visits": "Поездки",
+    "visitsCount_one": "{{count}} поездка",
+    "visitsCount_few": "{{count}} поездки",
+    "visitsCount_many": "{{count}} поездок",
+    "visitsCount_other": "{{count}} поездки",
+    "noVisits": "Пока нет поездок с датой. Добавьте ниже.",
+    "removeVisit": "Удалить поездку {{date}}",
+    "undatedCities": "Города без даты",
+    "logVisit": "Добавить поездку",
+    "month": "Месяц (необязательно)",
+    "cities": "Города",
+    "citiesPlaceholder": "Лиссабон, Порту",
+    "addVisit": "Добавить поездку",
+    "visitLogged": "Поездка: {{country}} — сохранено",
+    "openInCountries": "Все детали в разделе «Страны»"
   }
 }

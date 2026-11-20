@@ -11,7 +11,8 @@
     "map": "Mapa",
     "stats": "Estadísticas",
     "friends": "Amigos",
-    "signOut": "Iniciar sesión"
+    "signOut": "Iniciar sesión",
+    "countries": "Países"
   },
   "dash": {
     "kicker": "Leyendo el mapa",
@@ -348,7 +349,8 @@
       "lived": "Vivido",
       "capital": "Capital",
       "birthplace": "Lugar de nacimiento",
-      "erase": "Borrar"
+      "erase": "Borrar",
+      "select": "Seleccionar"
     },
     "precise": "Edición precisa",
     "preciseHint": "Haz clic en un país para abrir su menú de estado completo",
@@ -359,7 +361,8 @@
     "statusPickLabel": "Establecer estado",
     "statusClose": "Cerrar",
     "exportFormatLabel": "Elige un formato",
-    "exportCaption": "{{count}} de {{total}} países, {{pct}}% del mundo"
+    "exportCaption": "{{count}} de {{total}} países, {{pct}}% del mundo",
+    "selectHint": "Haz clic en un país para abrirlo · doble clic cambia su estado · desplaza o pellizca para hacer zoom"
   },
   "friends": {
     "kicker": "Otros cartógrafos",
@@ -445,5 +448,24 @@
   "discover": {
     "hint": "Escribe un nombre o @usuario para encontrar a quién seguir.",
     "noneFor": "No se encontró a nadie para «{{q}}»."
+  },
+  "panel": {
+    "close": "Cerrar",
+    "status": "Estado",
+    "statusNone": "Aún no",
+    "capital": "Visité la capital",
+    "visits": "Visitas",
+    "visitsCount_one": "{{count}} visita",
+    "visitsCount_other": "{{count}} visitas",
+    "noVisits": "Aún no hay visitas con fecha. Añade una abajo.",
+    "removeVisit": "Eliminar visita {{date}}",
+    "undatedCities": "Ciudades sin fecha",
+    "logVisit": "Registrar una visita",
+    "month": "Mes (opcional)",
+    "cities": "Ciudades",
+    "citiesPlaceholder": "Lisboa, Oporto",
+    "addVisit": "Añadir visita",
+    "visitLogged": "Visita a {{country}} guardada",
+    "openInCountries": "Todos los detalles en Países"
   }
 }

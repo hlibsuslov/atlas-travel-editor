@@ -60,6 +60,12 @@ export interface EditorState {
   mergeCountries: (countries: Country[]) => void;
   /** Mark a country (creating it if needed) as visited in the given calendar year. */
   actualizeCountry: (name: string, year: number) => void;
+  /**
+   * Log one visit as a single undo step: marks the country visited (creating it
+   * if needed), records the date in its visited timeline, and adds the visit's
+   * year to each named city (creating cities that do not exist yet).
+   */
+  logVisit: (name: string, date: string, cities?: readonly string[]) => void;
 
   // Country timelines (validated string entries)
   addCountryTimeline: (index: number, field: 'visited' | 'lived', value: string) => void;
@@ -288,6 +294,34 @@ export const useEditorStore = create<EditorState>()(
           c.status.visited = true;
           const entry = String(year);
           if (!c.timeline.visited.includes(entry)) c.timeline.visited.push(entry);
+        }),
+
+      logVisit: (name, date, cities = []) =>
+        mutate((s) => {
+          const key = canonicalCountryName(name);
+          let c = s.data.travel.countries.find((x) => canonicalCountryName(x.name) === key);
+          if (!c) {
+            c = makeEmptyCountry();
+            c.name = name;
+            s.data.travel.countries.push(c);
+          }
+          c.status.visited = true;
+          if (!c.timeline.visited.includes(date)) c.timeline.visited.push(date);
+          const year = Number.parseInt(date.slice(0, 4), 10);
+          for (const raw of cities) {
+            const cityName = raw.trim();
+            if (!cityName) continue;
+            const cityKey = cityName.toLocaleLowerCase();
+            let city = c.cities.find((x) => x.name.trim().toLocaleLowerCase() === cityKey);
+            if (!city) {
+              city = { name: cityName, timeline: { visited: [] } };
+              c.cities.push(city);
+            }
+            if (!city.timeline.visited.includes(year)) {
+              city.timeline.visited.push(year);
+              city.timeline.visited.sort((a, b) => a - b);
+            }
+          }
         }),
 
       addCountryTimeline: (index, field, value) =>

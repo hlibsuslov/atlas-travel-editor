@@ -7,229 +7,145 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-**Atlas** is an open-source, **local-first** personal travel-map editor. Record the
-country you were born in, the places you've lived and visited, and your city/year
-timelines into one self-contained `TravelData` document — edited through a typed
-React UI with a live, validated JSON preview and an interactive world map.
+Atlas is an open-source, local-first travel map and diary for the places you've lived and visited.
 
-Your data lives in **your browser** (IndexedDB). Atlas works fully **offline**,
-needs **no account**, **no login wall**, and **no `.env` file**. Sharing and social
-features are entirely optional and only appear when you connect your own
-self-hosted [Atlas Server](#optional-atlas-server--accounts--sharing--social).
+![A relief map of Europe: visited countries in green, lived in blue, Ukraine with Crimea in orange as the birthplace, and yellow flight arcs between them](docs/images/atlas-hero.jpg)
 
 **[Open Atlas](https://atlas-travel-editor.vercel.app)** ·
-[Project status](docs/PROJECT_STATUS.md) ·
-[Documentation](docs/README.md) ·
-[Deployment](docs/DEPLOYMENT.md)
+[Documentation](docs/README.md) · [Project status](docs/PROJECT_STATUS.md)
 
-![Atlas social preview: map your life in countries](public/og-image.png)
+## Why Atlas
+
+Atlas saves your travel history in your browser by default, with no account required. After the
+first load, the installable app works offline. Your whole record fits in one JSON document you own
+and can export, back up, or move to another device. World progress uses the 193 UN member states
+as its denominator.
+
+## Screenshots
+
+![Europe on the full-screen map with Portugal's country panel open](docs/images/screen-map.png)
+
+_Map. See where you've been and log a visit from the country panel._
+
+![Countries editor with a visit log and a validated JSON preview](docs/images/screen-countries.png)
+
+_Countries. Edit your travel record alongside a live JSON preview._
+
+![Stats dashboard showing world coverage, continent progress, and yearly activity](docs/images/screen-stats.png)
+
+_Stats. See your world coverage and travel patterns over time._
+
+<img src="docs/images/screen-mobile.png" alt="Portugal's visit log in the mobile country panel" width="280">
+
+_Mobile. Log a trip from your phone._
+
+## Features
+
+- **Full-screen map.** Start in Europe and explore detailed Natural Earth 1:50m geometry with
+  Crimea drawn as part of Ukraine. Search for a country or click it to open its panel.
+  Double-click to cycle its status, and pinch or scroll to zoom.
+- **Repeat visits.** Log the year, optional month, and cities in one step from the map or the
+  Countries editor.
+- **Clean JSON export.** Export chronological timelines with duplicate country and city entries
+  merged. Import your document to restore or move your record.
+- **Travel stats.** See your share of the world, progress by continent, a yearly chart of new
+  countries or trips, your status mix, milestones, and cities ranked by how many years you visited.
+- **Travel diary.** Record stays with dates, notes, and costs.
+- **PNG map export.** Save your map as an image in several aspect ratios.
+- **Offline PWA and eight locales.** Install Atlas for offline use. Choose English, German,
+  Spanish, French, Italian, Portuguese, Russian, or Ukrainian.
+- **Optional sharing and friends.** Connect a self-hosted [Atlas Server](#optional-atlas-server--accounts--sharing--social)
+  to share read-only maps, follow people, and see their activity.
 
 ## Try it in 60 seconds
 
-Use the [live app](https://atlas-travel-editor.vercel.app), or run it locally with
-no backend, account, or configuration:
+Open the [live app](https://atlas-travel-editor.vercel.app), select a country, and log a visit.
+To explore with sample data, choose **Load a richer sample** in the welcome banner on Countries.
+
+To run locally with Node.js 22 and npm:
 
 ```bash
 git clone https://github.com/hlibsuslov/atlas-travel-editor.git
 cd atlas-travel-editor
-npm install
-npm run dev                 # http://localhost:5173
+npm ci
+npm run dev
 ```
 
-That's it. The app boots straight into the editor and stores everything locally in
-your browser via IndexedDB. Edit your document, watch the live JSON preview, colour
-the map, and use **Export** / **Import** to back up your data to a JSON file or move
-it between machines.
-
-Account-only features (public sharing, friends, public profile) are simply hidden
-until you point Atlas at an Atlas Server — see below.
-
-## Features
-
-- **Editor** — typed, validated UI over the travel document with a live JSON preview.
-- **Interactive world map** — countries coloured by status (birthplace / lived /
-  visited / capital-only), built on react-simple-maps; load your own data or view
-  a friend's.
-- **Local-first & offline** — installable PWA backed by IndexedDB and a service
-  worker. No account, no network required. Back up and move data via JSON
-  Export/Import.
-- **Safe editing** — global debounced autosave, save-state feedback, bounded
-  undo/redo, validated imports, and optimistic version checks.
-- **Travel diary** — keep stays (places/hotels with dates and cost) alongside the
-  map.
-- **Friends** (optional, needs an Atlas Server) — follow people by **handle** or a
-  share link and browse their public maps.
-- **Internationalization** — 8 languages (de, en, es, fr, it, pt, ru, uk) via
-  i18next with browser-language detection; adding a locale is one JSON file.
-- **Light / dark / system theme** — shared CSS tokens, no per-component styling.
-- **Toasts** for non-blocking feedback; **Sentry** hook for error monitoring.
-
-> This is the production rebuild of the original single-file `index.html` MVP.
-> See [`docs/adr/0001-stack-and-architecture.md`](docs/adr/0001-stack-and-architecture.md)
-> for why the architecture looks the way it does, and
-> [`docs/PRODUCT_PLAN.md`](docs/PRODUCT_PLAN.md) for the north star.
+Open `http://localhost:5173`. The local app runs without a backend or an
+[environment file](.env.example).
 
 ## Stack
 
-| Concern      | Choice                                                          |
-| ------------ | -------------------------------------------------------------- |
-| Frontend     | React 18 + TypeScript (strict) + Vite                          |
-| State        | Zustand (editor) + TanStack Query (data cache)                |
-| Validation   | Zod — one schema shared by UI, storage, and tests             |
-| Storage      | Pluggable `DocumentStore` seam — IndexedDB by default          |
-| Server (opt) | Node + Hono + built-in `node:sqlite` (zero native deps)        |
-| Hosting / CI | Vercel static PWA + GitHub Actions + production smoke checks |
+| Concern        | Choice                                           |
+| -------------- | ------------------------------------------------ |
+| Frontend       | React 18, strict TypeScript, Vite                |
+| Map            | react-simple-maps, Natural Earth via world-atlas |
+| State          | Zustand, TanStack Query                          |
+| Validation     | Zod                                              |
+| Storage        | IndexedDB behind the `DocumentStore` contract    |
+| Server         | Node.js, Hono, built-in SQLite                   |
+| Hosting and CI | Vercel, GitHub Actions, deployment smoke checks  |
 
-## Storage options
+See the [architecture overview](docs/ARCHITECTURE.md) and
+[stack decision](docs/adr/0001-stack-and-architecture.md) for implementation details.
 
-The whole document is one self-contained `TravelData` JSON blob, so where it lives
-is pluggable. Every backend sits behind a single `DocumentStore` contract with
-normalize-on-load and validate-on-save enforced centrally
-(see [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)).
+## Data model
 
-| Mode | Account? | Data lives in | Sharing / social | Status |
-| ---- | -------- | ------------- | ---------------- | ------ |
-| **Local-first (IndexedDB)** | no | your browser | no | **default, ready** |
-| **Single local file** | no | one JSON file on disk (File System Access API) | no | ready on supporting browsers; fallback elsewhere |
-| **Atlas Server (self-hosted)** | yes | your own server (SQLite) | yes — public maps, follows, feed | ready (optional) |
-| GitHub / WebDAV / Google Drive / Dropbox | varies | your own cloud / repo | no | coming soon (not yet enabled) |
+One `TravelData` document holds your birthplace, country statuses and timelines, cities with
+visited years, and optional diary entries. Export wraps that record in a versioned JSON envelope.
+Atlas stores it in IndexedDB by default. On supported browsers you can work directly with a local
+JSON file. JSON import and export are available across browsers.
 
-- **Local-first (IndexedDB)** — the default. No account, no network. This is the
-  "Try it in 60 seconds" path above.
-- **Single local file** — point Atlas at one JSON file on disk; reads and writes go
-  straight to that file (with a download/upload fallback on browsers without the
-  File System Access API).
-- **Atlas Server** — the optional, self-hostable backend for accounts, public
-  read-only sharing, and social features. See below.
-- **Bring-your-own-cloud (coming soon)** — store the single JSON blob in a cloud
-  you control. These adapters are registered but **not yet enabled**.
+See the [data model and compatibility guide](docs/DATA_MODEL.md) for the schema.
 
-## Optional Atlas Server — accounts + sharing + social
+<a name="optional-atlas-server--accounts--sharing--social"></a>
 
-Atlas Server is a small, self-hostable backend (Node + Hono + the built-in
-`node:sqlite`, **zero native dependencies**). It is entirely optional: with no
-server connected, every social/sharing surface stays hidden and Atlas is pure
-local-first.
+## Optional Atlas Server
 
-When you do run it, you get:
-
-- **Accounts** — email + password (scrypt password hashing; bearer tokens stored
-  only as a SHA-256 hash with a 30-day TTL).
-- **Public sharing** — publish a read-only map by slug (`/share/:slug`) or at your
-  handle (`/u/:handle`). DTOs are column-minimized and never leak email or internal
-  ids; missing/private/revoked maps all return a generic 404.
-- **Friends** — directed follows by **handle** or share link, mutual friends, an
-  activity feed, and profile discovery.
-
-### Run with Docker
+The self-hosted Atlas Server adds accounts and SQLite-backed storage. Share a read-only map by
+link, publish a profile by handle, or follow friends and browse their activity.
 
 ```bash
-docker compose up --build   # http://localhost:8787
+docker compose up --build
 ```
 
-Then open the web app's storage picker and point it at your server, or set
-`VITE_SELFHOST_URL=http://localhost:8787` before building. See
-[`docs/SELF_HOSTING.md`](docs/SELF_HOSTING.md) for the full walkthrough.
+In the app's storage picker, choose **Atlas Server** and enter `http://localhost:8787`.
+See the [self-hosting guide](docs/SELF_HOSTING.md) and
+[server operations guide](docs/SERVER_OPERATIONS.md).
 
-## Environment
+## Scripts and quality gates
 
-Atlas needs **no configuration** to run. Every variable below is **optional** and
-only `VITE_`-prefixed values reach the browser (embedded at build time). See
-[`.env.example`](.env.example).
+| Script                                         | Purpose                                          |
+| ---------------------------------------------- | ------------------------------------------------ |
+| `npm run dev` / `npm run preview`              | Start development or serve the production build  |
+| `npm run build`                                | Typecheck and build to `dist/`                   |
+| `npm run typecheck` / `npm run lint`           | Run TypeScript and ESLint checks                 |
+| `npm run format:check` / `npm run format`      | Check or apply Prettier formatting               |
+| `npm run check:docs` / `npm run check:locales` | Check documentation links and locale parity      |
+| `npm run test` / `npm run test:coverage`       | Run frontend tests, with optional coverage       |
+| `npm run ci`                                   | Run the full frontend quality gate               |
+| `npm --prefix server run ci`                   | Check domain drift, typecheck, and run API tests |
+| `npm run smoke:deploy -- URL`                  | Verify a deployed SPA, PWA, and response headers |
 
-| Variable               | Required | Purpose                                                     |
-| ---------------------- | -------- | ----------------------------------------------------------- |
-| `VITE_APP_URL`         | no       | Base URL used to build share links (defaults to the origin) |
-| `VITE_SELFHOST_URL`    | no       | Atlas Server instance URL — enables sharing/social          |
-| `VITE_LOCAL_ONLY`      | no       | Force pure local-first even if a server URL is set          |
-| `VITE_DEMO_AUTH`       | no       | Enable an explorable demo login screen (dev only)           |
-| `VITE_DEMO_LOGIN`      | no       | Demo login username (default `1`)                           |
-| `VITE_DEMO_PASSWORD`   | no       | Demo login password (default `1`)                           |
-| `VITE_SENTRY_DSN`      | no       | Enables Sentry error/performance monitoring if set          |
-
-## Scripts
-
-| Script                  | Description                                       |
-| ----------------------- | ------------------------------------------------ |
-| `npm run dev`           | Vite dev server                                  |
-| `npm run build`         | Typecheck + production build to `dist/`          |
-| `npm run preview`       | Serve the production build locally               |
-| `npm run typecheck`     | `tsc` project references, no emit                |
-| `npm run lint`          | ESLint (type-aware)                              |
-| `npm run format:check`  | Verify repository formatting                    |
-| `npm run format`        | Prettier write                                   |
-| `npm run check:docs`    | Documentation policy + local-link checks        |
-| `npm run check:locales` | Verify all locale keys against English          |
-| `npm run test`          | Vitest unit + component tests                    |
-| `npm run test:coverage` | Tests with V8 coverage                           |
-| `npm run smoke:deploy -- URL` | Verify a deployed SPA/PWA and headers    |
-| `npm run ci`            | Full frontend quality gate                      |
-
-The optional server has its own gate: `npm --prefix server run ci`
-(check:domain → typecheck → `node:test`).
+See the [development guide](docs/DEVELOPMENT.md) and [testing guide](docs/TESTING.md).
 
 ## Deployment
 
-Atlas is a **static PWA**. The canonical frontend is live at
-[atlas-travel-editor.vercel.app](https://atlas-travel-editor.vercel.app).
-
-- **Vercel** — `vercel.json` configures SPA rewrites, long-term asset caching, and
-  security headers (CSP/HSTS/etc.). Pushes to `main` produce Production and other
-  branches produce protected Preview deployments.
-- **GitHub Pages** — an optional manually dispatched mirror after Pages is enabled
-  in repository settings.
-- **Netlify / any static host / a container** — serve `dist/` with SPA fallback.
-
-The optional **Atlas Server** deploys separately via Docker
-(`docker compose up --build`); Vercel never hosts its SQLite database. See the
-[deployment runbook](docs/DEPLOYMENT.md) and
-[`docs/SELF_HOSTING.md`](docs/SELF_HOSTING.md).
-
-## Project layout
-
-```
-src/
-  domain/      Zod schemas, validators, normalization — the source of truth
-  i18n/        i18next config + locale JSON (de, en, es, fr, it, pt, ru, uk)
-  lib/
-    storage/   the DocumentStore seam + backend registry (indexeddb, localfile, selfhost, …)
-    env.ts     optional env validation
-  features/
-    editor/    store (Zustand), data hooks, components
-    map/       world map, country-name matching, legend
-    friends/   follow by handle / share link, browse friends' maps
-    settings/  theme + language switchers
-    sharing/   public read-only share page (with map)
-  components/  cross-feature UI (AppShell nav, ErrorBoundary)
-server/        optional Atlas Server (Node + Hono + node:sqlite)
-docs/          status, architecture, model, operations, security, ADRs
-```
+The frontend is a static PWA hosted on Vercel. GitHub Pages is an optional mirror, and other static
+hosts can serve `dist/` with an SPA fallback. Deploy the Atlas Server separately with Docker.
+See the [deployment runbook](docs/DEPLOYMENT.md).
 
 ## Contributing
 
-PRs are welcome — start with [`CONTRIBUTING.md`](CONTRIBUTING.md), and be kind per
-our [`Code of Conduct`](CODE_OF_CONDUCT.md). To report a vulnerability, see the
-[`Security Policy`](.github/SECURITY.md).
+Pull requests are welcome. Start with the [contribution guide](CONTRIBUTING.md) and
+[code of conduct](CODE_OF_CONDUCT.md). For more project context, see the [product plan](docs/PRODUCT_PLAN.md),
+[glossary](docs/GLOSSARY.md), [brand assets](docs/brand/BRAND.md), and
+[architecture decisions](docs/adr/README.md).
 
-## Documentation
+## Security
 
-- [Docs index](docs/README.md) — start here
-- [Product plan](docs/PRODUCT_PLAN.md) — the north star
-- [Project status](docs/PROJECT_STATUS.md) — shipped, deferred, and limitations
-- [Architecture overview](docs/ARCHITECTURE.md)
-- [Data model & compatibility](docs/DATA_MODEL.md)
-- [Development guide](docs/DEVELOPMENT.md)
-- [Testing & quality gates](docs/TESTING.md)
-- [Deployment runbook](docs/DEPLOYMENT.md)
-- [Self-hosting & run modes](docs/SELF_HOSTING.md)
-- [Atlas Server operations](docs/SERVER_OPERATIONS.md)
-- [Security model](docs/SECURITY.md)
-- [Glossary](docs/GLOSSARY.md)
-- [Brand & assets](docs/brand/BRAND.md)
-- [ADRs](docs/adr/README.md)
-- [Contributing](CONTRIBUTING.md)
-- [Code of Conduct](CODE_OF_CONDUCT.md)
-- [Security policy](.github/SECURITY.md)
+Report vulnerabilities through the [security policy](.github/SECURITY.md).
+See the [security model](docs/SECURITY.md) for the app's trust boundaries.
 
 ## License
 

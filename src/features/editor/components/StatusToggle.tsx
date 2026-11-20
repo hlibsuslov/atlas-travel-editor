@@ -22,7 +22,7 @@ export function StatusToggle({ label, on, status, onClick }: StatusToggleProps) 
       aria-pressed={on}
       className={`status-toggle${on ? ' on' : ''}`}
       onClick={onClick}
-      style={on ? { color, borderColor: color } : undefined}
+      style={on ? { background: `color-mix(in srgb, ${color} 22%, var(--panel))` } : undefined}
     >
       <span className="sw" style={on ? { background: color } : undefined} aria-hidden="true" />
       <Check

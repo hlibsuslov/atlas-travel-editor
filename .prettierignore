@@ -2,3 +2,6 @@ dist
 coverage
 node_modules
 *.md
+
+# Impeccable design-tool working files
+.impeccable/

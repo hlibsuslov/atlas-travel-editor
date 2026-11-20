@@ -146,14 +146,14 @@ export async function exportMapPng(
   // Title (serif display).
   ctx.fillStyle = cssVar('--ink');
   ctx.textBaseline = 'alphabetic';
-  ctx.font = `600 ${Math.round(w * 0.05)}px Newsreader, Georgia, serif`;
+  ctx.font = `600 ${Math.round(w * 0.05)}px 'Onest Variable', system-ui, sans-serif`;
   ctx.fillText(meta.title, w / 2, Math.round(headerH * 0.46));
 
   // Subtitle.
   let subY = Math.round(headerH * 0.7);
   if (meta.subtitle) {
     ctx.fillStyle = cssVar('--ink-soft');
-    ctx.font = `500 ${Math.round(w * 0.022)}px 'Hanken Grotesk', system-ui, sans-serif`;
+    ctx.font = `500 ${Math.round(w * 0.022)}px 'Onest Variable', system-ui, sans-serif`;
     ctx.fillText(meta.subtitle, w / 2, subY);
     subY += Math.round(w * 0.034);
   }
@@ -161,7 +161,7 @@ export async function exportMapPng(
   // Caption: the accurate UN-193 coverage line, in the accent colour.
   if (meta.caption) {
     ctx.fillStyle = cssVar('--accent');
-    ctx.font = `700 ${Math.round(w * 0.02)}px 'Hanken Grotesk', system-ui, sans-serif`;
+    ctx.font = `700 ${Math.round(w * 0.02)}px 'Onest Variable', system-ui, sans-serif`;
     ctx.fillText(meta.caption, w / 2, subY);
   }
 
@@ -169,7 +169,7 @@ export async function exportMapPng(
   const sw = Math.round(w * 0.02);
   const gap = Math.round(w * 0.04);
   const fontSize = Math.round(w * 0.019);
-  ctx.font = `600 ${fontSize}px 'Hanken Grotesk', system-ui, sans-serif`;
+  ctx.font = `600 ${fontSize}px 'Onest Variable', system-ui, sans-serif`;
   const labelFor = (l: ExportLegendItem) =>
     l.count === undefined ? l.label : `${l.label} ${l.count}`;
   const widths = meta.legend.map((l) => sw + 9 + ctx.measureText(labelFor(l)).width + gap);
@@ -194,7 +194,7 @@ export async function exportMapPng(
   ctx.fillStyle = cssVar('--ink-faint');
   ctx.textAlign = 'center';
   ctx.textBaseline = 'alphabetic';
-  ctx.font = `600 ${Math.round(w * 0.015)}px 'JetBrains Mono', ui-monospace, monospace`;
+  ctx.font = `600 ${Math.round(w * 0.015)}px 'JetBrains Mono Variable', ui-monospace, monospace`;
   ctx.fillText(`${wordmark.toUpperCase()} · ${dateLabel}`, w / 2, h - Math.round(footerH * 0.18));
 
   await new Promise<void>((resolve) => {

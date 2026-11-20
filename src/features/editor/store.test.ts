@@ -272,4 +272,19 @@ describe('useEditorStore', () => {
     useEditorStore.getState().undo();
     expect(useEditorStore.getState().data.travel.stays![0]!.name).toBe('Place');
   });
+  it('logVisit records a repeat visit with its cities as one undo step', () => {
+    const store = useEditorStore.getState();
+    store.logVisit('Portugal', '2016', ['Lisbon']);
+    const depth = useEditorStore.getState().past.length;
+    useEditorStore.getState().logVisit('portugal', '2023-09', ['lisbon', 'Porto', ' ']);
+    const state = useEditorStore.getState();
+    expect(state.past.length).toBe(depth + 1);
+    const pt = state.data.travel.countries.find((c) => c.name === 'Portugal')!;
+    expect(pt.status.visited).toBe(true);
+    expect(pt.timeline.visited).toEqual(['2016', '2023-09']);
+    expect(pt.cities).toEqual([
+      { name: 'Lisbon', timeline: { visited: [2016, 2023] } },
+      { name: 'Porto', timeline: { visited: [2023] } },
+    ]);
+  });
 });

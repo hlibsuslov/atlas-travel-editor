@@ -94,11 +94,9 @@
   gap: 7px;
 }
 .status-control-label {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font-size: 12px;
   color: var(--ink-faint);
+  font-weight: 600;
 }
 .status-row {
   display: flex;
@@ -195,15 +193,13 @@
   flex-shrink: 0;
   align-self: center;
   margin-left: auto;
-  font-family: var(--font-mono);
-  font-size: 9px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-size: 12px;
   color: var(--ink-faint);
   background: var(--panel-2);
   border: 1px solid var(--line);
   border-radius: 999px;
   padding: 2px 7px;
+  font-weight: 600;
 }
 /* A sub-action (e.g. "Reconnect file") indented under its destination. */
 .atlas-pop-item.is-sub {
@@ -450,11 +446,9 @@
   border-bottom: 1px solid var(--line);
 }
 .stay-totals-label {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font-size: 12px;
   color: var(--ink-faint);
+  font-weight: 600;
 }
 .stay-totals-list {
   display: flex;
@@ -483,12 +477,10 @@
   margin-bottom: 10px;
 }
 .stay-sort-label {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font-size: 12px;
   color: var(--ink-faint);
   margin-right: 2px;
+  font-weight: 600;
 }
 
 /* The per-stay field grid: auto-fits columns, then stacks on narrow screens. */
@@ -505,11 +497,9 @@
   min-width: 0;
 }
 .stay-field-label {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  font-size: 12px;
   color: var(--ink-faint);
+  font-weight: 600;
 }
 /* Country selector spans the row on its own — it is the strongly-suggested tie. */
 .stay-field--country {
@@ -530,8 +520,8 @@
 }
 .stay-currency-manual {
   flex: 0 0 58px;
-  text-transform: uppercase;
   text-align: center;
+  font-weight: 600;
 }
 
 .stay-note {
