@@ -11,7 +11,8 @@
     "map": "Karte",
     "stats": "Statistik",
     "friends": "Freunde",
-    "signOut": "Anmelden"
+    "signOut": "Anmelden",
+    "countries": "Länder"
   },
   "dash": {
     "kicker": "Die Karte lesen",
@@ -348,7 +349,8 @@
       "lived": "Gewohnt",
       "capital": "Hauptstadt",
       "birthplace": "Geburtsort",
-      "erase": "Löschen"
+      "erase": "Löschen",
+      "select": "Auswählen"
     },
     "precise": "Präzise bearbeiten",
     "preciseHint": "Klicke auf ein Land, um sein vollständiges Statusmenü zu öffnen",
@@ -359,7 +361,8 @@
     "statusPickLabel": "Status festlegen",
     "statusClose": "Schließen",
     "exportFormatLabel": "Format wählen",
-    "exportCaption": "{{count}} von {{total}} Ländern, {{pct}}% der Welt"
+    "exportCaption": "{{count}} von {{total}} Ländern, {{pct}}% der Welt",
+    "selectHint": "Land anklicken zum Öffnen · Doppelklick ändert den Status · scrollen oder zoomen mit zwei Fingern"
   },
   "friends": {
     "kicker": "Andere Kartografen",
@@ -445,5 +448,24 @@
   "discover": {
     "hint": "Gib einen Namen oder @handle ein, um Personen zum Folgen zu finden.",
     "noneFor": "Niemand für „{{q}}“ gefunden."
+  },
+  "panel": {
+    "close": "Schließen",
+    "status": "Status",
+    "statusNone": "Noch nicht",
+    "capital": "Hauptstadt besucht",
+    "visits": "Besuche",
+    "visitsCount_one": "{{count}} Besuch",
+    "visitsCount_other": "{{count}} Besuche",
+    "noVisits": "Noch keine datierten Besuche. Unten eintragen.",
+    "removeVisit": "Besuch {{date}} entfernen",
+    "undatedCities": "Städte ohne Datum",
+    "logVisit": "Besuch eintragen",
+    "month": "Monat (optional)",
+    "cities": "Städte",
+    "citiesPlaceholder": "Lissabon, Porto",
+    "addVisit": "Besuch hinzufügen",
+    "visitLogged": "Besuch in {{country}} gespeichert",
+    "openInCountries": "Alle Details unter Länder"
   }
 }

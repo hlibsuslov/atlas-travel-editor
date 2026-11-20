@@ -4,12 +4,14 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { LoginPage } from '@/features/auth/LoginPage';
 import { AppShell } from '@/components/AppShell';
-import { EditorPage } from '@/features/editor/EditorPage';
+import { MapPage } from '@/features/map/MapPage';
 import { StorageProvider } from '@/features/storage/StorageProvider';
 
-// Code-split the heavier routes (world atlas, charts) so the editor's initial
-// bundle stays small.
-const MapPage = lazy(() => import('@/features/map/MapPage').then((m) => ({ default: m.MapPage })));
+// The map is the home screen and ships in the main bundle; the other routes are
+// code-split so first paint stays small.
+const EditorPage = lazy(() =>
+  import('@/features/editor/EditorPage').then((m) => ({ default: m.EditorPage })),
+);
 const DashboardPage = lazy(() =>
   import('@/features/dashboard/DashboardPage').then((m) => ({ default: m.DashboardPage })),
 );
@@ -77,8 +79,9 @@ export function App() {
                   </RequireAuth>
                 }
               >
-                <Route path="/" element={<EditorPage />} />
-                <Route path="/map" element={<MapPage />} />
+                <Route path="/" element={<MapPage />} />
+                <Route path="/countries" element={<EditorPage />} />
+                <Route path="/map" element={<Navigate to="/" replace />} />
                 <Route path="/stats" element={<DashboardPage />} />
                 <Route path="/friends" element={<FriendsPage />} />
               </Route>

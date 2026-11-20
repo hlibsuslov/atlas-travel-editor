@@ -70,7 +70,6 @@ export function FriendsPage() {
     <div className="page">
       <div className="page-head">
         <div>
-          <div className="kicker">{t('friends.kicker')}</div>
           <h1 className="page-title">{t('friends.title')}</h1>
           <p className="page-lede">{t('friends.subtitle')}</p>
         </div>

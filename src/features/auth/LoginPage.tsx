@@ -83,7 +83,7 @@ export function LoginPage() {
           }}
         />
         <div className="brand" style={{ position: 'relative', zIndex: 2, color: '#f3efe6' }}>
-          <BrandMark size={40} className="brand-mark" color="#f3efe6" ring="rgba(243,239,230,.4)" />
+          <BrandMark size={40} className="brand-mark" tile="#1b2f52" />
           <div className="brand-text">
             <span className="brand-name">{t('app.name')}</span>
             <span className="brand-sub" style={{ color: 'rgba(243,239,230,.6)' }}>

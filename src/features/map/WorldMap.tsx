@@ -1,22 +1,23 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { MouseEvent, PointerEvent } from 'react';
+import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import type { MouseEvent, PointerEvent, RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Check, X } from 'lucide-react';
+import { Check, LocateFixed, Minus, Plus, X } from 'lucide-react';
 import { ComposableMap, Geographies, Geography, Marker, ZoomableGroup } from 'react-simple-maps';
 import type { TravelData } from '@/domain/schema';
 import { Flag } from '@/components/ui/Flag';
 import { codeForEnglishName, localizedCountryName } from '@/domain/countries';
 import {
   buildStatusMap,
+  canonical,
   countryNameForGeography,
   STATUS_COLORS,
   statusForGeography,
   type MapStatus,
 } from './countryMatch';
-import { useMapZoom, type MapPosition } from './useMapZoom';
+import { europeView, MAX_ZOOM, useMapZoom, WORLD_VIEW, type MapPosition } from './useMapZoom';
 import { resolveBrushClick, type Brush } from './brush';
-import { CRIMEA_FEATURES, CRIMEA_OWNER } from './crimea';
-import { SUPPLEMENTAL_PLACES, WORLD_GEO } from './mapData';
+import { SUPPLEMENTAL_PLACES } from './mapData';
+import { LOW_RES_COUNTRIES, useWorldCountries, type CountryFeature } from './geography';
 
 /**
  * Status a country can be set to from the map's popover / brush. Mirrors the four
@@ -53,6 +54,22 @@ const READ_ONLY_REGION_STYLE = {
   hover: { outline: 'none', opacity: 0.9, cursor: 'grab' },
   pressed: { outline: 'none', opacity: 0.8 },
 } as const;
+/**
+ * Zoom with the wheel, trackpad pinch (arrives as ctrl+wheel) and drag; never on
+ * double-click, which belongs to marking a country. Module-level so the zoom
+ * behaviour is not rebuilt on every render.
+ */
+const ZOOM_FILTER = (event: { type: string; ctrlKey?: boolean; button?: number }) => {
+  if (event.type === 'dblclick') return false;
+  if (event.type === 'wheel') return true;
+  return !event.ctrlKey && !event.button;
+};
+
+const SELECTED_STYLE = {
+  default: { outline: 'none', pointerEvents: 'none' },
+  hover: { outline: 'none', pointerEvents: 'none' },
+  pressed: { outline: 'none', pointerEvents: 'none' },
+} as const;
 const MINI_REGION_STYLE = {
   default: { outline: 'none' },
   hover: { outline: 'none' },
@@ -66,6 +83,30 @@ const OVERLAY_GAP = 12;
 
 const clamp = (value: number, min: number, max: number) =>
   Math.min(Math.max(value, min), Math.max(min, max));
+
+/**
+ * The viewBox height that matches the container's aspect at MAP_WIDTH, tracked
+ * with a ResizeObserver; `null` until the first measurement. Without `fill`,
+ * the classic 960×500 frame. Rounded so sub-pixel jitter does not re-render.
+ */
+function useFillHeight(ref: RefObject<HTMLElement>, fill: boolean): number | null {
+  const [height, setHeight] = useState<number | null>(fill ? null : MAP_HEIGHT);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!fill || !el) return;
+    const measure = () => {
+      const { width, height: h } = el.getBoundingClientRect();
+      const next = width > 0 && h > 0 ? (MAP_WIDTH * h) / width : MAP_HEIGHT;
+      setHeight(Math.round(Math.min(2400, Math.max(360, next)) / 10) * 10);
+    };
+    measure();
+    if (typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [fill, ref]);
+  return height;
+}
 
 interface Hover {
   name: string;
@@ -87,9 +128,12 @@ interface StatusMenu {
 }
 
 interface MapCanvasProps {
+  /** viewBox height; the width is always MAP_WIDTH. */
+  height: number;
   statusMap: Map<string, MapStatus>;
-  crimeaStatus: MapStatus;
-  crimeaLabel: string;
+  countries: CountryFeature[];
+  /** The selected country as a one-item list (Geographies computes its path). */
+  selectedFeatures: CountryFeature[] | null;
   position: MapPosition;
   readOnly: boolean;
   regionAria: (name: string, status: MapStatus) => string;
@@ -114,9 +158,10 @@ interface MapCanvasProps {
  * in the parent, so moving between overlays no longer reconciles every country.
  */
 const MapCanvas = memo(function MapCanvas({
+  height,
   statusMap,
-  crimeaStatus,
-  crimeaLabel,
+  countries,
+  selectedFeatures,
   position,
   readOnly,
   regionAria,
@@ -136,7 +181,7 @@ const MapCanvas = memo(function MapCanvas({
       projection="geoEqualEarth"
       projectionConfig={PROJECTION_CONFIG}
       width={MAP_WIDTH}
-      height={MAP_HEIGHT}
+      height={height}
       className="atlas-svg"
       style={MAP_STYLE}
     >
@@ -144,40 +189,39 @@ const MapCanvas = memo(function MapCanvas({
         zoom={position.zoom}
         center={position.coordinates}
         minZoom={1}
-        maxZoom={10}
+        maxZoom={MAX_ZOOM}
+        // @types/react-simple-maps declares an SVGElement here, but the library
+        // passes the d3 event through (see its filterFunc).
+        filterZoomEvent={ZOOM_FILTER as unknown as (element: SVGElement) => boolean}
         onMoveStart={onMoveStart}
         onMoveEnd={onMoveEnd}
       >
-        <Geographies geography={WORLD_GEO}>
+        <Geographies geography={countries}>
           {({ geographies }) =>
-            geographies
-              .filter(
-                (geo: { properties: { name: string } }) => geo.properties.name !== 'Antarctica',
-              )
-              .map((geo: { rsmKey: string; properties: { name: string } }) => {
-                const name = countryNameForGeography(geo.properties.name);
-                const status = statusForGeography(name, statusMap);
-                return (
-                  <Geography
-                    key={geo.rsmKey}
-                    geography={geo}
-                    className="atlas-country"
-                    role="button"
-                    aria-label={regionAria(name, status)}
-                    fill={STATUS_COLORS[status]}
-                    stroke="var(--map-stroke)"
-                    strokeWidth={0.4}
-                    onMouseMove={onTipMove}
-                    onMouseEnter={(event) => onTipEnter(event, name, status)}
-                    onPointerDown={(event) => onPointerDown(event, name, status)}
-                    onPointerUp={onPointerEnd}
-                    onPointerLeave={onPointerEnd}
-                    onClick={(event) => onCountryClick(event, name, status)}
-                    onDoubleClick={() => onZoomToGeo(geo)}
-                    style={regionStyle}
-                  />
-                );
-              })
+            geographies.map((geo: { rsmKey: string; properties: { name: string } }) => {
+              const name = countryNameForGeography(geo.properties.name);
+              const status = statusForGeography(name, statusMap);
+              return (
+                <Geography
+                  key={geo.rsmKey}
+                  geography={geo}
+                  className="atlas-country"
+                  role="button"
+                  aria-label={regionAria(name, status)}
+                  fill={STATUS_COLORS[status]}
+                  stroke="var(--map-stroke)"
+                  strokeWidth={0.6}
+                  onMouseMove={onTipMove}
+                  onMouseEnter={(event) => onTipEnter(event, name, status)}
+                  onPointerDown={(event) => onPointerDown(event, name, status)}
+                  onPointerUp={onPointerEnd}
+                  onPointerLeave={onPointerEnd}
+                  onClick={(event) => onCountryClick(event, name, status)}
+                  onDoubleClick={() => onZoomToGeo(geo)}
+                  style={regionStyle}
+                />
+              );
+            })
           }
         </Geographies>
 
@@ -220,34 +264,23 @@ const MapCanvas = memo(function MapCanvas({
             </Marker>
           );
         })}
-
-        {/* Crimea (Ukraine) — explicit overlay so the border is always correct. */}
-        <Geographies geography={CRIMEA_FEATURES}>
-          {({ geographies }) =>
-            geographies.map((geo: { rsmKey: string }) => (
-              <Geography
-                key={geo.rsmKey}
-                geography={geo}
-                className="atlas-country"
-                role="button"
-                aria-label={regionAria(CRIMEA_OWNER, crimeaStatus)}
-                fill={STATUS_COLORS[crimeaStatus]}
-                stroke="var(--map-stroke)"
-                strokeWidth={0.4}
-                onMouseMove={onTipMove}
-                onMouseEnter={(event) =>
-                  onTipEnter(event, CRIMEA_OWNER, crimeaStatus, CRIMEA_OWNER, crimeaLabel)
-                }
-                onPointerDown={(event) => onPointerDown(event, CRIMEA_OWNER, crimeaStatus)}
-                onPointerUp={onPointerEnd}
-                onPointerLeave={onPointerEnd}
-                onClick={(event) => onCountryClick(event, CRIMEA_OWNER, crimeaStatus)}
-                onDoubleClick={() => onZoomToGeo(geo)}
-                style={regionStyle}
-              />
-            ))
-          }
-        </Geographies>
+        {selectedFeatures && (
+          <Geographies geography={selectedFeatures}>
+            {({ geographies }) =>
+              geographies.map((geo: { rsmKey: string }) => (
+                <Geography
+                  key={`selected-${geo.rsmKey}`}
+                  geography={geo}
+                  className="atlas-selected"
+                  fill="var(--map-selected)"
+                  stroke="none"
+                  style={SELECTED_STYLE}
+                  aria-hidden="true"
+                />
+              ))
+            }
+          </Geographies>
+        )}
       </ZoomableGroup>
     </ComposableMap>
   );
@@ -270,7 +303,27 @@ interface WorldMapProps {
    * the popover regardless (touch path).
    */
   precise?: boolean;
+  /**
+   * Select mode: a plain click opens the country (e.g. a docked panel) instead
+   * of painting. Double-click still zooms; long-press still opens the popover.
+   */
+  onSelectCountry?: (geographyName: string) => void;
+  /**
+   * Double-click on an editable map: a quick status change (e.g. cycle visited
+   * → lived → clear) instead of zooming. Without it, double-click fits the
+   * country in view.
+   */
+  onQuickMark?: (geographyName: string) => void;
+  /** Fly the view to this country; `at` makes a repeat request distinct. */
+  flyTo?: { name: string; at: number } | null;
+  /** Country to highlight as selected. */
+  selected?: string | null;
   readOnly?: boolean;
+  /**
+   * Fill the parent: the viewBox follows the container's aspect ratio (no empty
+   * sea bands), and tall containers start zoomed in so land fills the screen.
+   */
+  fill?: boolean;
 }
 
 export function WorldMap({
@@ -279,7 +332,12 @@ export function WorldMap({
   onSetStatus,
   brush = 'cycle',
   precise = false,
+  onSelectCountry,
+  onQuickMark,
+  flyTo = null,
+  selected = null,
   readOnly,
+  fill = false,
 }: WorldMapProps) {
   const { t, i18n } = useTranslation();
   const statusMap = useMemo(() => buildStatusMap(data), [data]);
@@ -295,12 +353,31 @@ export function WorldMap({
       }),
     [i18n.language, t],
   );
-  const crimeaStatus = statusForGeography(CRIMEA_OWNER, statusMap);
-  const crimeaLabel = t('map.crimeaUkraine', { defaultValue: 'Crimea (Ukraine)' });
+  const countries = useWorldCountries();
+  const selectedFeatures = useMemo(() => {
+    if (!selected) return null;
+    const key = canonical(selected);
+    const match = countries.find(
+      (f) => canonical(countryNameForGeography(f.properties.name)) === key,
+    );
+    return match ? [match] : null;
+  }, [countries, selected]);
   const [hover, setHover] = useState<Hover | null>(null);
   const [menu, setMenu] = useState<StatusMenu | null>(null);
-  const { position, setPosition, setZoom, reset, zoomToGeo, deferClick } = useMapZoom();
   const wrapRef = useRef<HTMLDivElement>(null);
+  const measuredHeight = useFillHeight(wrapRef, fill);
+  const viewHeight = measuredHeight ?? MAP_HEIGHT;
+  // Land spans roughly 85% of the default 960×500 frame; on a taller frame,
+  // zoom in until it fills the height (capped so the world stays recognisable).
+  const baseZoom = Math.min(3, Math.max(1, (viewHeight / MAP_HEIGHT) * 0.85));
+  const homeView = useMemo(
+    () => (fill ? europeView(MAP_WIDTH, viewHeight, PROJECTION_CONFIG.scale) : WORLD_VIEW),
+    [fill, viewHeight],
+  );
+  const { position, setPosition, setZoom, reset, zoomToGeo, deferClick, cancelClick } = useMapZoom(
+    baseZoom,
+    homeView,
+  );
   const tooltipRef = useRef<HTMLDivElement>(null);
   const tooltipPoint = useRef({ clientX: 0, clientY: 0 });
   const tooltipFrame = useRef<number | null>(null);
@@ -442,6 +519,10 @@ export function WorldMap({
         pressFired.current = false;
         return;
       }
+      if (onSelectCountry && !event.altKey) {
+        deferClick(() => onSelectCountry(name));
+        return;
+      }
       if (precise || event.altKey) {
         deferClick(() => {}); // cancel any pending action without scheduling a new one
         openMenu(name, status, event.clientX, event.clientY);
@@ -453,7 +534,33 @@ export function WorldMap({
       }
       deferClick(() => onSetStatus?.(name, resolveBrushClick(brush, status)));
     },
-    [brush, deferClick, editable, onCountryClick, onSetStatus, openMenu, precise],
+    [brush, deferClick, editable, onCountryClick, onSelectCountry, onSetStatus, openMenu, precise],
+  );
+
+  useEffect(() => {
+    if (!flyTo) return;
+    const key = canonical(flyTo.name);
+    const match = countries.find(
+      (f) => canonical(countryNameForGeography(f.properties.name)) === key,
+    );
+    if (match) zoomToGeo(match);
+    // Only a new request moves the map; geometry swaps must not re-fly.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [flyTo]);
+
+  // Double-click: quick-mark on the editable map (cancelling the pending
+  // single-click), otherwise fit the country in view.
+  const handleDoubleClick = useCallback(
+    (geo: unknown) => {
+      const raw = (geo as { properties?: { name?: string } }).properties?.name;
+      if (editable && onQuickMark && raw) {
+        cancelClick();
+        onQuickMark(countryNameForGeography(raw));
+        return;
+      }
+      zoomToGeo(geo);
+    },
+    [cancelClick, editable, onQuickMark, zoomToGeo],
   );
 
   // Long-press (primary button / touch) opens the popover — the touch-friendly
@@ -606,22 +713,28 @@ export function WorldMap({
         onMouseLeave={hideTip}
         style={{ cursor: 'grab' }}
       >
-        <MapCanvas
-          statusMap={statusMap}
-          crimeaStatus={crimeaStatus}
-          crimeaLabel={crimeaLabel}
-          position={position}
-          readOnly={!!readOnly}
-          regionAria={regionAria}
-          onTipEnter={showTip}
-          onTipMove={moveTip}
-          onPointerDown={handlePointerDown}
-          onPointerEnd={clearPress}
-          onCountryClick={handleCountryClick}
-          onZoomToGeo={zoomToGeo}
-          onMoveStart={handleMoveStart}
-          onMoveEnd={handleMoveEnd}
-        />
+        {/* The zoom library places the view once per mount from the frame size,
+            so wait for the measurement and remount when the frame's shape changes. */}
+        {measuredHeight !== null && (
+          <MapCanvas
+            key={viewHeight}
+            height={viewHeight}
+            statusMap={statusMap}
+            countries={countries}
+            selectedFeatures={selectedFeatures}
+            position={position}
+            readOnly={!!readOnly}
+            regionAria={regionAria}
+            onTipEnter={showTip}
+            onTipMove={moveTip}
+            onPointerDown={handlePointerDown}
+            onPointerEnd={clearPress}
+            onCountryClick={handleCountryClick}
+            onZoomToGeo={handleDoubleClick}
+            onMoveStart={handleMoveStart}
+            onMoveEnd={handleMoveEnd}
+          />
+        )}
 
         {hover && !menu && (
           <div ref={tooltipRef} className="atlas-tip" role="tooltip">
@@ -666,24 +779,32 @@ export function WorldMap({
       )}
 
       <div className="atlas-zoom">
+        <div className="atlas-zoom-group">
+          <button
+            type="button"
+            onClick={() => setZoom(1.5)}
+            aria-label={t('map.zoomIn', { defaultValue: 'Zoom in' })}
+            title={t('map.zoomIn', { defaultValue: 'Zoom in' })}
+          >
+            <Plus size={18} aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setZoom(1 / 1.5)}
+            aria-label={t('map.zoomOut', { defaultValue: 'Zoom out' })}
+            title={t('map.zoomOut', { defaultValue: 'Zoom out' })}
+          >
+            <Minus size={18} aria-hidden="true" />
+          </button>
+        </div>
         <button
-          onClick={() => setZoom(1.5)}
-          aria-label={t('map.zoomIn', { defaultValue: 'Zoom in' })}
-        >
-          +
-        </button>
-        <button
-          onClick={() => setZoom(1 / 1.5)}
-          aria-label={t('map.zoomOut', { defaultValue: 'Zoom out' })}
-        >
-          −
-        </button>
-        <button
+          type="button"
+          className="atlas-zoom-home"
           onClick={reset}
           aria-label={t('map.zoomReset', { defaultValue: 'Reset view' })}
-          className="atlas-zoom-reset mono"
+          title={t('map.zoomReset', { defaultValue: 'Reset view' })}
         >
-          {t('map.reset', { defaultValue: 'RESET' })}
+          <LocateFixed size={18} aria-hidden="true" />
         </button>
       </div>
 
@@ -700,7 +821,6 @@ export function WorldMap({
 /** Lightweight, non-interactive mini map for friend cards and the login art. */
 export const MiniMap = memo(function MiniMap({ data, none }: { data: TravelData; none?: string }) {
   const statusMap = useMemo(() => buildStatusMap(data), [data]);
-  const crimeaStatus = statusForGeography(CRIMEA_OWNER, statusMap);
   const fill = (status: MapStatus) => (status === 'none' && none ? none : STATUS_COLORS[status]);
 
   return (
@@ -712,22 +832,20 @@ export const MiniMap = memo(function MiniMap({ data, none }: { data: TravelData;
       aria-hidden
       style={MINI_MAP_STYLE}
     >
-      <Geographies geography={WORLD_GEO}>
+      <Geographies geography={LOW_RES_COUNTRIES}>
         {({ geographies }) =>
-          geographies
-            .filter((geo: { properties: { name: string } }) => geo.properties.name !== 'Antarctica')
-            .map((geo: { rsmKey: string; properties: { name: string } }) => (
-              <Geography
-                key={geo.rsmKey}
-                geography={geo}
-                fill={fill(
-                  statusForGeography(countryNameForGeography(geo.properties.name), statusMap),
-                )}
-                stroke="var(--map-stroke)"
-                strokeWidth={0.3}
-                style={MINI_REGION_STYLE}
-              />
-            ))
+          geographies.map((geo: { rsmKey: string; properties: { name: string } }) => (
+            <Geography
+              key={geo.rsmKey}
+              geography={geo}
+              fill={fill(
+                statusForGeography(countryNameForGeography(geo.properties.name), statusMap),
+              )}
+              stroke="var(--map-stroke)"
+              strokeWidth={0.3}
+              style={MINI_REGION_STYLE}
+            />
+          ))
         }
       </Geographies>
       {SUPPLEMENTAL_PLACES.map((place) => {
@@ -744,20 +862,6 @@ export const MiniMap = memo(function MiniMap({ data, none }: { data: TravelData;
           </Marker>
         );
       })}
-      <Geographies geography={CRIMEA_FEATURES}>
-        {({ geographies }) =>
-          geographies.map((geo: { rsmKey: string }) => (
-            <Geography
-              key={geo.rsmKey}
-              geography={geo}
-              fill={fill(crimeaStatus)}
-              stroke="var(--map-stroke)"
-              strokeWidth={0.3}
-              style={MINI_REGION_STYLE}
-            />
-          ))
-        }
-      </Geographies>
     </ComposableMap>
   );
 });

@@ -1,158 +1,353 @@
 /* ============================================================================
-   Map feature styles. Scoped to src/features/map/** and imported once from
-   MapPage.tsx. Builds ON TOP of the shared design tokens (:root) and the shared
-   popover system (.atlas-pop*, .atlas-sheet*) defined in src/index.css — this
-   file only adds map-specific bits (the status-brush toolbar, the precise-edit
-   affordance, and small popover/tooltip extras).
+   Map feature styles: the full-screen map stage, its floating controls, the
+   docked country panel (the "stub"), and the long-press status popover.
+   Built on the tokens and the shared .atlas-pop / .atlas-sheet system in
+   src/index.css.
    ========================================================================== */
 
-/* --- Status brush toolbar ------------------------------------------------- */
-/* Sits above the map: a segmented control that picks the active "paint". When a
-   brush is active, one click on a country applies it directly. */
-.map-controls {
-  display: flex;
+/* --- Full-screen stage ---------------------------------------------------- */
+.map-screen {
+  position: relative;
+  height: calc(100dvh - var(--band-h) - var(--tabbar-h));
+  min-height: 420px;
+  overflow: hidden;
+  background: var(--sea);
+}
+.map-stage,
+.map-stage .atlas-stage,
+.map-stage .atlas-wrap {
+  position: absolute;
+  inset: 0;
+}
+.map-stage .atlas-wrap {
+  border: none;
+  border-radius: 0;
+}
+.map-stage .atlas-svg {
+  width: 100%;
+  height: 100%;
+}
+/* Zoom: one quiet stack bottom-right (zoom in/out joined, home apart). It
+   moves left of the docked panel so it never hides under it. */
+.map-stage .atlas-zoom {
+  top: auto;
+  bottom: 12px;
+  right: 12px;
+  z-index: 5;
+  gap: 8px;
   align-items: center;
+}
+.map-stage .atlas-zoom button {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  color: var(--ink);
+  cursor: pointer;
+}
+.map-stage .atlas-zoom button:hover {
+  background: var(--panel-2);
+}
+.atlas-zoom-group,
+.map-stage .atlas-zoom .atlas-zoom-home {
+  background: var(--panel);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.atlas-zoom-group {
+  display: flex;
+  flex-direction: column;
+}
+.atlas-zoom-group button + button {
+  box-shadow: inset 0 1px 0 var(--line) !important;
+}
+.map-stage .atlas-coord {
+  display: none;
+}
+.map-screen.has-panel .atlas-zoom {
+  right: calc(var(--panel-w) + 24px);
+}
+.map-screen {
+  --panel-w: 380px;
+}
+
+/* --- Floating chrome ------------------------------------------------------ */
+.map-bar {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  right: 12px;
+  display: flex;
+  align-items: flex-start;
   justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
+  pointer-events: none;
 }
-.map-controls-left {
+.map-bar > * {
+  pointer-events: auto;
+}
+.map-screen.has-panel .map-bar {
+  right: calc(var(--panel-w) + 24px);
+}
+.map-search {
+  width: min(300px, 100%);
+}
+.map-search .combobox-trigger {
+  min-height: 42px;
+  background: var(--panel);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  font-weight: 500;
+}
+.map-search .combobox-trigger:hover {
+  background: var(--panel);
+}
+.map-bar-actions {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-  min-width: 0;
+  gap: 6px;
 }
-.map-controls-right {
+.map-bar-actions .btn {
+  box-shadow: var(--shadow);
+  border-color: transparent;
+}
+
+/* Totals + legend: one small card in the bottom-left corner. */
+.map-summary {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  max-width: min(440px, calc(100% - 24px));
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+  background: var(--panel);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+}
+.map-summary-figures {
+  display: flex;
+  gap: 24px;
+}
+.figure {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.figure-value {
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+.figure-label {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ink-soft);
+}
+.map-summary .legend {
+  gap: 6px 14px;
+}
+.map-unmatched {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  font-size: 12.5px;
+  color: var(--c-danger);
+}
+.map-hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--ink-faint);
+}
+.map-empty {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(400px, calc(100% - 32px));
+}
+.map-empty .panel {
+  box-shadow: var(--shadow);
+}
+.map-empty .page-title {
+  font-size: 22px;
+}
+.format-glyph {
+  flex: 0 0 auto;
+  border-radius: 2px;
+  border: 1.5px solid var(--ink-faint);
+}
+
+/* --- Country panel: the stub --------------------------------------------- */
+.country-panel {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  bottom: 12px;
+  width: var(--panel-w);
+  display: flex;
+  flex-direction: column;
+  background: var(--panel);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  z-index: 30;
+  animation: stub-in 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@keyframes stub-in {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.country-panel-head {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 18px 16px 18px 18px;
+}
+/* The perforation: a dashed tear line with two punched notches at its ends. */
+.country-panel-head::after {
+  content: '';
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 0;
+  border-bottom: 2px dashed var(--line);
+}
+.country-panel-head::before {
+  content: '';
+  position: absolute;
+  left: -9px;
+  right: -9px;
+  bottom: -9px;
+  height: 18px;
+  background:
+    radial-gradient(circle at 0 50%, var(--sea) 8px, transparent 8.5px),
+    radial-gradient(circle at 100% 50%, var(--sea) 8px, transparent 8.5px);
+}
+.country-panel-head .flag {
+  margin-top: 4px;
+}
+.country-panel-id {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.country-panel-code {
+  font-size: 44px;
+  font-weight: 850;
+  line-height: 0.95;
+  letter-spacing: 0.02em;
+}
+.country-panel-name {
+  margin: 4px 0 0;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
+}
+.country-panel-name:focus {
+  outline: none;
+}
+.country-panel-sub {
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+.country-panel-body {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+.segmented {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+.segmented-item {
   display: flex;
   align-items: center;
   gap: 8px;
-  flex-wrap: wrap;
-}
-
-.brush-bar {
-  display: inline-flex;
-  align-items: stretch;
-  gap: 2px;
-  padding: 3px;
+  min-height: 42px;
+  padding: 8px 12px;
+  border: none;
+  border-radius: var(--radius);
   background: var(--panel-2);
-  border: 1px solid var(--line);
-  border-radius: 999px;
-}
-.brush-bar-label {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--ink-faint);
-  align-self: center;
-}
-.brush-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  padding: 6px 12px;
-  border: 1px solid transparent;
-  border-radius: 999px;
-  background: transparent;
-  color: var(--ink-soft);
+  color: var(--ink);
   font-family: var(--font-ui);
-  font-size: 12.5px;
+  font-size: 14px;
   font-weight: 600;
-  line-height: 1.1;
+  text-align: left;
   cursor: pointer;
-  white-space: nowrap;
-  transition:
-    background 0.15s,
-    color 0.15s,
-    border-color 0.15s,
-    box-shadow 0.15s;
 }
-.brush-item:hover {
-  color: var(--ink);
-  background: color-mix(in srgb, var(--panel) 70%, transparent);
+.segmented-item:hover {
+  background: #e6ebf1;
 }
-.brush-item:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
+.segmented-item[aria-checked='true'] {
+  background: var(--band);
+  color: var(--band-ink);
 }
-.brush-item.is-active {
-  color: var(--ink);
-  background: var(--panel);
-  border-color: var(--line-strong);
-  box-shadow: var(--shadow-sm);
+.segmented-item[aria-checked='true'] .status-swatch {
+  box-shadow: 0 0 0 2px var(--band-ink);
 }
-/* The colour dot that previews what a brush paints. */
-.brush-dot {
-  width: 11px;
-  height: 11px;
+.status-swatch {
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
   flex: 0 0 auto;
-  border: 1px solid rgba(0, 0, 0, 0.12);
+  box-shadow: inset 0 0 0 1px rgba(14, 23, 38, 0.18);
 }
-/* The "cycle" brush has no single colour — show a small tri-colour ring instead. */
-.brush-dot-cycle {
-  background: conic-gradient(var(--c-none) 0 33%, var(--c-visited) 0 66%, var(--c-lived) 0);
-  border-color: rgba(0, 0, 0, 0.08);
+.check-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
 }
-/* "Erase" reads as an outlined empty dot. */
-.brush-dot-erase {
-  background: var(--panel);
-  border: 1px dashed var(--ink-faint);
-}
-/* Hide the text label on very narrow screens; the colour dot + aria-label carry it. */
-@media (max-width: 560px) {
-  .brush-item .brush-text {
-    display: none;
-  }
-  .brush-item {
-    padding: 6px 9px;
-  }
+.check-row input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--band);
 }
 
-/* --- Precise-edit toggle -------------------------------------------------- */
-/* A small switch that turns a click into "open the per-country popover" instead
-   of painting — the discoverable replacement for Alt-click. */
-.map-precise {
+.panel-link {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  padding: 6px 12px;
-  border: 1px solid var(--line-strong);
-  border-radius: 999px;
-  background: var(--panel);
-  color: var(--ink-soft);
-  font-family: var(--font-ui);
-  font-size: 12.5px;
+  gap: 4px;
+  align-self: flex-start;
+  font-size: 14px;
   font-weight: 600;
-  cursor: pointer;
-  box-shadow: var(--shadow-sm);
-  transition:
-    background 0.15s,
-    color 0.15s,
-    border-color 0.15s;
-}
-.map-precise > svg {
-  flex-shrink: 0;
-}
-.map-precise:hover {
-  border-color: var(--ink-faint);
   color: var(--ink);
-}
-.map-precise.is-on {
-  background: color-mix(in srgb, var(--accent) 12%, var(--panel));
-  border-color: color-mix(in srgb, var(--accent) 42%, var(--line-strong));
-  color: var(--accent);
-}
-.map-precise:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
+  text-underline-offset: 3px;
 }
 
-/* --- Per-country status popover (built on .atlas-pop) --------------------- */
-/* The popover is anchored absolutely inside the map wrapper; .atlas-pop supplies
-   the surface. These add the country header and the colour dots on each row. */
+/* --- Map geometry --------------------------------------------------------- */
 .atlas-country {
+  vector-effect: non-scaling-stroke;
+}
+.atlas-selected {
   vector-effect: non-scaling-stroke;
 }
 .atlas-wrap.is-moving .atlas-country,
@@ -175,6 +370,8 @@
 .atlas-place-hit {
   pointer-events: all;
 }
+
+/* --- Long-press status popover (built on .atlas-pop) --------------------- */
 .map-pop {
   position: absolute;
   width: 292px;
@@ -182,53 +379,21 @@
   max-height: calc(100% - 20px);
   padding: 0;
   overflow: auto;
-  background: color-mix(in srgb, var(--panel) 94%, transparent);
-  backdrop-filter: blur(14px) saturate(1.08);
-  border-color: color-mix(in srgb, var(--line-strong) 82%, transparent);
-  border-radius: 16px;
-  box-shadow:
-    0 22px 54px rgba(25, 22, 16, 0.22),
-    0 4px 14px rgba(25, 22, 16, 0.1);
 }
 .map-pop.is-above {
   transform-origin: bottom;
-  animation-name: map-pop-in-up;
-}
-@keyframes map-pop-in-up {
-  from {
-    opacity: 0;
-    transform: translateY(4px) scale(0.98);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
 }
 .map-pop-head {
   display: flex;
   align-items: center;
   gap: 11px;
-  min-height: 78px;
-  padding: 13px 12px;
-  background:
-    radial-gradient(
-      circle at 0 0,
-      color-mix(in srgb, var(--accent) 12%, transparent),
-      transparent 62%
-    ),
-    var(--panel-2);
+  padding: 12px;
   border-bottom: 1px solid var(--line);
 }
 .map-pop-flag {
   display: grid;
   place-items: center;
   flex: 0 0 auto;
-  width: 46px;
-  height: 46px;
-  border-radius: 14px;
-  background: color-mix(in srgb, var(--panel) 82%, transparent);
-  border: 1px solid var(--line);
-  box-shadow: var(--shadow-sm);
 }
 .map-pop-id {
   display: flex;
@@ -238,59 +403,43 @@
   gap: 2px;
 }
 .map-pop-kicker {
-  font-family: var(--font-mono);
-  font-size: 8.5px;
-  font-weight: 700;
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
+  font-size: 12px;
   color: var(--ink-faint);
 }
 .map-pop-name {
-  font-family: var(--font-display);
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 700;
-  letter-spacing: -0.02em;
-  line-height: 1.08;
-  color: var(--ink);
+  line-height: 1.15;
   overflow-wrap: anywhere;
 }
 .map-pop-current {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 11px;
-  font-weight: 600;
+  font-size: 12px;
   color: var(--ink-soft);
 }
 .map-pop-current .dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  flex: 0 0 auto;
 }
 .map-pop-close {
   align-self: flex-start;
   display: grid;
   place-items: center;
-  flex: 0 0 auto;
-  width: 30px;
-  height: 30px;
-  margin: -3px -2px 0 0;
+  width: 32px;
+  height: 32px;
   padding: 0;
-  border: 1px solid transparent;
-  border-radius: 9px;
+  border: none;
+  border-radius: 8px;
   background: transparent;
   color: var(--ink-faint);
   cursor: pointer;
 }
 .map-pop-close:hover {
   color: var(--ink);
-  background: var(--panel);
-  border-color: var(--line);
-}
-.map-pop-close:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
+  background: var(--panel-2);
 }
 .map-pop-body {
   padding: 8px;
@@ -301,78 +450,39 @@
   gap: 6px;
 }
 .map-pop-option {
-  position: relative;
-  min-height: 46px;
-  padding: 9px 10px;
+  min-height: 44px;
   border: 1px solid var(--line);
-  border-radius: 11px;
-  background: color-mix(in srgb, var(--panel-2) 52%, transparent);
-  font-size: 12.5px;
-  line-height: 1.15;
-}
-.map-pop-option:hover {
-  border-color: var(--line-strong);
-  background: var(--panel-2);
-}
-.map-pop-option[aria-checked='true'] {
-  border-color: color-mix(in srgb, var(--accent) 42%, var(--line));
-  background: color-mix(in srgb, var(--accent) 9%, var(--panel));
+  border-radius: var(--radius);
 }
 .map-pop-body > .atlas-pop-sep {
   margin: 8px 3px 5px;
 }
-.map-pop-clear {
-  min-height: 40px;
-  color: var(--ink-soft);
-}
-.map-pop-clear:hover {
-  color: var(--ink);
-}
-/* The colour dot inside a status row in the popover. */
 .map-pop-dot {
   width: 12px;
   height: 12px;
   border-radius: 50%;
   flex: 0 0 auto;
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: inset 0 0 0 1px rgba(14, 23, 38, 0.15);
 }
 .map-pop-dot-erase {
-  background: var(--panel);
-  border: 1px dashed var(--ink-faint);
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--ink-faint);
 }
-/* A check on the row matching the country's current status. */
 .map-pop-check {
   margin-left: auto;
-  color: var(--accent);
   display: inline-flex;
   flex: 0 0 auto;
 }
-
 .map-status-sheet {
   overflow: auto;
   padding: 8px 8px max(12px, env(safe-area-inset-bottom, 0px));
-  background: var(--panel);
-  box-shadow: 0 -18px 48px rgba(25, 22, 16, 0.2);
-}
-.map-status-sheet .map-pop-head {
-  padding-top: 18px;
-  border-radius: 13px 13px 0 0;
-}
-.map-status-sheet .map-pop-body {
-  padding-bottom: 2px;
 }
 
-/* --- Tooltip flag --------------------------------------------------------- */
-/* The shared .atlas-tip already supplies the surface; we add a header row so the
-   circular <Flag> sits beside the ISO/name. */
+/* --- Tooltip -------------------------------------------------------------- */
 .atlas-tip-head {
   display: flex;
   align-items: center;
   gap: 9px;
-}
-.atlas-tip-head .flag {
-  flex: 0 0 auto;
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.16);
 }
 .atlas-tip-id {
   display: flex;
@@ -381,23 +491,50 @@
   min-width: 0;
 }
 
+/* --- Small screens: controls compact, the stub becomes a bottom sheet ----- */
+@media (max-width: 720px) {
+  .map-screen.has-panel .map-bar,
+  .map-screen.has-panel .atlas-zoom {
+    right: 12px;
+  }
+  .map-summary {
+    padding: 10px 12px;
+    gap: 6px;
+  }
+  .map-summary .legend,
+  .map-hint {
+    display: none;
+  }
+  .figure-value {
+    font-size: 24px;
+  }
+  .country-panel {
+    top: auto;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: auto;
+    max-height: 78dvh;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    animation-name: stub-up;
+  }
+  @keyframes stub-up {
+    from {
+      opacity: 0;
+      transform: translateY(24px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  .country-panel-code {
+    font-size: 34px;
+  }
+}
 @media (max-width: 380px) {
   .map-pop-options {
     grid-template-columns: 1fr;
   }
-}
-
-/* --- Edit affordance on the map ------------------------------------------ */
-/* A small floating hint badge so the precise/long-press path is discoverable. */
-.map-hint {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  letter-spacing: 0.04em;
-  color: var(--ink-faint);
-}
-.map-hint > svg {
-  flex-shrink: 0;
 }

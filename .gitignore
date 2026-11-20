@@ -41,3 +41,9 @@ yarn-error.log*
 
 # Local design export (prototype reference, not part of the app)
 /Travel Editor/
+
+# Impeccable runtime files (decision rounds, mocks, review captures)
+.impeccable/decision-payload.json
+.impeccable/mocks/
+.impeccable/questions/
+.impeccable/review/

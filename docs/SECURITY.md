@@ -11,8 +11,8 @@ its own. This document covers both.
 A clean clone runs entirely in the browser. The travel document lives in
 **IndexedDB**; there is no account, login wall, or required `.env`. Travel data
 only leaves the device when **you** choose to export a JSON file, save to a local
-file, or connect a server. The hosted shell can still fetch static assets and
-Google Fonts, and optional Sentry sends telemetry when configured. With no server
+file, or connect a server. The hosted shell fetches only its own static assets
+(fonts are self-hosted), and optional Sentry sends telemetry when configured. With no server
 connected, all sharing/social UI is hidden because no sharing-capable backend is
 advertised.
 

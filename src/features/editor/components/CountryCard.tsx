@@ -15,6 +15,7 @@ import { StatusRow } from './StatusRow';
 import { TimelineField } from './TimelineField';
 import { CityTimeline } from './CityTimeline';
 import { CountrySelect } from './CountrySelect';
+import { VisitLog } from './VisitLog';
 
 interface CountryCardProps {
   country: Country;
@@ -152,7 +153,9 @@ function CountryCardImpl({ country, index, invalid, defaultOpen }: CountryCardPr
             onToggleCapital={() => store.setCapitalVisit(index, !country.capitalVisit.visited)}
           />
 
-          <div className="grid-2">
+          {country.name ? (
+            <VisitLog name={country.name} />
+          ) : (
             <TimelineField
               title={t('country.timelineVisited')}
               mode="year"
@@ -160,6 +163,8 @@ function CountryCardImpl({ country, index, invalid, defaultOpen }: CountryCardPr
               onAdd={(v) => store.addCountryTimeline(index, 'visited', v)}
               onRemove={(i) => store.removeCountryTimeline(index, 'visited', i)}
             />
+          )}
+          {(country.status.lived || country.timeline.lived.length > 0) && (
             <TimelineField
               title={t('country.timelineLived')}
               mode="range"
@@ -167,7 +172,7 @@ function CountryCardImpl({ country, index, invalid, defaultOpen }: CountryCardPr
               onAdd={(v) => store.addCountryTimeline(index, 'lived', v)}
               onRemove={(i) => store.removeCountryTimeline(index, 'lived', i)}
             />
-          </div>
+          )}
 
           <CityTimeline
             cities={country.cities}

@@ -11,7 +11,8 @@
     "map": "Carte",
     "stats": "Statistiques",
     "friends": "Amis",
-    "signOut": "Se connecter"
+    "signOut": "Se connecter",
+    "countries": "Pays"
   },
   "dash": {
     "kicker": "Lecture de la carte",
@@ -348,7 +349,8 @@
       "lived": "Vécu",
       "capital": "Capitale",
       "birthplace": "Lieu de naissance",
-      "erase": "Effacer"
+      "erase": "Effacer",
+      "select": "Sélectionner"
     },
     "precise": "Édition précise",
     "preciseHint": "Cliquez sur un pays pour ouvrir son menu de statut complet",
@@ -359,7 +361,8 @@
     "statusPickLabel": "Définir le statut",
     "statusClose": "Fermer",
     "exportFormatLabel": "Choisissez un format",
-    "exportCaption": "{{count}} pays sur {{total}}, {{pct}}% du monde"
+    "exportCaption": "{{count}} pays sur {{total}}, {{pct}}% du monde",
+    "selectHint": "Cliquez sur un pays pour l’ouvrir · double-clic pour changer son statut · molette ou pincement pour zoomer"
   },
   "friends": {
     "kicker": "Autres cartographes",
@@ -445,5 +448,24 @@
   "discover": {
     "hint": "Saisissez un nom ou un @pseudo pour trouver qui suivre.",
     "noneFor": "Personne trouvé pour « {{q}} »."
+  },
+  "panel": {
+    "close": "Fermer",
+    "status": "Statut",
+    "statusNone": "Pas encore",
+    "capital": "Capitale visitée",
+    "visits": "Visites",
+    "visitsCount_one": "{{count}} visite",
+    "visitsCount_other": "{{count}} visites",
+    "noVisits": "Aucune visite datée. Ajoutez-en une ci-dessous.",
+    "removeVisit": "Supprimer la visite {{date}}",
+    "undatedCities": "Villes sans date",
+    "logVisit": "Ajouter une visite",
+    "month": "Mois (facultatif)",
+    "cities": "Villes",
+    "citiesPlaceholder": "Lisbonne, Porto",
+    "addVisit": "Ajouter la visite",
+    "visitLogged": "Visite en {{country}} enregistrée",
+    "openInCountries": "Tous les détails dans Pays"
   }
 }

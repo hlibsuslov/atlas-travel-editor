@@ -8,40 +8,53 @@
    ========================================================================== */
 
 :root {
-  --paper: #f3efe6;
-  --panel: #fbfaf6;
-  --panel-2: #f0ebe0;
-  --ink: #211f1a;
-  --ink-soft: #6e695b;
-  --ink-faint: #9a9485;
-  --line: #e4ddcd;
-  --line-strong: #d3cab6;
-  --accent: #2f6df0;
+  /* Boarding Pass world: card-stock panels on a cool blue-grey ground, a navy
+     band for the shell, gate-sign yellow only for "you are here". */
+  color-scheme: light;
+  --paper: #e9edf2;
+  --panel: #ffffff;
+  --panel-2: #f3f5f8;
+  --ink: #0e1726;
+  --ink-soft: #46536a;
+  --ink-faint: #66728a;
+  --line: #e1e6ed;
+  --line-strong: #c8d1dc;
+  --band: #10203a;
+  --band-2: #1b2f52;
+  --band-ink: #ffffff;
+  --band-ink-soft: #b9c6dc;
+  --gate: #ffd23f;
+  --gate-ink: #10203a;
+  --accent: #10203a;
   --accent-ink: #ffffff;
+  --focus: #2f6bff;
 
-  --c-birthplace: #e8943a;
-  --c-lived: #2f6df0;
-  --c-visited: #1f9d6b;
-  --c-capital: #9fc2f2;
-  --c-none: #e7e2d6;
-  --c-danger: #b4452f;
+  --c-birthplace: #ef8424;
+  --c-lived: #3a6ff7;
+  --c-visited: #13a06a;
+  --c-capital: #a8c4fb;
+  --c-none: #f1f4f7;
+  --c-danger: #c23b2b;
 
-  --sea: #f6f3ec;
-  --sea-line: #e7e0d0;
-  --map-stroke: #f3efe6;
+  --sea: #d6e0ea;
+  --sea-line: #cbd5e1;
+  --map-stroke: #ffffff;
+  --map-selected: rgba(14, 23, 38, 0.24);
 
-  --shadow-sm: 0 1px 2px rgba(40, 34, 20, 0.05);
-  --shadow: 0 14px 40px -18px rgba(40, 34, 20, 0.28), 0 2px 8px rgba(40, 34, 20, 0.05);
+  --shadow-sm: 0 1px 2px rgba(16, 32, 58, 0.06);
+  --shadow: 0 12px 32px -14px rgba(16, 32, 58, 0.3), 0 2px 6px rgba(16, 32, 58, 0.06);
 
-  --font-ui: 'Hanken Grotesk', ui-sans-serif, system-ui, sans-serif;
-  --font-display: 'Newsreader', Georgia, serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-ui: 'Onest Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Onest Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  --fs: 16px;
+  --band-h: 60px;
+  --tabbar-h: 0px;
+  --fs: 15px;
   --pad: 18px;
   --gap: 16px;
-  --radius: 4px;
-  --radius-lg: 8px;
+  --radius: 10px;
+  --radius-lg: 14px;
 }
 
 * {
@@ -59,6 +72,7 @@ body {
   line-height: 1.5;
   color: var(--ink);
   background: var(--paper);
+  font-variant-numeric: tabular-nums;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -86,19 +100,16 @@ body {
   min-height: 100%;
   display: flex;
   flex-direction: column;
-  background:
-    radial-gradient(120% 80% at 100% -10%, rgba(47, 109, 240, 0.05), transparent 60%), var(--paper);
+  background: var(--paper);
 }
 
 .mono {
   font-family: var(--font-mono);
-  font-feature-settings: 'tnum' 1;
+  font-variant-numeric: tabular-nums;
 }
 .kicker {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
+  font-size: 12px;
+  font-weight: 600;
   color: var(--ink-faint);
 }
 .serif {
@@ -114,23 +125,27 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 14px 24px;
-  background: color-mix(in srgb, var(--paper) 82%, transparent);
-  backdrop-filter: blur(10px) saturate(1.3);
-  border-bottom: 1px solid var(--line);
+  height: var(--band-h);
+  padding: 0 16px;
+  background: color-mix(in srgb, var(--panel) 86%, transparent);
+  backdrop-filter: blur(16px) saturate(1.4);
+  -webkit-backdrop-filter: blur(16px) saturate(1.4);
+  box-shadow: 0 1px 0 rgba(16, 32, 58, 0.07);
+  color: var(--ink);
 }
 .brand {
   display: flex;
   align-items: center;
-  gap: 13px;
+  gap: 10px;
   min-width: 0;
+  color: inherit;
+  text-decoration: none;
 }
 /* The compass rings + needle are now drawn by the <BrandMark> SVG itself
    (src/components/brand/BrandMark.tsx); this class only positions it and sets
    the colour the mark inherits via currentColor on light surfaces. */
 .brand-mark {
   flex-shrink: 0;
-  color: var(--ink);
 }
 .brand-text {
   display: flex;
@@ -138,51 +153,50 @@ body {
   line-height: 1.1;
 }
 .brand-name {
-  font-family: var(--font-display);
-  font-size: 19px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
 }
 .brand-sub {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--ink-faint);
+  display: none;
 }
 
 .nav {
   display: flex;
   gap: 2px;
   align-items: center;
+  padding: 4px;
+  border-radius: 12px;
+  background: var(--panel-2);
 }
 .nav-link {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  padding: 8px 14px;
-  border-radius: 999px;
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 9px;
   font-size: 14px;
   font-weight: 600;
   color: var(--ink-soft);
   background: transparent;
-  border: 1px solid transparent;
+  border: none;
   cursor: pointer;
   text-decoration: none;
   transition:
     background 0.18s,
     color 0.18s,
-    border-color 0.18s;
+    box-shadow 0.18s;
 }
 .nav-link:hover {
   color: var(--ink);
-  background: var(--panel-2);
 }
 .nav-link.active {
   color: var(--ink);
   background: var(--panel);
-  border-color: var(--line-strong);
-  box-shadow: var(--shadow-sm);
+  box-shadow:
+    0 1px 2px rgba(16, 32, 58, 0.08),
+    0 2px 8px -2px rgba(16, 32, 58, 0.12);
 }
 .nav-count {
   font-family: var(--font-mono);
@@ -196,16 +210,15 @@ body {
   gap: 8px;
 }
 .avatar {
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  background: var(--accent);
-  color: var(--accent-ink);
+  background: var(--gate);
+  color: var(--gate-ink);
   display: grid;
   place-items: center;
   font-weight: 700;
   font-size: 13px;
-  border: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 /* buttons */
@@ -214,26 +227,23 @@ body {
   align-items: center;
   justify-content: center;
   gap: 7px;
-  padding: 9px 15px;
+  min-height: 38px;
+  padding: 8px 14px;
   border: 1px solid var(--line-strong);
-  border-radius: 999px;
+  border-radius: var(--radius);
   background: var(--panel);
   color: var(--ink);
   font-family: var(--font-ui);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   line-height: 1.2;
   cursor: pointer;
   text-decoration: none;
-  /* Long localized labels (German/Russian run longer) must not overflow or clip:
-     keep the label on one line by default but allow it to break if truly needed. */
   white-space: nowrap;
   transition:
     transform 0.06s ease,
-    box-shadow 0.2s,
-    background 0.2s,
-    border-color 0.2s;
-  box-shadow: var(--shadow-sm);
+    background 0.15s,
+    border-color 0.15s;
 }
 /* Keep the icon crisp and from being squashed when the label is long. */
 .btn > svg {
@@ -241,6 +251,7 @@ body {
 }
 .btn:hover {
   border-color: var(--ink-faint);
+  background: var(--panel-2);
 }
 .btn:active {
   transform: translateY(1px);
@@ -256,7 +267,7 @@ body {
 }
 .btn-primary:hover {
   border-color: transparent;
-  filter: brightness(1.05);
+  background: var(--band-2);
 }
 .btn-ghost {
   background: transparent;
@@ -265,16 +276,17 @@ body {
 }
 .btn-ghost:hover {
   background: var(--panel-2);
-  border-color: var(--line);
+  border-color: transparent;
 }
 .btn-danger {
-  color: #b4452f;
-  border-color: #e7c9bf;
-  background: #f8ede9;
+  color: var(--c-danger);
+  border-color: color-mix(in srgb, var(--c-danger) 30%, var(--line));
+  background: color-mix(in srgb, var(--c-danger) 7%, var(--panel));
 }
 .btn-sm {
-  padding: 6px 11px;
-  font-size: 12px;
+  min-height: 32px;
+  padding: 5px 11px;
+  font-size: 13px;
 }
 .btn-block {
   width: 100%;
@@ -285,7 +297,7 @@ body {
 .page {
   width: min(1240px, 100%);
   margin: 0 auto;
-  padding: 26px 24px 64px;
+  padding: 28px 20px 64px;
 }
 .page-head {
   display: flex;
@@ -297,15 +309,16 @@ body {
 }
 .page-title {
   font-family: var(--font-display);
-  font-size: clamp(28px, 4vw, 42px);
-  font-weight: 500;
+  font-size: clamp(26px, 3.2vw, 36px);
+  font-weight: 750;
   letter-spacing: -0.02em;
-  margin: 6px 0 0;
-  line-height: 1.02;
+  margin: 0;
+  line-height: 1.1;
+  text-wrap: balance;
 }
 .page-title em {
-  font-style: italic;
-  color: var(--accent);
+  font-style: normal;
+  color: inherit;
 }
 .page-lede {
   color: var(--ink-soft);
@@ -323,6 +336,9 @@ body {
   display: flex;
   flex-direction: column;
   gap: var(--gap);
+  /* Grid items default to min-width:auto and would grow to fit wide content
+     (the JSON preview), pushing the page sideways on phones. */
+  min-width: 0;
 }
 
 /* panels */
@@ -343,14 +359,14 @@ body {
 }
 .panel-head h2 {
   font-family: var(--font-display);
-  font-size: 18px;
-  font-weight: 600;
+  font-size: 17px;
+  font-weight: 700;
   margin: 0;
   letter-spacing: -0.01em;
   white-space: nowrap;
 }
 .panel-head .sub {
-  font-size: 12.5px;
+  font-size: 13px;
   color: var(--ink-soft);
   margin-top: 2px;
 }
@@ -367,6 +383,12 @@ body {
    wrapped buttons to the start, so a long localized label never pushes a control
    off-screen. */
 @media (max-width: 640px) {
+  .page {
+    padding: 20px 12px 48px;
+  }
+  .panel-head {
+    flex-wrap: wrap;
+  }
   .page-head .toolbar {
     width: 100%;
     justify-content: flex-start;
@@ -436,12 +458,12 @@ button.pill {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 9px;
+  padding: 4px 10px;
   border-radius: 999px;
   border: 1px solid var(--line);
   background: var(--panel-2);
   color: var(--ink-soft);
-  font-size: 11.5px;
+  font-size: 12.5px;
   font-weight: 600;
   line-height: 1.3;
 }
@@ -449,17 +471,15 @@ button.pill {
   flex-shrink: 0;
 }
 .chip .mono {
-  font-size: 10.5px;
-  color: var(--ink-faint);
+  font-size: 12px;
+  color: var(--ink-soft);
 }
 
 /* editor form */
 .section-label {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--ink-faint);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-soft);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -477,38 +497,37 @@ button.pill {
   margin-bottom: 6px;
 }
 .field-label .req {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  font-size: 12px;
+  font-weight: 500;
   color: var(--ink-faint);
 }
 .input,
 input.input,
 textarea.input {
   width: 100%;
-  padding: 10px 12px;
+  min-height: 40px;
+  padding: 9px 12px;
   border: 1px solid var(--line-strong);
   border-radius: var(--radius);
   background: var(--panel);
   color: var(--ink);
   font-family: var(--font-ui);
-  font-size: 14px;
+  font-size: 15px;
   outline: none;
   transition:
     border-color 0.15s,
     box-shadow 0.15s;
 }
 .input:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 16%, transparent);
+  border-color: var(--focus);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 22%, transparent);
 }
 .input::placeholder {
   color: var(--ink-faint);
 }
 .input.invalid {
-  border-color: #c8553a;
-  background: #fbf0ec;
+  border-color: var(--c-danger);
+  background: color-mix(in srgb, var(--c-danger) 5%, var(--panel));
 }
 textarea.input {
   min-height: 130px;
@@ -561,13 +580,11 @@ textarea.input {
   flex: 1;
 }
 .country-meta {
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-size: 12px;
   color: var(--ink-faint);
   display: flex;
   gap: 8px;
+  font-weight: 600;
 }
 .country-top-right {
   margin-left: auto;
@@ -696,9 +713,8 @@ textarea.input {
 }
 
 .empty-note {
-  font-size: 12.5px;
+  font-size: 13px;
   color: var(--ink-faint);
-  font-style: italic;
 }
 
 /** Inline form/field error message. Centralized so the danger color is consistent. */
@@ -776,10 +792,10 @@ textarea.input {
 }
 .stat-num {
   font-family: var(--font-display);
-  font-size: clamp(34px, 5vw, 52px);
-  font-weight: 500;
-  line-height: 0.9;
-  letter-spacing: -0.02em;
+  font-size: clamp(32px, 4vw, 44px);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.03em;
   font-variant-numeric: tabular-nums;
 }
 .stat-sub {
@@ -851,8 +867,7 @@ textarea.input {
 .atlas-tip-name {
   font-weight: 700;
   font-size: 14px;
-  font-family: var(--font-display);
-  line-height: 1.15;
+  line-height: 1.2;
   overflow-wrap: anywhere;
 }
 .atlas-tip-status {
@@ -1172,12 +1187,10 @@ textarea.input {
   line-height: 1;
 }
 .friend-stat .l {
-  font-family: var(--font-mono);
-  font-size: 9.5px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  font-size: 12px;
   color: var(--ink-faint);
   margin-top: 3px;
+  font-weight: 600;
 }
 
 /* login */
@@ -1264,11 +1277,9 @@ textarea.input {
   align-items: center;
   gap: 12px;
   color: var(--ink-faint);
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
+  font-size: 12px;
   margin: 18px 0;
+  font-weight: 600;
 }
 .divider::before,
 .divider::after {
@@ -1652,10 +1663,8 @@ textarea.input {
   }
 }
 .atlas-pop-label {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font-size: 12px;
+  font-weight: 600;
   color: var(--ink-faint);
   padding: 8px 10px 4px;
 }
@@ -1694,7 +1703,8 @@ textarea.input {
 .atlas-pop-item.is-active,
 .atlas-pop-item[aria-checked='true'] {
   background: var(--panel-2);
-  color: var(--accent);
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--line-strong);
 }
 .atlas-pop-sep {
   height: 1px;
@@ -1711,7 +1721,7 @@ textarea.input {
   position: fixed;
   inset: 0;
   z-index: 59;
-  background: rgba(28, 26, 22, 0.4);
+  background: rgba(14, 23, 38, 0.45);
   animation: atlas-fade-in 0.16s ease;
 }
 .atlas-sheet {
@@ -1779,12 +1789,10 @@ textarea.input {
   overflow: auto;
 }
 .export-group-label {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font-size: 12px;
   color: var(--ink-faint);
   padding: 8px 10px 4px;
+  font-weight: 600;
 }
 .export-item {
   display: flex;
@@ -1807,17 +1815,14 @@ textarea.input {
 }
 .export-soon {
   margin-left: auto;
-  font-family: var(--font-mono);
-  font-size: 9.5px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-size: 12px;
   color: var(--ink-faint);
+  font-weight: 600;
 }
 .export-foot {
   padding: 8px 10px 4px;
   font-size: 11px;
   color: var(--ink-faint);
-  font-style: italic;
 }
 
 /* modal (import) */
@@ -1826,12 +1831,16 @@ textarea.input {
   inset: 0;
   display: grid;
   place-items: center;
-  background: rgba(28, 26, 22, 0.4);
+  background: rgba(14, 23, 38, 0.45);
   z-index: 60;
-  padding: 20px;
+  padding: 16px;
+  overflow-y: auto;
 }
 .modal-card {
   width: min(680px, 100%);
+  max-height: calc(100dvh - 32px);
+  display: flex;
+  flex-direction: column;
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
@@ -1929,9 +1938,6 @@ textarea.input {
   .login-art {
     display: none;
   }
-  .nav .nav-text {
-    display: none;
-  }
 }
 @media (max-width: 640px) {
   .hide-sm {
@@ -2019,4 +2025,327 @@ textarea.input {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* ============================================================================
+   Top bar controls, and the phone tab bar: under 720px the same <nav> docks
+   to the bottom of the screen where thumbs reach it.
+   ========================================================================== */
+.topbar .pill {
+  background: var(--panel-2);
+  color: var(--ink-soft);
+  box-shadow: none;
+}
+.topbar .lang-switch-icon {
+  color: var(--ink-faint);
+}
+.topbar .lang-switch .combobox-trigger {
+  border-radius: var(--radius);
+}
+main {
+  padding-bottom: var(--tabbar-h);
+}
+@media (max-width: 720px) {
+  :root {
+    --band-h: 56px;
+    --tabbar-h: calc(62px + env(safe-area-inset-bottom, 0px));
+  }
+  /* A backdrop-filter would make the bar the containing block of the fixed
+     tab bar below, pinning it to the top; phones get a solid bar instead. */
+  .topbar {
+    gap: 8px;
+    padding: 0 12px;
+    background: var(--panel);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+  .nav {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 45;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    height: var(--tabbar-h);
+    padding: 6px 8px env(safe-area-inset-bottom, 0px);
+    border-radius: 0;
+    background: color-mix(in srgb, var(--panel) 92%, transparent);
+    backdrop-filter: blur(16px) saturate(1.4);
+    -webkit-backdrop-filter: blur(16px) saturate(1.4);
+    box-shadow: 0 -1px 0 rgba(16, 32, 58, 0.08);
+  }
+  .nav-link {
+    flex-direction: column;
+    justify-content: center;
+    gap: 3px;
+    height: 50px;
+    padding: 0 4px;
+    font-size: 11.5px;
+    background: transparent;
+    box-shadow: none;
+  }
+  .nav-link.active {
+    background: transparent;
+    box-shadow: none;
+    color: var(--ink);
+  }
+  .nav-link > svg {
+    width: 44px;
+    height: 26px;
+    padding: 4px 12px;
+    border-radius: 999px;
+    transition: background 0.18s;
+  }
+  .nav-link.active > svg {
+    background: var(--gate);
+  }
+  .topbar .lang-switch-icon {
+    display: none;
+  }
+  .topbar .lang-switch .combobox {
+    min-width: 0;
+  }
+}
+
+/* ============================================================================
+   Browser surfaces: focus, selection, scrollbars, numerals.
+   ========================================================================== */
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+::selection {
+  background: color-mix(in srgb, var(--gate) 70%, transparent);
+  color: var(--ink);
+}
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+
+/* ============================================================================
+   Visit log + compact fields: shared by the map's country panel and the
+   Countries list.
+   ========================================================================== */
+.visit-log {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.panel-section-title {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+.icon-btn {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+.icon-btn:hover {
+  background: var(--panel-2);
+  color: var(--ink);
+}
+.icon-btn-sm {
+  width: 28px;
+  height: 28px;
+}
+
+/* Visits read like the legs on a ticket: date, then where. */
+.visit-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.visit-row {
+  display: grid;
+  grid-template-columns: minmax(96px, auto) 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 14px;
+}
+.visit-row:first-child {
+  border-top: 1px solid var(--line);
+}
+.visit-date {
+  font-weight: 700;
+}
+.visit-cities {
+  color: var(--ink-soft);
+  overflow-wrap: anywhere;
+}
+.panel-empty,
+.panel-note {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ink-faint);
+}
+.panel-note {
+  margin-top: 8px;
+}
+.visit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border-radius: var(--radius);
+  background: var(--panel-2);
+}
+.visit-form .panel-section-title {
+  margin: 0;
+}
+.visit-form-row {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  gap: 8px;
+}
+.field-compact {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+.field-compact .input {
+  font-weight: 500;
+  color: var(--ink);
+}
+
+/* Popovers that open from controls on the right edge (language, country
+   picker in a panel header) anchor to that edge so they never run past the
+   window and widen the page. */
+.combobox-popover {
+  max-width: calc(100vw - 24px);
+}
+.topbar .combobox-popover,
+.panel-head .combobox-popover {
+  left: auto;
+  right: 0;
+}
+html,
+body {
+  overflow-x: clip;
+}
+
+/* ============================================================================
+   Surface language: fills, not outlines. Controls read as soft filled shapes
+   on white panels; edges come from contrast and one shadow level, never from
+   stacked 1px borders.
+   ========================================================================== */
+.panel,
+.stat-tile,
+.friend-card,
+.modal-card {
+  border: none;
+}
+.panel {
+  box-shadow:
+    0 1px 2px rgba(16, 32, 58, 0.05),
+    0 8px 24px -16px rgba(16, 32, 58, 0.22);
+}
+.btn {
+  border-color: transparent;
+  background: var(--panel-2);
+}
+.btn:hover {
+  border-color: transparent;
+  background: #e6ebf1;
+}
+.btn-ghost {
+  background: transparent;
+}
+.input,
+input.input,
+textarea.input,
+.combobox-trigger {
+  border-color: transparent;
+  background: var(--panel-2);
+}
+.input:hover,
+.combobox-trigger:hover {
+  border-color: transparent;
+  background: #e9edf2;
+}
+.input:focus {
+  border-color: var(--focus);
+  background: var(--panel);
+}
+.chip,
+.tag,
+.year-chip {
+  border-color: transparent;
+}
+.country-card {
+  border: none;
+  background: var(--panel-2);
+}
+.country-card .country-body {
+  border-top-color: var(--panel);
+}
+.city-card {
+  border: none;
+  background: var(--panel);
+}
+.atlas-pop,
+.export-popover,
+.combobox-popover {
+  border: none;
+}
+.legend-sw {
+  border: none;
+}
+.visit-row,
+.visit-row:first-child {
+  border-top: none;
+}
+.visit-row {
+  border-bottom-color: var(--panel-2);
+}
+.btn-primary,
+.btn-primary:hover {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+.btn-primary:hover {
+  background: var(--band-2);
+}
+/* Controls sitting on a grey surface switch to white fills. */
+.visit-form .input,
+.country-card .input,
+.country-card .country-body .combobox-trigger,
+.country-card .btn:not(.btn-ghost):not(.btn-primary) {
+  background: var(--panel);
+}
+.country-card .visit-form {
+  background: var(--panel);
+}
+.country-card .visit-form .input {
+  background: var(--panel-2);
+}
+.status-toggle {
+  border-color: transparent;
+  background: var(--panel);
+}
+.status-toggle.on {
+  border-color: transparent;
+  color: var(--ink);
+}
+.btn-danger,
+.btn-danger:hover {
+  color: var(--c-danger);
+  background: color-mix(in srgb, var(--c-danger) 9%, var(--panel));
 }

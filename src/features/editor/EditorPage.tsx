@@ -8,8 +8,6 @@ import { validateTravelData } from '@/domain/schema';
 import { computeStats } from '@/domain/stats';
 import { makeEmptyData, makeSampleData } from '@/domain/sampleData';
 import { env } from '@/lib/env';
-import { SaveStatus } from '@/components/ui/SaveStatus';
-import type { SaveState } from '@/lib/persistence/useDataSync';
 import { CountryList } from './components/CountryList';
 import { CountrySelect } from './components/CountrySelect';
 import { EditorEmptyState } from './components/EditorEmptyState';
@@ -26,7 +24,6 @@ const ONBOARDED_KEY = 'atlas:onboarded';
 export function EditorPage() {
   const { t } = useTranslation();
   const data = useEditorStore((s) => s.data);
-  const dirty = useEditorStore((s) => s.dirty);
   const setBirthplace = useEditorStore((s) => s.setBirthplace);
   const ensureCountry = useEditorStore((s) => s.ensureCountry);
   const setData = useEditorStore((s) => s.setData);
@@ -35,7 +32,7 @@ export function EditorPage() {
   const canUndo = useEditorStore((s) => s.past.length > 0);
   const canRedo = useEditorStore((s) => s.future.length > 0);
 
-  const { record, save, share, isOffline } = useTravelData();
+  const { record, share, isOffline } = useTravelData();
   const [importOpen, setImportOpen] = useState(false);
   const [filter, setFilter] = useState('');
   // Show the first-run welcome banner until the user dismisses or acts on it.
@@ -133,17 +130,6 @@ export function EditorPage() {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [undo, redo]);
 
-  // Reuse the shared <SaveStatus/> for a consistent indicator. We pass the state
-  // explicitly (rather than letting it auto-detect) so it reflects THIS hook
-  // instance's pending save and the local dirty/offline flags exactly.
-  const saveState: SaveState = save.isPending
-    ? 'saving'
-    : isOffline
-      ? 'offline'
-      : dirty
-        ? 'unsaved'
-        : 'synced';
-
   const onShare = () =>
     share.mutate(!record?.isPublic, {
       onSuccess: (r) => toast.success(r.isPublic ? t('toast.shareOn') : t('toast.shareOff')),
@@ -153,14 +139,10 @@ export function EditorPage() {
     <div className="page">
       <div className="page-head">
         <div>
-          <div className="kicker">{t('editor.kicker')}</div>
-          <h1 className="page-title">
-            {t('editor.bornIn')} <em>{data.person.birthplace.country || '—'}</em>
-          </h1>
+          <h1 className="page-title">{t('nav.countries')}</h1>
           <p className="page-lede">{t('editor.lede')}</p>
         </div>
         <div className="toolbar">
-          <SaveStatus state={saveState} actionable />
           <div className="btn-group">
             <button
               className="btn btn-sm btn-ghost"

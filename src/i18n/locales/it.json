@@ -11,7 +11,8 @@
     "map": "Mappa",
     "stats": "Statistiche",
     "friends": "Amici",
-    "signOut": "Accedi"
+    "signOut": "Accedi",
+    "countries": "Paesi"
   },
   "dash": {
     "kicker": "Leggere la mappa",
@@ -348,7 +349,8 @@
       "lived": "Vissuto",
       "capital": "Capitale",
       "birthplace": "Luogo di nascita",
-      "erase": "Cancella"
+      "erase": "Cancella",
+      "select": "Seleziona"
     },
     "precise": "Modifica precisa",
     "preciseHint": "Fai clic su un paese per aprire il suo menu di stato completo",
@@ -359,7 +361,8 @@
     "statusPickLabel": "Imposta lo stato",
     "statusClose": "Chiudi",
     "exportFormatLabel": "Scegli un formato",
-    "exportCaption": "{{count}} di {{total}} paesi, {{pct}}% del mondo"
+    "exportCaption": "{{count}} di {{total}} paesi, {{pct}}% del mondo",
+    "selectHint": "Clicca un paese per aprirlo · doppio clic per cambiarne lo stato · scorri o pizzica per lo zoom"
   },
   "friends": {
     "kicker": "Altri cartografi",
@@ -445,5 +448,24 @@
   "discover": {
     "hint": "Digita un nome o un @handle per trovare persone da seguire.",
     "noneFor": "Nessuno trovato per «{{q}}»."
+  },
+  "panel": {
+    "close": "Chiudi",
+    "status": "Stato",
+    "statusNone": "Non ancora",
+    "capital": "Capitale visitata",
+    "visits": "Visite",
+    "visitsCount_one": "{{count}} visita",
+    "visitsCount_other": "{{count}} visite",
+    "noVisits": "Nessuna visita datata. Aggiungine una qui sotto.",
+    "removeVisit": "Rimuovi visita {{date}}",
+    "undatedCities": "Città senza data",
+    "logVisit": "Registra una visita",
+    "month": "Mese (facoltativo)",
+    "cities": "Città",
+    "citiesPlaceholder": "Lisbona, Porto",
+    "addVisit": "Aggiungi visita",
+    "visitLogged": "Visita in {{country}} salvata",
+    "openInCountries": "Tutti i dettagli in Paesi"
   }
 }

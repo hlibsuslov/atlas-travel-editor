@@ -10,6 +10,8 @@ import { queryClient } from '@/lib/queryClient';
 import { envError } from '@/lib/env';
 import { initObservability } from '@/lib/observability';
 import '@/i18n';
+import '@fontsource-variable/onest';
+import '@fontsource-variable/jetbrains-mono';
 import './index.css';
 
 const rootEl = document.getElementById('root');
@@ -33,7 +35,12 @@ if (envError) {
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
             <App />
-            <Toaster position="bottom-right" richColors closeButton />
+            <Toaster
+              position="bottom-center"
+              mobileOffset={{ bottom: 84 }}
+              richColors
+              closeButton
+            />
           </AuthProvider>
         </QueryClientProvider>
       </ErrorBoundary>

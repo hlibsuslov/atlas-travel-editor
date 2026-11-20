@@ -2,7 +2,7 @@ import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { Profiler } from 'react';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { WorldMap, MiniMap } from './WorldMap';
-import { WORLD_VIEW, zoomToFit } from './useMapZoom';
+import { europeView, MAX_ZOOM, WORLD_VIEW, zoomToFit } from './useMapZoom';
 import type { TravelData } from '@/domain/schema';
 
 // jsdom does not implement the SVG geometry properties d3-zoom reads when the
@@ -92,7 +92,7 @@ describe('zoomToFit (applied on double-click)', () => {
     expect(pos.coordinates[1]).toBeLessThan(55);
   });
 
-  it('clamps zoom within the existing minZoom 1 / maxZoom 10 bounds', () => {
+  it('clamps zoom within the existing minZoom 1 / MAX_ZOOM bounds', () => {
     const wholeWorld = box([
       [-179, -85],
       [-179, 85],
@@ -111,12 +111,12 @@ describe('zoomToFit (applied on double-click)', () => {
     // A world-sized geography cannot zoom below the minimum.
     expect(zoomToFit(wholeWorld).zoom).toBe(1);
     // A pin-sized geography is capped at the maximum.
-    expect(zoomToFit(tiny).zoom).toBe(10);
+    expect(zoomToFit(tiny).zoom).toBe(MAX_ZOOM);
 
     // Anything in between stays within bounds.
     const mid = zoomToFit(smallCountry).zoom;
     expect(mid).toBeGreaterThanOrEqual(1);
-    expect(mid).toBeLessThanOrEqual(10);
+    expect(mid).toBeLessThanOrEqual(MAX_ZOOM);
   });
 });
 
@@ -291,5 +291,16 @@ describe('<WorldMap> brush + precise click behaviour', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+
+describe('europeView (home view of the full-screen map)', () => {
+  it('fits Europe to the frame: a tall phone frame zooms in more than a desktop one', () => {
+    const desktop = europeView(960, 560, 165);
+    const phone = europeView(960, 2000, 165);
+    expect(desktop.zoom).toBeGreaterThan(1);
+    expect(desktop.zoom).toBeLessThanOrEqual(MAX_ZOOM);
+    expect(phone.zoom).toBeGreaterThanOrEqual(desktop.zoom);
+    expect(desktop.coordinates[1]).toBeGreaterThan(40);
   });
 });

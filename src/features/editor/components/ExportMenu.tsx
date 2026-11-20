@@ -14,6 +14,7 @@ import {
 import type { LucideIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import type { TravelData } from '@/domain/schema';
+import { tidyTravelData } from '@/domain/tidy';
 import { downloadText } from '@/lib/download';
 import { wrapEnvelope } from '@/lib/storage/envelope';
 import { useStorage } from '@/features/storage/StorageProvider';
@@ -88,8 +89,9 @@ export function ExportMenu({ data }: { data: TravelData }) {
 
   // Export the self-describing portable envelope ({app,schemaVersion,updatedAt,data})
   // so the file is forward-compatible and round-trips through import and the
-  // file/IndexedDB stores without translation.
-  const json = () => JSON.stringify(wrapEnvelope(data), null, 2);
+  // file/IndexedDB stores without translation. The document is tidied first:
+  // chronological timelines, merged duplicates, no empty rows.
+  const json = () => JSON.stringify(wrapEnvelope(tidyTravelData(data)), null, 2);
   const exportFilename = () => `travel-data-${new Date().toISOString().slice(0, 10)}.json`;
 
   const download = () => {

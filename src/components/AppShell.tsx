@@ -1,6 +1,6 @@
-import { NavLink, Outlet } from 'react-router-dom';
+import { Link, NavLink, Outlet } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Compass, LogOut, Map as MapIcon, PencilLine, Users } from 'lucide-react';
+import { BarChart3, ListChecks, LogOut, Map as MapIcon, Users } from 'lucide-react';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { BrandMark } from '@/components/brand/BrandMark';
 import { LanguageSwitcher } from '@/features/settings/LanguageSwitcher';
@@ -8,9 +8,9 @@ import { DataSync } from '@/lib/persistence/DataSync';
 import { SaveStatus } from '@/components/ui/SaveStatus';
 
 const NAV = [
-  { to: '/map', icon: MapIcon, key: 'nav.map' },
-  { to: '/', icon: PencilLine, key: 'nav.editor' },
-  { to: '/stats', icon: Compass, key: 'nav.stats' },
+  { to: '/', icon: MapIcon, key: 'nav.map' },
+  { to: '/countries', icon: ListChecks, key: 'nav.countries' },
+  { to: '/stats', icon: BarChart3, key: 'nav.stats' },
   { to: '/friends', icon: Users, key: 'nav.friends' },
 ] as const;
 
@@ -29,13 +29,10 @@ export function AppShell() {
         {t('a11y.skipToContent')}
       </a>
       <header className="topbar">
-        <div className="brand">
-          <BrandMark size={40} className="brand-mark" />
-          <div className="brand-text">
-            <span className="brand-name">{t('app.name')}</span>
-            <span className="brand-sub">{t('app.tagline')}</span>
-          </div>
-        </div>
+        <Link to="/" className="brand" aria-label={t('app.name')}>
+          <BrandMark size={30} className="brand-mark" />
+          <span className="brand-name hide-sm">{t('app.name')}</span>
+        </Link>
 
         <nav className="nav" aria-label="Primary">
           {NAV.map((n) => {
