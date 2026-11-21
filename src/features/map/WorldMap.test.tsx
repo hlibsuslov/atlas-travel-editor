@@ -3,6 +3,7 @@ import { Profiler } from 'react';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { WorldMap, MiniMap } from './WorldMap';
 import { europeView, MAX_ZOOM, WORLD_VIEW, zoomToFit } from './useMapZoom';
+import { loadDetailedCountries } from './geography';
 import type { TravelData } from '@/domain/schema';
 
 // jsdom does not implement the SVG geometry properties d3-zoom reads when the
@@ -151,6 +152,9 @@ describe('<WorldMap> accessibility (G3)', () => {
   });
 
   it('moves the tooltip without committing a React render on every mousemove', async () => {
+    // Load the detailed geometry first: otherwise its chunk can resolve mid-test
+    // and the 110m → 50m swap adds commits unrelated to pointer movement.
+    await loadDetailedCountries();
     const onRender = vi.fn();
     render(
       <Profiler id="map" onRender={onRender}>
